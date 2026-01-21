@@ -4,137 +4,122 @@ import { COLORS } from '../constants/theme';
 
 interface Props {
   scaleName: string;
-  width?: number;
-  height?: number;
   isActive?: boolean;
 }
 
-const DATA: Record<string, { name: string; start: number; grid: number[][] }> = {
-  'Am_pent_box1': {
-    name: 'Am Pentatónica - Box 1',
-    start: 5,
-    grid: [[-1,0,0,4], [1,0,0,4], [1,0,3,0], [1,0,3,0], [-1,0,3,0], [-1,0,0,4]],
-  },
-  'Am_blues': {
-    name: 'Am Blues',
-    start: 5,
-    grid: [[-1,0,0,4], [1,0,0,4], [1,0,3,0], [1,0,3,0], [-1,2,3,0], [-1,0,0,4]],
-  },
-  'C_major_box1': {
-    name: 'Do Mayor',
-    start: 7,
-    grid: [[1,-2,0,4], [0,-1,0,3], [1,0,3,0], [1,0,3,-4], [1,2,0,4], [1,-2,0,4]],
-  },
+const SCALES: Record<string, { name: string; start: number; g: number[][] }> = {
+  'Am_pent_box1': { name: 'Am Pentatónica', start: 5, g: [[-1,0,0,4], [1,0,0,4], [1,0,3,0], [1,0,3,0], [-1,0,3,0], [-1,0,0,4]] },
+  'Am_blues': { name: 'Am Blues', start: 5, g: [[-1,0,0,4], [1,0,0,4], [1,0,3,0], [1,0,3,0], [-1,2,3,0], [-1,0,0,4]] },
+  'C_major_box1': { name: 'Do Mayor', start: 7, g: [[1,-2,0,4], [0,-1,0,3], [1,0,3,0], [1,0,3,-4], [1,2,0,4], [1,-2,0,4]] },
 };
 
 const STR = ['e','B','G','D','A','E'];
 const W = Dimensions.get('window').width;
 
 export const ScaleFretboard: React.FC<Props> = ({ scaleName, isActive = false }) => {
-  const d = DATA[scaleName];
-  if (!d) return <Text style={{color:'red'}}>No encontrado: {scaleName}</Text>;
+  const d = SCALES[scaleName];
+  if (!d) return <Text style={{color:'red'}}>?</Text>;
   
-  const nf = d.grid[0].length;
+  const nf = d.g[0].length;
   const cw = Math.floor((W - 100) / nf);
 
+  // Simple cell with optional note
+  const Cell = ({ v, si, fi }: { v: number; si: number; fi: number }) => {
+    const hasNote = v !== 0;
+    const isRoot = v < 0;
+    const finger = Math.abs(v);
+    
+    return (
+      <View style={[S.cell, { width: cw }]}>
+        {/* Left border = fret line */}
+        <View style={[S.fretL, fi === 0 && S.nutL]} />
+        {/* Cell content - either note or empty with string line */}
+        {hasNote ? (
+          <View style={[S.note, isRoot ? S.noteR : S.noteG, isActive && (isRoot ? S.noteRA : S.noteGA)]}>
+            <Text style={S.noteT}>{finger}</Text>
+          </View>
+        ) : (
+          <View style={[S.emptyStr, { height: 2 + si * 0.4 }]} />
+        )}
+      </View>
+    );
+  };
+
   return (
-    <View style={css.box}>
-      <Text style={css.ttl}>{d.name}</Text>
+    <View style={S.wrap}>
+      <Text style={S.title}>{d.name} - Trastes {d.start}-{d.start + nf - 1}</Text>
       
-      {/* Table container */}
-      <View style={css.tbl}>
-        {d.grid.map((row, ri) => {
-          const root = row.some(x => x < 0);
+      {/* Fretboard grid */}
+      <View style={S.board}>
+        {d.g.map((row, si) => {
+          const hasRoot = row.some(x => x < 0);
           return (
-            <View key={ri} style={css.tr}>
-              {/* Label cell */}
-              <View style={[css.lbl, root ? css.lblR : css.lblG]}>
-                <Text style={css.lblT}>{STR[ri]}</Text>
+            <View key={si} style={S.row}>
+              {/* String label */}
+              <View style={[S.lbl, hasRoot ? S.lblR : S.lblG]}>
+                <Text style={S.lblT}>{STR[si]}</Text>
               </View>
-              {/* Nut */}
-              <View style={css.nut}/>
-              {/* Data cells */}
-              {row.map((v, ci) => {
-                const ir = v < 0;
-                const f = Math.abs(v);
-                return (
-                  <View key={ci} style={[css.td, {width:cw}]}>
-                    {/* String line */}
-                    <View style={[css.str, {height: 2+ri*0.5}]}/>
-                    {/* Note */}
-                    {v !== 0 ? (
-                      <View style={[
-                        css.note,
-                        ir ? css.noteR : css.noteG,
-                        isActive && css.noteA
-                      ]}>
-                        <Text style={css.fng}>{f}</Text>
-                      </View>
-                    ) : null}
-                    {/* Fret line */}
-                    <View style={css.frt}/>
-                  </View>
-                );
-              })}
+              
+              {/* Cells */}
+              {row.map((v, fi) => <Cell key={fi} v={v} si={si} fi={fi} />)}
             </View>
           );
         })}
-      </View>
-      
-      {/* Fret numbers */}
-      <View style={css.nums}>
-        <View style={{width:40}}/>
-        {[...Array(nf)].map((_,i) => (
-          <View key={i} style={[css.numC,{width:cw}]}>
-            <Text style={css.numT}>{d.start + i}</Text>
-          </View>
-        ))}
+        
+        {/* Fret numbers row */}
+        <View style={S.fnRow}>
+          <View style={{ width: 32 }} />
+          {[...Array(nf)].map((_, i) => (
+            <View key={i} style={[S.fnCell, { width: cw }]}>
+              <Text style={S.fnT}>{d.start + i}</Text>
+            </View>
+          ))}
+        </View>
       </View>
       
       {/* Legend */}
-      <View style={css.leg}>
-        <View style={css.legI}><View style={[css.dot,{backgroundColor:'#FF6B35'}]}/><Text style={css.legT}>Raíz</Text></View>
-        <View style={css.legI}><View style={[css.dot,{backgroundColor:'#00D68F'}]}/><Text style={css.legT}>Notas</Text></View>
-        <Text style={css.allS}>✓ Todas suenan</Text>
+      <View style={S.leg}>
+        <View style={S.legI}><View style={[S.dot, { backgroundColor: '#FF6B35' }]} /><Text style={S.legT}>Raíz</Text></View>
+        <View style={S.legI}><View style={[S.dot, { backgroundColor: '#00D68F' }]} /><Text style={S.legT}>Notas</Text></View>
+        <Text style={[S.legT, { color: '#00D68F' }]}>✓ Todas suenan</Text>
       </View>
     </View>
   );
 };
 
-const css = StyleSheet.create({
-  box: {alignItems:'center',padding:4},
-  ttl: {fontSize:15,fontWeight:'bold',color:COLORS.primary,marginBottom:8},
+const S = StyleSheet.create({
+  wrap: { alignItems: 'center', paddingVertical: 8 },
+  title: { fontSize: 14, fontWeight: 'bold', color: COLORS.primary, marginBottom: 10 },
   
-  tbl: {backgroundColor:'#1E1810',borderRadius:6,padding:6},
-  tr: {flexDirection:'row',alignItems:'center',marginVertical:2},
+  board: { backgroundColor: '#1E1810', borderRadius: 6, padding: 8 },
   
-  lbl: {width:28,height:28,borderRadius:14,alignItems:'center',justifyContent:'center'},
-  lblG: {backgroundColor:'#00D68F'},
-  lblR: {backgroundColor:'#FF6B35'},
-  lblT: {color:'#FFF',fontSize:11,fontWeight:'bold'},
+  row: { flexDirection: 'row', alignItems: 'center', height: 36 },
   
-  nut: {width:4,height:30,backgroundColor:'#AAA',marginHorizontal:2},
+  lbl: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', marginRight: 4 },
+  lblG: { backgroundColor: '#00D68F' },
+  lblR: { backgroundColor: '#FF6B35' },
+  lblT: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
   
-  td: {height:34,flexDirection:'row',alignItems:'center',justifyContent:'center'},
+  cell: { height: 34, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
   
-  str: {position:'absolute',left:0,right:0,backgroundColor:'#A08060'},
+  fretL: { width: 2, height: 30, backgroundColor: '#555' },
+  nutL: { width: 4, backgroundColor: '#AAA' },
   
-  note: {width:28,height:28,borderRadius:14,borderWidth:2,alignItems:'center',justifyContent:'center',backgroundColor:'#222',zIndex:2},
-  noteG: {borderColor:'#00D68F'},
-  noteR: {borderColor:'#FF6B35'},
-  noteA: {backgroundColor:'#00D68F'},
+  emptyStr: { flex: 1, backgroundColor: '#A08060' },
   
-  fng: {color:'#FFF',fontSize:13,fontWeight:'bold'},
+  note: { width: 26, height: 26, borderRadius: 13, borderWidth: 2, alignItems: 'center', justifyContent: 'center', backgroundColor: '#222', marginLeft: 4 },
+  noteG: { borderColor: '#00D68F' },
+  noteR: { borderColor: '#FF6B35' },
+  noteGA: { backgroundColor: '#00D68F' },
+  noteRA: { backgroundColor: '#FF6B35' },
+  noteT: { color: '#FFF', fontSize: 12, fontWeight: 'bold' },
   
-  frt: {position:'absolute',right:0,top:2,bottom:2,width:2,backgroundColor:'#555'},
+  fnRow: { flexDirection: 'row', marginTop: 4 },
+  fnCell: { alignItems: 'center' },
+  fnT: { fontSize: 10, color: '#888', fontWeight: '600' },
   
-  nums: {flexDirection:'row',marginTop:4},
-  numC: {alignItems:'center'},
-  numT: {fontSize:11,color:'#888',fontWeight:'600'},
-  
-  leg: {flexDirection:'row',marginTop:8,alignItems:'center',gap:12},
-  legI: {flexDirection:'row',alignItems:'center',gap:4},
-  dot: {width:10,height:10,borderRadius:5},
-  legT: {fontSize:11,color:'#888'},
-  allS: {fontSize:11,color:'#00D68F',fontWeight:'600'},
+  leg: { flexDirection: 'row', marginTop: 10, alignItems: 'center', gap: 12 },
+  legI: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  dot: { width: 10, height: 10, borderRadius: 5 },
+  legT: { fontSize: 11, color: '#888' },
 });
