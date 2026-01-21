@@ -99,13 +99,16 @@ export default function PracticeScreen() {
   useEffect(() => { bpmRef.current = bpm; }, [bpm]);
   useEffect(() => { metronomeVolumeRef.current = metronomeVolume; }, [metronomeVolume]);
 
+  // Show week intro for weeks with pedagogical content on Day 1
+  useEffect(() => {
+    if (weekNum >= 6 && dayNum === 1 && weekIntro) {
+      setShowWeekIntro(true);
+    }
+  }, [weekNum, dayNum, weekIntro]);
+
   useEffect(() => {
     loadLesson();
     checkCompletion();
-    // Show week intro for weeks 6+ on day 1
-    if (weekIntro && dayNum === 1) {
-      setShowWeekIntro(true);
-    }
     return () => stopPlayback();
   }, [weekNum, dayNum]);
 
