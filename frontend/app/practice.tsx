@@ -49,10 +49,12 @@ export default function PracticeScreen() {
   const [weekData, setWeekData] = useState<any>(null);
   const [stage, setStage] = useState<Stage>('aprender');
   const [isCompleted, setIsCompleted] = useState(false);
+  const [showTablature, setShowTablature] = useState(false);
   
   // Playback state
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentBeat, setCurrentBeat] = useState(1);
+  const [currentSubdivision, setCurrentSubdivision] = useState(0); // 0-7 for 8th note subdivisions
   const [currentChordIndex, setCurrentChordIndex] = useState(0);
   const [metronomeVolume, setMetronomeVolume] = useState(0.7);
   
