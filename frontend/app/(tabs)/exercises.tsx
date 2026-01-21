@@ -257,10 +257,29 @@ const styles = StyleSheet.create({
     padding: SPACING.lg,
     paddingBottom: SPACING.md,
   },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   title: {
     fontSize: FONTS.sizes.hero,
     fontWeight: '800',
     color: COLORS.text,
+  },
+  progressBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.success + '20',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.round,
+    gap: SPACING.xs,
+  },
+  progressBadgeText: {
+    fontSize: FONTS.sizes.sm,
+    fontWeight: '700',
+    color: COLORS.success,
   },
   subtitle: {
     fontSize: FONTS.sizes.md,
@@ -332,6 +351,56 @@ const styles = StyleSheet.create({
   listContent: {
     padding: SPACING.lg,
     paddingTop: SPACING.sm,
+  },
+  exerciseItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.backgroundCard,
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    marginBottom: SPACING.sm,
+  },
+  exerciseItemComplete: {
+    borderLeftWidth: 4,
+    borderLeftColor: COLORS.success,
+  },
+  exerciseContent: {
+    flex: 1,
+  },
+  exerciseHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.xs,
+  },
+  exerciseTitle: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: '600',
+    color: COLORS.text,
+    flex: 1,
+    marginRight: SPACING.sm,
+  },
+  exerciseMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  domainBadge: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.sm,
+  },
+  domainBadgeText: {
+    fontSize: FONTS.sizes.xs,
+    fontWeight: '600',
+  },
+  difficultyText: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.textMuted,
+  },
+  tempoText: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.textMuted,
   },
   emptyState: {
     alignItems: 'center',
