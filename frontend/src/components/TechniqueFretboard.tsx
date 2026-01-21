@@ -570,9 +570,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   techniqueBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
   techniqueText: {
     fontSize: 10,
