@@ -483,11 +483,16 @@ export const TechniqueFretboard: React.FC<Props> = ({
             </View>
           )}
           {currentNote.technique && (
-            <View style={[styles.techniqueBadge, { backgroundColor: getTechniqueColor(currentNote.technique) + '40' }]}>
+            <TouchableOpacity 
+              style={[styles.techniqueBadge, { backgroundColor: getTechniqueColor(currentNote.technique) + '40' }]}
+              onPress={() => handleTechniqueTap(currentNote.technique!)}
+            >
+              {getSoloTechniqueIcon(currentNote.technique, { size: 14, color: getTechniqueColor(currentNote.technique) })}
               <Text style={[styles.techniqueText, { color: getTechniqueColor(currentNote.technique) }]}>
                 {currentNote.technique.toUpperCase()}
               </Text>
-            </View>
+              <Ionicons name="help-circle" size={12} color={getTechniqueColor(currentNote.technique)} />
+            </TouchableOpacity>
           )}
         </View>
       )}
