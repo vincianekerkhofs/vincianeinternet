@@ -96,7 +96,7 @@ export const ScaleFretboard: React.FC<Props> = ({
     scale.notes.some(n => n.s === strIdx && n.root);
 
   // Render one cell
-  const renderCell = (strIdx: number, fretOffset: number) => {
+  const renderCell = (strIdx: number, fretOffset: number, cellWidth: number) => {
     const noteKey = `${strIdx}-${fretOffset}`;
     const noteData = noteMap.get(noteKey);
     const hasNote = !!noteData;
@@ -105,7 +105,7 @@ export const ScaleFretboard: React.FC<Props> = ({
     const stringThickness = 1.5 + strIdx * 0.4;
 
     return (
-      <View key={`cell-${strIdx}-${fretOffset}`} style={styles.cell}>
+      <View key={`cell-${strIdx}-${fretOffset}`} style={[styles.cell, { width: cellWidth }]}>
         {/* String line through the cell */}
         <View style={[styles.stringLine, { height: stringThickness }]} />
         
@@ -130,14 +130,15 @@ export const ScaleFretboard: React.FC<Props> = ({
   };
 
   // Render one string row
-  const renderStringRow = (strIdx: number) => {
+  const renderStringRow = (strIdx: number, rowWidth: number) => {
+    const cellWidth = rowWidth / NUM_FRETS;
     const cells = [];
     for (let f = 0; f < NUM_FRETS; f++) {
-      cells.push(renderCell(strIdx, f));
+      cells.push(renderCell(strIdx, f, cellWidth));
     }
     
     return (
-      <View key={`row-${strIdx}`} style={styles.stringRow}>
+      <View key={`row-${strIdx}`} style={[styles.stringRow, { width: rowWidth }]}>
         {cells}
       </View>
     );
