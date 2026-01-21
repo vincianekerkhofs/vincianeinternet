@@ -54,6 +54,9 @@ export default function PracticeScreen() {
   const [currentChordIndex, setCurrentChordIndex] = useState(0);
   const [metronomeVolume, setMetronomeVolume] = useState(0.7);
   
+  const { bpm, setBpm } = useStore();
+  const lessonId = `week${weekNum}-day${dayNum}`;
+  
   // Audio context refs
   const audioContextRef = useRef<AudioContext | null>(null);
   const schedulerIdRef = useRef<number | null>(null);
@@ -68,9 +71,6 @@ export default function PracticeScreen() {
   const currentBeatRef = useRef(1);
   const currentChordIndexRef = useRef(0);
   const barCountRef = useRef(0); // Track which bar we're on
-  
-  const { bpm, setBpm } = useStore();
-  const lessonId = `week${weekNum}-day${dayNum}`;
 
   // Parse chord progression
   const parseProgression = (prog: string): string[] => {
