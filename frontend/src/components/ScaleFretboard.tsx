@@ -208,7 +208,7 @@ export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
   const renderFretNumbers = () => (
     <View style={styles.fretNumRow}>
       {Array.from({ length: numFrets }, (_, i) => (
-        <Text key={`fn-${i}`} style={styles.fretNum}>{startFret + i + 1}</Text>
+        <Text key={`fn-${i}`} style={styles.fretNum}>{startFret + i}</Text>
       ))}
     </View>
   );
