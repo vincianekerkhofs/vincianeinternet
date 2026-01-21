@@ -229,7 +229,7 @@ export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
     <View style={styles.container}>
       {renderStringIndicators()}
       
-      <View style={styles.svgContainer}>
+      <View style={[styles.svgContainer, {borderWidth: 2, borderColor: 'red'}]}>
         <Svg width={width} height={svgHeight}>
           {/* Background */}
           <Rect x={0} y={0} width={width} height={svgHeight} fill="#1E1810" />
@@ -250,7 +250,7 @@ export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
       
       {renderFretNumbers()}
       
-      <Text style={styles.startFret}>Trastes {startFret}-{endFret}</Text>
+      <Text style={styles.startFret}>Trastes {startFret}-{endFret} | SVG:{svgHeight} | Spacing:{stringSpacing.toFixed(0)}</Text>
       
       <View style={styles.legend}>
         <View style={styles.legendItem}>
