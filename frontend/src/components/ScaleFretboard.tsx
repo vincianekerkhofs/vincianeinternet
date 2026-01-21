@@ -9,7 +9,6 @@ interface Props {
   isActive?: boolean;
 }
 
-// Scale patterns: s = string index (0=high e, 5=low E), f = fret offset from startFret
 const SCALES: Record<string, { 
   name: string; 
   start: number; 
@@ -61,10 +60,7 @@ const THEME = {
   NOTE: '#00D68F',
   ROOT: '#FF6B35',
   BG: '#1E1810',
-  FRET: '#5A5A5A',
-  NUT: '#CCC',
   STRING: '#B8977E',
-  CELL_BG: 'transparent',
 };
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -85,150 +81,138 @@ export const ScaleFretboard: React.FC<Props> = ({
     );
   }
 
-  // Build lookup: "stringIndex-fretOffset" -> note data
+  // Build lookup
   const noteMap = new Map<string, { finger: number; root?: boolean }>();
   scale.notes.forEach(note => {
     noteMap.set(`${note.s}-${note.f}`, { finger: note.finger, root: note.root });
   });
 
-  // Check if string has any root note
   const stringHasRoot = (strIdx: number) => 
     scale.notes.some(n => n.s === strIdx && n.root);
 
-  // Render one cell
-  const renderCell = (strIdx: number, fretOffset: number, cellWidth: number) => {
-    const noteKey = `${strIdx}-${fretOffset}`;
-    const noteData = noteMap.get(noteKey);
-    const hasNote = !!noteData;
-    const isRoot = noteData?.root === true;
-    const finger = noteData?.finger;
-    const stringThickness = 1.5 + strIdx * 0.4;
-
-    return (
-      <View key={`cell-${strIdx}-${fretOffset}`} style={[styles.cell, { width: cellWidth }]}>
-        {/* String line through the cell */}
-        <View style={[styles.stringLine, { height: stringThickness }]} />
-        
-        {/* Note indicator (if present) */}
-        {hasNote && (
-          <View 
-            style={[
-              styles.noteCircle,
-              {
-                backgroundColor: isRoot 
-                  ? THEME.ROOT 
-                  : (isActive ? THEME.NOTE : '#2A2A2A'),
-                borderColor: isRoot ? THEME.ROOT : THEME.NOTE,
-              }
-            ]}
-          >
-            <Text style={styles.fingerText}>{finger}</Text>
-          </View>
-        )}
-      </View>
-    );
-  };
-
-  // Render one string row
-  const renderStringRow = (strIdx: number, rowWidth: number) => {
-    const cellWidth = rowWidth / NUM_FRETS;
-    const cells = [];
-    for (let f = 0; f < NUM_FRETS; f++) {
-      cells.push(renderCell(strIdx, f, cellWidth));
-    }
-    
-    return (
-      <View key={`row-${strIdx}`} style={[styles.stringRow, { width: rowWidth }]}>
-        {cells}
-      </View>
-    );
-  };
-
-  // Render all string rows
-  const renderFretboard = () => {
-    const boardWidth = width - 20; // Account for padding
-    const rows = [];
-    for (let s = 0; s < NUM_STRINGS; s++) {
-      rows.push(renderStringRow(s, boardWidth));
-    }
-    return (
-      <View style={[styles.fretboard, { backgroundColor: THEME.BG, width: boardWidth }]}>
-        {/* String rows */}
-        <View style={[styles.stringsContainer, { width: boardWidth }]}>
-          {rows}
-        </View>
-      </View>
-    );
-  };
-
-  // Top indicators
-  const renderTopIndicators = () => {
-    const indicatorWidth = (width - 40) / NUM_STRINGS;
-    return (
-      <View style={styles.indicatorRow}>
-        {STRING_NAMES.map((name, idx) => {
-          const isRoot = stringHasRoot(idx);
-          return (
-            <View 
-              key={`ind-${idx}`}
-              style={[
-                styles.indicator,
-                { 
-                  width: Math.min(indicatorWidth - 4, 28),
-                  backgroundColor: isRoot ? THEME.ROOT : THEME.NOTE 
-                }
-              ]}
-            >
-              <Text style={styles.indicatorText}>{name}</Text>
-            </View>
-          );
-        })}
-      </View>
-    );
-  };
-
-  // Fret numbers
-  const renderFretNumbers = () => (
-    <View style={styles.fretNumberRow}>
-      {Array.from({ length: NUM_FRETS }, (_, i) => (
-        <View key={`fn-${i}`} style={styles.fretNumberCell}>
-          <Text style={styles.fretNumberText}>{scale.start + i}</Text>
-        </View>
-      ))}
-    </View>
-  );
-
-  // Legend
-  const renderLegend = () => (
-    <View style={styles.legend}>
-      <View style={styles.legendItem}>
-        <View style={[styles.legendDot, { backgroundColor: THEME.ROOT }]} />
-        <Text style={styles.legendLabel}>Raíz</Text>
-      </View>
-      <View style={styles.legendItem}>
-        <View style={[styles.legendDot, { backgroundColor: THEME.NOTE }]} />
-        <Text style={styles.legendLabel}>Nota</Text>
-      </View>
-      <Text style={styles.legendFingerHint}>Números = Dedos (1-4)</Text>
-    </View>
-  );
+  // Calculate cell size
+  const boardWidth = width - 20;
+  const cellWidth = boardWidth / NUM_FRETS;
+  const cellHeight = 32;
 
   return (
-    <View style={[styles.container, { width }]}>
-      {renderTopIndicators()}
-      {renderFretboard()}
-      {renderFretNumbers()}
-      <Text style={styles.posText}>Trastes {scale.start}–{scale.start + NUM_FRETS - 1}</Text>
-      {renderLegend()}
+    <View style={{ width, alignItems: 'center' }}>
+      {/* String indicators */}
+      <View style={{ flexDirection: 'row', marginBottom: 8, justifyContent: 'space-around', width: boardWidth }}>
+        {STRING_NAMES.map((name, idx) => (
+          <View 
+            key={`ind-${idx}`}
+            style={{
+              width: 26,
+              height: 26,
+              borderRadius: 13,
+              backgroundColor: stringHasRoot(idx) ? THEME.ROOT : THEME.NOTE,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text style={{ color: '#FFF', fontSize: 11, fontWeight: 'bold' }}>{name}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Fretboard */}
+      <View style={{ width: boardWidth, backgroundColor: THEME.BG, borderRadius: 6, padding: 4 }}>
+        {/* 6 string rows */}
+        {STRING_NAMES.map((_, strIdx) => (
+          <View 
+            key={`str-${strIdx}`}
+            style={{ 
+              flexDirection: 'row', 
+              width: boardWidth, 
+              height: cellHeight,
+            }}
+          >
+            {/* 4 fret cells */}
+            {Array.from({ length: NUM_FRETS }).map((_, fretIdx) => {
+              const noteKey = `${strIdx}-${fretIdx}`;
+              const noteData = noteMap.get(noteKey);
+              const hasNote = !!noteData;
+              const isRoot = noteData?.root === true;
+              const finger = noteData?.finger;
+              const stringThickness = 1.5 + strIdx * 0.4;
+
+              return (
+                <View 
+                  key={`cell-${strIdx}-${fretIdx}`}
+                  style={{
+                    width: cellWidth,
+                    height: cellHeight,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {/* String line */}
+                  <View 
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      right: 0,
+                      height: stringThickness,
+                      backgroundColor: THEME.STRING,
+                    }}
+                  />
+                  
+                  {/* Note circle */}
+                  {hasNote && (
+                    <View 
+                      style={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: 14,
+                        backgroundColor: isRoot ? THEME.ROOT : (isActive ? THEME.NOTE : '#2A2A2A'),
+                        borderWidth: 2,
+                        borderColor: isRoot ? THEME.ROOT : THEME.NOTE,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Text style={{ color: '#FFF', fontSize: 14, fontWeight: 'bold' }}>{finger}</Text>
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+        ))}
+      </View>
+
+      {/* Fret numbers */}
+      <View style={{ flexDirection: 'row', width: boardWidth, marginTop: 4 }}>
+        {Array.from({ length: NUM_FRETS }).map((_, i) => (
+          <View key={`fn-${i}`} style={{ width: cellWidth, alignItems: 'center' }}>
+            <Text style={{ fontSize: 11, color: '#888', fontWeight: '600' }}>{scale.start + i}</Text>
+          </View>
+        ))}
+      </View>
+
+      {/* Position text */}
+      <Text style={{ marginTop: 6, fontSize: 12, color: COLORS.primary, fontWeight: '600' }}>
+        Trastes {scale.start}–{scale.start + NUM_FRETS - 1}
+      </Text>
+
+      {/* Legend */}
+      <View style={{ flexDirection: 'row', gap: 14, marginTop: 10 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+          <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: THEME.ROOT }} />
+          <Text style={{ fontSize: 11, color: '#888' }}>Raíz</Text>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+          <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: THEME.NOTE }} />
+          <Text style={{ fontSize: 11, color: '#888' }}>Nota</Text>
+        </View>
+        <Text style={{ fontSize: 11, color: COLORS.primary, fontWeight: '500' }}>1-4 = Dedos</Text>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
   errorBox: {
     padding: 20,
     alignItems: 'center',
@@ -236,142 +220,5 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#FF4757',
     fontSize: 14,
-  },
-  
-  // Indicators
-  indicatorRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    marginBottom: 10,
-    paddingHorizontal: 4,
-  },
-  indicator: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  indicatorText: {
-    color: '#FFF',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  
-  // Fretboard
-  fretboard: {
-    width: '100%',
-    borderRadius: 6,
-    overflow: 'hidden',
-    paddingVertical: 8,
-  },
-  fretWiresOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 1,
-  },
-  fretWire: {
-    width: 2,
-    backgroundColor: '#5A5A5A',
-  },
-  nutWire: {
-    width: 5,
-    backgroundColor: '#CCC',
-  },
-  stringsContainer: {
-    width: '100%',
-  },
-  
-  // String row
-  stringRow: {
-    flexDirection: 'row',
-    width: '100%',
-    height: 32,
-  },
-  
-  // Cell
-  cell: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  stringLine: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    backgroundColor: '#B8977E',
-  },
-  noteCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 5,
-  },
-  fingerText: {
-    color: '#FFF',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  
-  // Fret numbers
-  fretNumberRow: {
-    flexDirection: 'row',
-    width: '100%',
-    marginTop: 4,
-  },
-  fretNumberCell: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  fretNumberText: {
-    fontSize: 11,
-    color: '#888',
-    fontWeight: '600',
-  },
-  
-  // Position text
-  posText: {
-    marginTop: 6,
-    fontSize: 12,
-    color: COLORS.primary,
-    fontWeight: '600',
-  },
-  
-  // Legend
-  legend: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 14,
-    marginTop: 10,
-    flexWrap: 'wrap',
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  legendDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  legendLabel: {
-    fontSize: 11,
-    color: '#888',
-  },
-  legendFingerHint: {
-    fontSize: 11,
-    color: COLORS.primary,
-    fontWeight: '500',
   },
 });
