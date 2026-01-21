@@ -60,10 +60,9 @@ export default function PracticeScreen() {
     onBeatChange: (beat) => {
       // Update fretboard visualization when beat changes
       if (exerciseNotes.length > 0) {
-        const { allNotes, currentNotes, previewNotes } = tabNotesToFretboard(exerciseNotes, beat);
+        const { allNotes, currentNotes } = tabNotesToFretboard(exerciseNotes, beat);
         setAllFretboardNotes(allNotes);
         setCurrentFretboardNotes(currentNotes);
-        setPreviewFretboardNotes(previewNotes);
       }
     },
   });
