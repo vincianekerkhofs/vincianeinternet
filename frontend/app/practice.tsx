@@ -187,6 +187,7 @@ export default function PracticeScreen() {
   }, []);
 
   // Metronome scheduler - uses refs to avoid stale closures
+  // Now tracks 8th note subdivisions (0-7 per bar)
   const runScheduler = useCallback(() => {
     if (!isPlayingRef.current) return;
     
@@ -195,25 +196,32 @@ export default function PracticeScreen() {
     
     const now = ctx.currentTime;
     const currentBpm = bpmRef.current;
-    const secondsPerBeat = 60.0 / currentBpm;
+    // 8th note subdivision = half a beat
+    const secondsPerSubdivision = 30.0 / currentBpm;
     const scheduleAhead = 0.1;
     const lookahead = 25;
     
-    const timeSinceLastBeat = now - lastBeatTimeRef.current;
+    const timeSinceLast = now - lastBeatTimeRef.current;
     
-    if (timeSinceLastBeat >= secondsPerBeat * 0.95) {
-      // Schedule next beat
-      const nextBeatTime = lastBeatTimeRef.current + secondsPerBeat;
+    if (timeSinceLast >= secondsPerSubdivision * 0.95) {
+      const nextTime = lastBeatTimeRef.current + secondsPerSubdivision;
       
-      if (nextBeatTime < now + scheduleAhead) {
-        // Update beat counter
-        const prevBeat = currentBeatRef.current;
-        const newBeat = prevBeat >= 4 ? 1 : prevBeat + 1;
-        currentBeatRef.current = newBeat;
-        setCurrentBeat(newBeat);
+      if (nextTime < now + scheduleAhead) {
+        // Update subdivision counter (0-7)
+        const prevSub = currentSubdivisionRef.current;
+        const newSub = (prevSub + 1) % 8;
+        currentSubdivisionRef.current = newSub;
+        setCurrentSubdivision(newSub);
         
-        // On beat 1 (after completing a bar), advance chord in APLICAR mode
-        if (newBeat === 1 && prevBeat === 4 && stageRef.current === 'aplicar') {
+        // Update beat counter (1-4) - beat changes on even subdivisions
+        const newBeat = Math.floor(newSub / 2) + 1;
+        if (newBeat !== currentBeatRef.current) {
+          currentBeatRef.current = newBeat;
+          setCurrentBeat(newBeat);
+        }
+        
+        // On subdivision 0 (start of new bar), advance chord in APLICAR mode
+        if (newSub === 0 && prevSub === 7 && stageRef.current === 'aplicar') {
           const chords = progressionChordsRef.current;
           if (chords.length > 0) {
             barCountRef.current += 1;
@@ -223,10 +231,14 @@ export default function PracticeScreen() {
           }
         }
         
-        // Play click - accent on beat 1
-        playClick(nextBeatTime, newBeat === 1);
+        // Play click - accent on subdivision 0 (beat 1), quieter on even subdivisions (downbeats)
+        const isDownbeat = newSub % 2 === 0;
+        const isAccent = newSub === 0;
+        if (isDownbeat) {
+          playClick(nextTime, isAccent);
+        }
         
-        lastBeatTimeRef.current = nextBeatTime;
+        lastBeatTimeRef.current = nextTime;
       }
     }
     
