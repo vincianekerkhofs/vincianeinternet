@@ -216,7 +216,7 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
     return markers;
   };
 
-  // Render note markers
+  // Render note markers - with clear string indicators
   const renderNotes = () => {
     const notes = [];
     
@@ -226,26 +226,29 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
       const y = paddingTop + stringIndex * stringSpacing;
       const state = getStringState(stringIndex);
       
-      // Muted string - big red X
+      // LEFT SIDE INDICATOR - always show for every string
+      const indicatorX = paddingLeft - 22;
+      
+      // Muted string - RED X indicator
       if (fret === null) {
         notes.push(
-          <G key={`mute-${stringIndex}`}>
+          <G key={`indicator-${stringIndex}`}>
+            {/* Red background */}
             <Circle
-              cx={paddingLeft - 22}
+              cx={indicatorX}
               cy={y}
-              r={12}
-              fill={STRING_COLORS.MUTED + '30'}
-              stroke={STRING_COLORS.MUTED}
-              strokeWidth={2}
-            />
-            <SvgText
-              x={paddingLeft - 22}
-              y={y + 1}
+              r={14}
               fill={STRING_COLORS.MUTED}
-              fontSize={16}
+              opacity={0.9}
+            />
+            {/* X symbol */}
+            <SvgText
+              x={indicatorX}
+              y={y + 5}
+              fill="#FFFFFF"
+              fontSize={18}
               fontWeight="bold"
               textAnchor="middle"
-              alignmentBaseline="middle"
             >
               ✕
             </SvgText>
@@ -256,23 +259,51 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
       
       const fretIndex = fret - startFret;
       
-      // Open string (fret 0)
+      // Open string (fret 0) - GREEN O indicator
       if (fret === 0) {
         notes.push(
-          <G key={`open-${stringIndex}`}>
+          <G key={`indicator-${stringIndex}`}>
+            {/* Green circle indicator */}
             <Circle
-              cx={paddingLeft - 22}
+              cx={indicatorX}
               cy={y}
-              r={12}
-              fill={STRING_COLORS.SOUND + '30'}
+              r={14}
+              fill="transparent"
               stroke={STRING_COLORS.SOUND}
-              strokeWidth={2}
+              strokeWidth={3}
             />
+            {/* O for open */}
             <SvgText
-              x={paddingLeft - 22}
+              x={indicatorX}
               y={y + 5}
               fill={STRING_COLORS.SOUND}
-              fontSize={12}
+              fontSize={14}
+              fontWeight="bold"
+              textAnchor="middle"
+            >
+              O
+            </SvgText>
+          </G>
+        );
+      } else {
+        // Fretted note - GREEN filled indicator + note on fretboard
+        const x = paddingLeft + (fretIndex - 0.5) * fretWidth;
+        
+        // Left indicator - filled green circle
+        notes.push(
+          <G key={`indicator-${stringIndex}`}>
+            <Circle
+              cx={indicatorX}
+              cy={y}
+              r={14}
+              fill={STRING_COLORS.SOUND}
+              opacity={0.9}
+            />
+            <SvgText
+              x={indicatorX}
+              y={y + 5}
+              fill="#FFFFFF"
+              fontSize={11}
               fontWeight="bold"
               textAnchor="middle"
             >
@@ -280,10 +311,8 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
             </SvgText>
           </G>
         );
-      } else {
-        // Fretted note
-        const x = paddingLeft + (fretIndex - 0.5) * fretWidth;
         
+        // Note on fretboard
         notes.push(
           <G key={`note-${stringIndex}`}>
             {/* Glow effect when active */}
