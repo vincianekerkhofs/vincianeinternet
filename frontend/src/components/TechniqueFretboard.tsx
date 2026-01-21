@@ -65,9 +65,11 @@ export const TechniqueFretboard: React.FC<Props> = ({
   numFrets = 5,
   height = 280,
   showAllNotes = true,
+  showNoteNames = true,
 }) => {
   const [measuredWidth, setMeasuredWidth] = useState(0);
   const [pulseAnim] = useState(new Animated.Value(1));
+  const [showNoteModal, setShowNoteModal] = useState(false);
 
   // Pulse animation for active note
   useEffect(() => {
