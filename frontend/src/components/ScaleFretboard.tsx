@@ -275,14 +275,14 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
+    width: '100%',
   },
   cell: {
     flex: 1,
     height: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#F00',
+    minWidth: 0,
   },
   string: {
     position: 'absolute',
