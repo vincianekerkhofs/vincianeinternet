@@ -143,6 +143,7 @@ const s = StyleSheet.create({
     borderRadius: 6, 
     padding: 8,
     paddingRight: 12,
+    width: '100%',
   },
   
   row: { 
