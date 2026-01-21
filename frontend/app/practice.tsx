@@ -348,7 +348,11 @@ export default function PracticeScreen() {
 
             <View style={styles.fretboardContainer}>
               <Text style={styles.sectionLabel}>{CHORD_SHAPES[currentShape]?.name || currentShape}</Text>
-              <ChordFretboard shape={currentShape} width={width - SPACING.lg * 2} height={260} />
+              {SCALE_SHAPES.includes(currentShape) ? (
+                <ScaleFretboard scaleName={currentShape} width={width - SPACING.lg * 2} height={280} />
+              ) : (
+                <ChordFretboard shape={currentShape} width={width - SPACING.lg * 2} height={260} />
+              )}
             </View>
 
             {lesson.learn.shapes.length > 1 && (
