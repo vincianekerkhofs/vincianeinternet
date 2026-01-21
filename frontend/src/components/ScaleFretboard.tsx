@@ -187,8 +187,8 @@ export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
   // Render ALL scale notes
   const renderScaleNotes = () => {
     return scaleData.notes.map((note, idx) => {
-      const fretIndex = note.fret - startFret;
-      if (fretIndex < 0 || fretIndex > numFrets) return null;
+      const fretIndex = note.fret - startFret + 1; // +1 because fret 5 is after the nut line
+      if (fretIndex < 1 || fretIndex > numFrets) return null;
       
       const x = paddingLeft + (fretIndex - 0.5) * fretWidth;
       const y = paddingTop + note.string * stringSpacing;
