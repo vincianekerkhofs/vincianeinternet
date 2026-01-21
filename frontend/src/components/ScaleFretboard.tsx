@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   },
   indText: { color: '#FFF', fontSize: 11, fontWeight: 'bold' },
   
-  svgContainer: { position: 'relative' },
+  svgContainer: { position: 'relative', overflow: 'visible' },
   
   fingerOverlay: {
     position: 'absolute', width: 10, height: 14,
