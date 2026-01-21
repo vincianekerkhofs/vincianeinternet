@@ -535,6 +535,13 @@ export default function PracticeScreen() {
               </View>
             </View>
 
+            {/* Strum Pattern Visualizer */}
+            <StrumVisualizer 
+              pattern={getStrumPatternByStyle(lesson.apply.style) || STRUM_PATTERNS.pop_basic}
+              currentSubdivision={currentSubdivision}
+              isPlaying={isPlaying}
+            />
+
             {/* Dynamic Fretboard - updates with progression */}
             <View style={styles.fretboardContainer}>
               <Text style={styles.sectionLabel}>
