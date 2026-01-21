@@ -16,7 +16,7 @@ interface ChordFretboardProps {
 const STRING_COLORS = {
   SOUND: '#22C55E',      // GREEN - must sound
   MUTED: '#EF4444',      // RED - must NOT sound
-  UNUSED: '#4A4A4A',     // GREY - not used
+  UNUSED: '#6B6B6B',     // GREY - not used
 };
 
 /**
@@ -26,13 +26,6 @@ const STRING_COLORS = {
  * - GREEN = must sound (play this string)
  * - RED = must NOT sound (mute this string)
  * - GREY = not used in this exercise
- * 
- * Features:
- * - Clear finger numbers (1-4) on fretted notes
- * - Fret numbers below fretboard
- * - String names on left
- * - Open strings marked with O
- * - Muted strings marked with X in RED
  */
 export const ChordFretboard: React.FC<ChordFretboardProps> = ({
   shape,
@@ -46,9 +39,9 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
     return null;
   }
 
-  const paddingTop = 35;
-  const paddingBottom = 40;
-  const paddingLeft = 55;  // Increased for string indicators
+  const paddingTop = 30;
+  const paddingBottom = 35;
+  const paddingLeft = 50;
   const paddingRight = 15;
   
   const fretboardWidth = width - paddingLeft - paddingRight;
@@ -60,24 +53,80 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
   const stringNames = ['e', 'B', 'G', 'D', 'A', 'E'];
   const startFret = shapeData.startFret || 0;
 
-  // Determine string state: 'sound', 'muted', or 'unused'
+  // Determine string state
   const getStringState = (stringIndex: number): 'sound' | 'muted' | 'unused' => {
     const fret = shapeData.frets[stringIndex];
-    if (fret === null) return 'muted';  // Explicitly muted (X)
-    return 'sound';  // Open (0) or fretted = should sound
+    if (fret === null) return 'muted';
+    return 'sound';
   };
 
-  // Get string color based on state
-  const getStringColor = (stringIndex: number): string => {
-    const state = getStringState(stringIndex);
-    switch (state) {
-      case 'sound': return STRING_COLORS.SOUND;
-      case 'muted': return STRING_COLORS.MUTED;
-      default: return STRING_COLORS.UNUSED;
+  // Render LEFT SIDE string indicators - RED X or GREEN circle
+  const renderStringIndicators = () => {
+    const indicators = [];
+    const indicatorX = 22; // Center of indicator column
+    
+    for (let i = 0; i < 6; i++) {
+      const fret = shapeData.frets[i];
+      const y = paddingTop + i * stringSpacing;
+      const state = getStringState(i);
+      
+      if (fret === null) {
+        // MUTED - RED X
+        indicators.push(
+          <G key={`ind-${i}`}>
+            <Circle cx={indicatorX} cy={y} r={15} fill={STRING_COLORS.MUTED} />
+            <SvgText
+              x={indicatorX}
+              y={y + 6}
+              fill="#FFFFFF"
+              fontSize={20}
+              fontWeight="bold"
+              textAnchor="middle"
+            >
+              ✕
+            </SvgText>
+          </G>
+        );
+      } else if (fret === 0) {
+        // OPEN STRING - GREEN circle with O
+        indicators.push(
+          <G key={`ind-${i}`}>
+            <Circle cx={indicatorX} cy={y} r={15} fill="none" stroke={STRING_COLORS.SOUND} strokeWidth={3} />
+            <SvgText
+              x={indicatorX}
+              y={y + 6}
+              fill={STRING_COLORS.SOUND}
+              fontSize={16}
+              fontWeight="bold"
+              textAnchor="middle"
+            >
+              O
+            </SvgText>
+          </G>
+        );
+      } else {
+        // FRETTED - GREEN filled circle with string name
+        indicators.push(
+          <G key={`ind-${i}`}>
+            <Circle cx={indicatorX} cy={y} r={15} fill={STRING_COLORS.SOUND} />
+            <SvgText
+              x={indicatorX}
+              y={y + 5}
+              fill="#FFFFFF"
+              fontSize={12}
+              fontWeight="bold"
+              textAnchor="middle"
+            >
+              {stringNames[i]}
+            </SvgText>
+          </G>
+        );
+      }
     }
+    return indicators;
   };
 
-  // Render strings with color coding - CLEAR VISUAL DISTINCTION
+  // Render strings with color coding
   const renderStrings = () => {
     return stringNames.map((name, i) => {
       const y = paddingTop + i * stringSpacing;
@@ -85,16 +134,14 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
       const state = getStringState(i);
       const isActiveString = isActive && state === 'sound';
       
-      // String line color - more visible
       const lineColor = state === 'muted' 
-        ? STRING_COLORS.MUTED  // RED for muted
+        ? STRING_COLORS.MUTED 
         : isActiveString 
-          ? STRING_COLORS.SOUND  // GREEN when playing
-          : '#9D8B78';  // Warm string color when idle
+          ? STRING_COLORS.SOUND 
+          : '#9D8B78';
       
       return (
         <G key={`string-${i}`}>
-          {/* String glow effect when active */}
           {isActiveString && (
             <Line
               x1={paddingLeft}
@@ -106,7 +153,6 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
               opacity={0.35}
             />
           )}
-          {/* Muted string glow - show it's wrong to play */}
           {state === 'muted' && (
             <Line
               x1={paddingLeft}
@@ -114,11 +160,10 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
               x2={width - paddingRight}
               y2={y}
               stroke={STRING_COLORS.MUTED}
-              strokeWidth={thickness + 6}
-              opacity={0.2}
+              strokeWidth={thickness + 5}
+              opacity={0.25}
             />
           )}
-          {/* Main string line */}
           <Line
             x1={paddingLeft}
             y1={y}
@@ -151,17 +196,16 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
         />
       );
       
-      // Fret number below
       if (i > 0) {
         const fretNum = startFret + i;
         frets.push(
           <SvgText
             key={`fret-num-${i}`}
             x={x - fretWidth / 2}
-            y={height - 10}
+            y={height - 8}
             fill={COLORS.textMuted}
-            fontSize={13}
-            fontWeight="700"
+            fontSize={12}
+            fontWeight="600"
             textAnchor="middle"
           >
             {fretNum}
@@ -170,13 +214,12 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
       }
     }
     
-    // Position marker if not starting at nut
     if (startFret > 0) {
       frets.push(
         <SvgText
           key="position"
-          x={paddingLeft - 22}
-          y={height - 10}
+          x={paddingLeft - 15}
+          y={height - 8}
           fill={COLORS.primary}
           fontSize={12}
           fontWeight="bold"
@@ -216,134 +259,48 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
     return markers;
   };
 
-  // Render note markers - with clear string indicators
-  const renderNotes = () => {
+  // Render finger dots on fretboard
+  const renderFingerDots = () => {
     const notes = [];
     
     for (let stringIndex = 0; stringIndex < 6; stringIndex++) {
       const fret = shapeData.frets[stringIndex];
       const finger = shapeData.fingers[stringIndex];
       const y = paddingTop + stringIndex * stringSpacing;
-      const state = getStringState(stringIndex);
       
-      // LEFT SIDE INDICATOR - always show for every string
-      const indicatorX = paddingLeft - 30;  // Position for indicator circles
-      
-      // Muted string - RED X indicator
-      if (fret === null) {
-        notes.push(
-          <G key={`indicator-${stringIndex}`}>
-            {/* Red background */}
-            <Circle
-              cx={indicatorX}
-              cy={y}
-              r={14}
-              fill={STRING_COLORS.MUTED}
-              opacity={0.9}
-            />
-            {/* X symbol */}
-            <SvgText
-              x={indicatorX}
-              y={y + 5}
-              fill="#FFFFFF"
-              fontSize={18}
-              fontWeight="bold"
-              textAnchor="middle"
-            >
-              ✕
-            </SvgText>
-          </G>
-        );
-        continue;
-      }
+      // Skip open and muted strings - they don't have dots on fretboard
+      if (fret === null || fret === 0) continue;
       
       const fretIndex = fret - startFret;
+      const x = paddingLeft + (fretIndex - 0.5) * fretWidth;
       
-      // Open string (fret 0) - GREEN O indicator
-      if (fret === 0) {
-        notes.push(
-          <G key={`indicator-${stringIndex}`}>
-            {/* Green circle indicator */}
-            <Circle
-              cx={indicatorX}
-              cy={y}
-              r={14}
-              fill="transparent"
-              stroke={STRING_COLORS.SOUND}
-              strokeWidth={3}
-            />
-            {/* O for open */}
+      notes.push(
+        <G key={`note-${stringIndex}`}>
+          {isActive && (
+            <Circle cx={x} cy={y} r={22} fill={STRING_COLORS.SOUND} opacity={0.25} />
+          )}
+          <Circle
+            cx={x}
+            cy={y}
+            r={17}
+            fill={isActive ? STRING_COLORS.SOUND : '#2A2A2A'}
+            stroke={STRING_COLORS.SOUND}
+            strokeWidth={2.5}
+          />
+          {finger !== null && finger !== 0 && (
             <SvgText
-              x={indicatorX}
-              y={y + 5}
-              fill={STRING_COLORS.SOUND}
-              fontSize={14}
-              fontWeight="bold"
-              textAnchor="middle"
-            >
-              O
-            </SvgText>
-          </G>
-        );
-      } else {
-        // Fretted note - GREEN filled indicator + note on fretboard
-        const x = paddingLeft + (fretIndex - 0.5) * fretWidth;
-        
-        // Left indicator - filled green circle
-        notes.push(
-          <G key={`indicator-${stringIndex}`}>
-            <Circle
-              cx={indicatorX}
-              cy={y}
-              r={14}
-              fill={STRING_COLORS.SOUND}
-              opacity={0.9}
-            />
-            <SvgText
-              x={indicatorX}
-              y={y + 5}
+              x={x}
+              y={y + 6}
               fill="#FFFFFF"
-              fontSize={11}
+              fontSize={16}
               fontWeight="bold"
               textAnchor="middle"
             >
-              {stringNames[stringIndex]}
+              {finger}
             </SvgText>
-          </G>
-        );
-        
-        // Note on fretboard
-        notes.push(
-          <G key={`note-${stringIndex}`}>
-            {/* Glow effect when active */}
-            {isActive && (
-              <Circle cx={x} cy={y} r={22} fill={STRING_COLORS.SOUND} opacity={0.25} />
-            )}
-            {/* Note circle */}
-            <Circle
-              cx={x}
-              cy={y}
-              r={17}
-              fill={isActive ? STRING_COLORS.SOUND : '#2A2A2A'}
-              stroke={STRING_COLORS.SOUND}
-              strokeWidth={2.5}
-            />
-            {/* Finger number */}
-            {finger !== null && finger !== 0 && (
-              <SvgText
-                x={x}
-                y={y + 6}
-                fill="#FFFFFF"
-                fontSize={16}
-                fontWeight="bold"
-                textAnchor="middle"
-              >
-                {finger}
-              </SvgText>
-            )}
-          </G>
-        );
-      }
+          )}
+        </G>
+      );
     }
     
     return notes;
@@ -352,15 +309,6 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
   return (
     <View style={styles.container}>
       <Svg width={width} height={height}>
-        {/* Indicator background area */}
-        <Rect
-          x={0}
-          y={paddingTop - 5}
-          width={paddingLeft - 5}
-          height={fretboardHeight + 10}
-          fill="transparent"
-        />
-        
         {/* Fretboard background */}
         <Rect
           x={paddingLeft}
@@ -374,7 +322,9 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
         {renderFretMarkers()}
         {renderFrets()}
         {renderStrings()}
-        {renderNotes()}
+        {renderFingerDots()}
+        {/* String indicators LAST so they render on top */}
+        {renderStringIndicators()}
       </Svg>
       
       {/* Legend */}
