@@ -280,6 +280,10 @@ export const TechniqueFretboard: React.FC<Props> = ({
       
       const radius = isActive ? 16 : 14;
       
+      // Get note name for display
+      const noteName = getNoteAtFret(note.string, note.fret);
+      const solfegeName = letterToSolfege(noteName);
+      
       dots.push(
         <G key={`note-${i}`} opacity={opacity}>
           {isActive && (
@@ -293,16 +297,16 @@ export const TechniqueFretboard: React.FC<Props> = ({
             stroke={stroke} 
             strokeWidth={2} 
           />
-          {/* Finger number */}
+          {/* Note name or Finger number */}
           <SvgText
             x={pos.x}
             y={pos.y + 4}
             fill="#FFF"
-            fontSize="12"
+            fontSize={showNoteNames ? "10" : "12"}
             fontWeight="bold"
             textAnchor="middle"
           >
-            {note.finger}
+            {showNoteNames ? noteName : note.finger}
           </SvgText>
         </G>
       );
@@ -311,12 +315,40 @@ export const TechniqueFretboard: React.FC<Props> = ({
     return dots;
   };
 
+  // Note Names Info Modal
+  const NoteNamesInfoModal = () => (
+    <Modal visible={showNoteModal} transparent animationType="fade" onRequestClose={() => setShowNoteModal(false)}>
+      <View style={modalStyles.overlay}>
+        <View style={modalStyles.container}>
+          <View style={modalStyles.header}>
+            <Text style={modalStyles.title}>Equivalencia de Notas</Text>
+            <TouchableOpacity onPress={() => setShowNoteModal(false)} style={modalStyles.closeBtn}>
+              <Ionicons name="close" size={24} color={COLORS.text} />
+            </TouchableOpacity>
+          </View>
+          <Text style={modalStyles.subtitle}>Notación Anglosajona ↔ Solfeo Latino</Text>
+          <View style={modalStyles.table}>
+            {NOTE_MAPPING_REFERENCE.slice(0, 7).map((item, idx) => (
+              <View key={idx} style={modalStyles.row}>
+                <Text style={modalStyles.letter}>{item.letter}</Text>
+                <Text style={modalStyles.equals}>=</Text>
+                <Text style={modalStyles.solfege}>{item.solfege}</Text>
+              </View>
+            ))}
+          </View>
+          <Text style={modalStyles.note}># = sostenido (sharp) · b = bemol (flat)</Text>
+          <Text style={modalStyles.example}>Ejemplo: F# = Fa# · Bb = Sib</Text>
+        </View>
+      </View>
+    </Modal>
+  );
+
   // String indicator row
   const renderStringIndicators = () => (
     <View style={styles.indicatorRow}>
-      {STRING_NAMES.map((name, i) => (
+      {STRING_NAMES_DUAL.map((name, i) => (
         <View key={i} style={[styles.indicator, { backgroundColor: COLORS.surfaceLight }]}>
-          <Text style={styles.indicatorText}>{name}</Text>
+          <Text style={styles.indicatorText}>{name.split('/')[0]}</Text>
         </View>
       ))}
     </View>
