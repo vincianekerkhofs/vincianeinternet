@@ -1,6 +1,18 @@
 /**
  * GUITAR GUIDE PRO - MAPEO PROGRAMA ↔ EJERCICIOS
  * Conecta las semanas del curriculum con ejercicios relevantes de la biblioteca
+ * 
+ * Dominios disponibles en la DB:
+ * - "Techniques"
+ * - "Chords & Harmony"
+ * - "Timing & Rhythm"
+ * - "Picking"
+ * - "Strumming & Rhythm Guitar"
+ * - "Scales & Fretboard"
+ * - "Lead / Punteos"
+ * - "Musical Application"
+ * - "Fretting Hand"
+ * - "Improvisation"
  */
 
 // Mapeo de semanas a dominios y tags de ejercicios
@@ -12,220 +24,220 @@ export interface ExerciseMapping {
   difficulty: string[];         // Niveles de dificultad apropiados
 }
 
-// Mapeo por semana
+// Mapeo por semana - usando dominios REALES de la base de datos
 export const WEEK_EXERCISE_MAPPING: Record<number, ExerciseMapping> = {
   // Semana 1: Acordes abiertos básicos
   1: {
-    warmUpDomains: ['Fretting & Chords'],
+    warmUpDomains: ['Fretting Hand', 'Chords & Harmony'],
     warmUpTags: ['finger-strength', 'chord-change'],
-    reinforceDomains: ['Fretting & Chords', 'Strumming & Rhythm'],
+    reinforceDomains: ['Chords & Harmony', 'Strumming & Rhythm Guitar'],
     reinforceTags: ['open-chords', 'beginner'],
     difficulty: ['Fundamentals', 'Beginner']
   },
   
   // Semana 2: Más acordes + ritmo
   2: {
-    warmUpDomains: ['Fretting & Chords'],
+    warmUpDomains: ['Fretting Hand', 'Chords & Harmony'],
     warmUpTags: ['chord-change', 'warm-up'],
-    reinforceDomains: ['Strumming & Rhythm', 'Fretting & Chords'],
+    reinforceDomains: ['Strumming & Rhythm Guitar', 'Chords & Harmony'],
     reinforceTags: ['rhythm', 'strumming'],
     difficulty: ['Fundamentals', 'Beginner']
   },
   
   // Semana 3: Canciones simples
   3: {
-    warmUpDomains: ['Timing & Feel'],
+    warmUpDomains: ['Timing & Rhythm'],
     warmUpTags: ['metronome', 'timing'],
-    reinforceDomains: ['Application & Songs', 'Strumming & Rhythm'],
+    reinforceDomains: ['Musical Application', 'Strumming & Rhythm Guitar'],
     reinforceTags: ['song', 'progression'],
     difficulty: ['Beginner', 'Intermediate']
   },
   
   // Semana 4: Power chords
   4: {
-    warmUpDomains: ['Fretting & Chords', 'Picking Technique'],
+    warmUpDomains: ['Chords & Harmony', 'Picking'],
     warmUpTags: ['power-chord', 'palm-mute'],
-    reinforceDomains: ['Application & Songs'],
+    reinforceDomains: ['Musical Application', 'Techniques'],
     reinforceTags: ['rock', 'power-chord'],
     difficulty: ['Beginner', 'Intermediate']
   },
   
   // Semana 5: Blues acordes 7
   5: {
-    warmUpDomains: ['Fretting & Chords'],
+    warmUpDomains: ['Chords & Harmony'],
     warmUpTags: ['seventh-chord', 'blues'],
-    reinforceDomains: ['Application & Songs', 'Improvisation & Lead'],
+    reinforceDomains: ['Musical Application', 'Improvisation'],
     reinforceTags: ['blues', '12-bar'],
     difficulty: ['Beginner', 'Intermediate']
   },
   
   // Semana 6: Pentatónica menor
   6: {
-    warmUpDomains: ['Scales & Theory', 'Picking Technique'],
+    warmUpDomains: ['Scales & Fretboard', 'Picking'],
     warmUpTags: ['scale', 'alternate-picking'],
-    reinforceDomains: ['Improvisation & Lead', 'Scales & Theory'],
+    reinforceDomains: ['Improvisation', 'Lead / Punteos', 'Scales & Fretboard'],
     reinforceTags: ['pentatonic', 'box-1', 'minor'],
     difficulty: ['Beginner', 'Intermediate']
   },
   
   // Semana 7: Cejillas
   7: {
-    warmUpDomains: ['Fretting & Chords'],
+    warmUpDomains: ['Fretting Hand', 'Chords & Harmony', 'Techniques'],
     warmUpTags: ['barre', 'finger-strength'],
-    reinforceDomains: ['Fretting & Chords', 'Application & Songs'],
+    reinforceDomains: ['Chords & Harmony', 'Musical Application'],
     reinforceTags: ['barre-chord', 'F-shape', 'A-shape'],
-    difficulty: ['Intermediate']
+    difficulty: ['Beginner', 'Intermediate']
   },
   
   // Semana 8: Octavas + Funk
   8: {
-    warmUpDomains: ['Picking Technique', 'Strumming & Rhythm'],
+    warmUpDomains: ['Picking', 'Strumming & Rhythm Guitar'],
     warmUpTags: ['muting', '16th-notes'],
-    reinforceDomains: ['Application & Songs'],
+    reinforceDomains: ['Musical Application', 'Techniques'],
     reinforceTags: ['funk', 'octave', 'groove'],
     difficulty: ['Intermediate']
   },
   
   // Semana 9: Reggae
   9: {
-    warmUpDomains: ['Strumming & Rhythm', 'Timing & Feel'],
+    warmUpDomains: ['Strumming & Rhythm Guitar', 'Timing & Rhythm'],
     warmUpTags: ['offbeat', 'staccato'],
-    reinforceDomains: ['Application & Songs'],
+    reinforceDomains: ['Musical Application'],
     reinforceTags: ['reggae', 'skank'],
     difficulty: ['Intermediate']
   },
   
   // Semana 10: Bossa Nova
   10: {
-    warmUpDomains: ['Fretting & Chords', 'Picking Technique'],
+    warmUpDomains: ['Chords & Harmony', 'Picking'],
     warmUpTags: ['jazz-chord', 'fingerpicking'],
-    reinforceDomains: ['Application & Songs'],
+    reinforceDomains: ['Musical Application'],
     reinforceTags: ['bossa', 'latin', 'jazz'],
     difficulty: ['Intermediate', 'Advanced']
   },
   
   // Semana 11: Metal Palm Mute
   11: {
-    warmUpDomains: ['Picking Technique'],
+    warmUpDomains: ['Picking', 'Techniques'],
     warmUpTags: ['palm-mute', 'alternate-picking'],
-    reinforceDomains: ['Application & Songs'],
+    reinforceDomains: ['Musical Application'],
     reinforceTags: ['metal', 'gallop', 'speed'],
     difficulty: ['Intermediate', 'Advanced']
   },
   
   // Semana 12: Arpegios
   12: {
-    warmUpDomains: ['Picking Technique'],
+    warmUpDomains: ['Picking', 'Techniques'],
     warmUpTags: ['fingerpicking', 'pima'],
-    reinforceDomains: ['Application & Songs', 'Fretting & Chords'],
+    reinforceDomains: ['Musical Application', 'Chords & Harmony'],
     reinforceTags: ['arpeggio', 'ballad'],
     difficulty: ['Intermediate']
   },
   
   // Semana 13: Escala Mayor
   13: {
-    warmUpDomains: ['Scales & Theory'],
+    warmUpDomains: ['Scales & Fretboard'],
     warmUpTags: ['major-scale', 'intervals'],
-    reinforceDomains: ['Improvisation & Lead'],
+    reinforceDomains: ['Improvisation', 'Lead / Punteos'],
     reinforceTags: ['melody', 'major'],
     difficulty: ['Intermediate']
   },
   
   // Semana 14: Modo Dórico
   14: {
-    warmUpDomains: ['Scales & Theory'],
+    warmUpDomains: ['Scales & Fretboard'],
     warmUpTags: ['mode', 'dorian'],
-    reinforceDomains: ['Improvisation & Lead', 'Application & Songs'],
+    reinforceDomains: ['Improvisation', 'Musical Application'],
     reinforceTags: ['dorian', 'funk', 'modal'],
     difficulty: ['Intermediate', 'Advanced']
   },
   
   // Semana 15: Legato
   15: {
-    warmUpDomains: ['Picking Technique', 'Improvisation & Lead'],
+    warmUpDomains: ['Techniques', 'Lead / Punteos'],
     warmUpTags: ['hammer-on', 'pull-off', 'legato'],
-    reinforceDomains: ['Improvisation & Lead'],
+    reinforceDomains: ['Improvisation', 'Lead / Punteos'],
     reinforceTags: ['legato', 'speed'],
     difficulty: ['Intermediate', 'Advanced']
   },
   
   // Semana 16: Bends y Vibrato
   16: {
-    warmUpDomains: ['Improvisation & Lead'],
+    warmUpDomains: ['Lead / Punteos', 'Techniques'],
     warmUpTags: ['bend', 'vibrato', 'expression'],
-    reinforceDomains: ['Improvisation & Lead', 'Application & Songs'],
+    reinforceDomains: ['Improvisation', 'Musical Application'],
     reinforceTags: ['blues', 'expression', 'phrasing'],
     difficulty: ['Intermediate', 'Advanced']
   },
   
   // Semana 17: Shell Chords
   17: {
-    warmUpDomains: ['Fretting & Chords'],
+    warmUpDomains: ['Chords & Harmony'],
     warmUpTags: ['jazz', 'shell-chord', 'voicing'],
-    reinforceDomains: ['Application & Songs'],
+    reinforceDomains: ['Musical Application'],
     reinforceTags: ['jazz', 'ii-V-I'],
     difficulty: ['Advanced']
   },
   
   // Semana 18: Riffs Rock
   18: {
-    warmUpDomains: ['Picking Technique'],
+    warmUpDomains: ['Picking', 'Techniques'],
     warmUpTags: ['palm-mute', 'accent'],
-    reinforceDomains: ['Application & Songs'],
+    reinforceDomains: ['Musical Application'],
     reinforceTags: ['rock', 'riff'],
     difficulty: ['Intermediate', 'Advanced']
   },
   
   // Semana 19: Reggae Avanzado
   19: {
-    warmUpDomains: ['Strumming & Rhythm'],
+    warmUpDomains: ['Strumming & Rhythm Guitar'],
     warmUpTags: ['offbeat', 'muting'],
-    reinforceDomains: ['Application & Songs'],
+    reinforceDomains: ['Musical Application'],
     reinforceTags: ['reggae', 'dub'],
     difficulty: ['Intermediate', 'Advanced']
   },
   
   // Semana 20: Metal Velocidad
   20: {
-    warmUpDomains: ['Picking Technique'],
+    warmUpDomains: ['Picking', 'Techniques'],
     warmUpTags: ['alternate-picking', 'tremolo', 'speed'],
-    reinforceDomains: ['Application & Songs', 'Improvisation & Lead'],
+    reinforceDomains: ['Musical Application', 'Lead / Punteos'],
     reinforceTags: ['metal', 'shred', 'speed'],
     difficulty: ['Advanced', 'Pro']
   },
   
   // Semana 21: Conexión del mástil
   21: {
-    warmUpDomains: ['Scales & Theory', 'Improvisation & Lead'],
+    warmUpDomains: ['Scales & Fretboard', 'Lead / Punteos'],
     warmUpTags: ['position-shift', 'fretboard'],
-    reinforceDomains: ['Improvisation & Lead'],
+    reinforceDomains: ['Improvisation'],
     reinforceTags: ['full-neck', 'connection'],
     difficulty: ['Advanced']
   },
   
   // Semana 22: Construcción de solos
   22: {
-    warmUpDomains: ['Improvisation & Lead'],
+    warmUpDomains: ['Improvisation', 'Lead / Punteos'],
     warmUpTags: ['phrasing', 'target-note'],
-    reinforceDomains: ['Improvisation & Lead', 'Application & Songs'],
+    reinforceDomains: ['Improvisation', 'Musical Application'],
     reinforceTags: ['solo', 'structure'],
     difficulty: ['Advanced']
   },
   
   // Semana 23: Composición
   23: {
-    warmUpDomains: ['Scales & Theory', 'Fretting & Chords'],
+    warmUpDomains: ['Scales & Fretboard', 'Chords & Harmony'],
     warmUpTags: ['composition', 'creativity'],
-    reinforceDomains: ['Application & Songs'],
+    reinforceDomains: ['Musical Application'],
     reinforceTags: ['composition', 'songwriting'],
     difficulty: ['Advanced', 'Pro']
   },
   
   // Semana 24: Integración total
   24: {
-    warmUpDomains: ['Picking Technique', 'Scales & Theory'],
+    warmUpDomains: ['Picking', 'Scales & Fretboard', 'Techniques'],
     warmUpTags: ['warm-up', 'all-styles'],
-    reinforceDomains: ['Application & Songs', 'Improvisation & Lead'],
+    reinforceDomains: ['Musical Application', 'Improvisation'],
     reinforceTags: ['jam', 'integration'],
     difficulty: ['Advanced', 'Pro']
   }
