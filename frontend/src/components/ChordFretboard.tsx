@@ -77,14 +77,20 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
     }
   };
 
-  // Render strings with color coding
+  // Render strings with color coding - CLEAR VISUAL DISTINCTION
   const renderStrings = () => {
     return stringNames.map((name, i) => {
       const y = paddingTop + i * stringSpacing;
       const thickness = 1.5 + (i * 0.5);
-      const stringColor = getStringColor(i);
       const state = getStringState(i);
       const isActiveString = isActive && state === 'sound';
+      
+      // String line color - more visible
+      const lineColor = state === 'muted' 
+        ? STRING_COLORS.MUTED  // RED for muted
+        : isActiveString 
+          ? STRING_COLORS.SOUND  // GREEN when playing
+          : '#9D8B78';  // Warm string color when idle
       
       return (
         <G key={`string-${i}`}>
@@ -95,9 +101,21 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
               y1={y}
               x2={width - paddingRight}
               y2={y}
-              stroke={stringColor}
+              stroke={STRING_COLORS.SOUND}
+              strokeWidth={thickness + 8}
+              opacity={0.35}
+            />
+          )}
+          {/* Muted string glow - show it's wrong to play */}
+          {state === 'muted' && (
+            <Line
+              x1={paddingLeft}
+              y1={y}
+              x2={width - paddingRight}
+              y2={y}
+              stroke={STRING_COLORS.MUTED}
               strokeWidth={thickness + 6}
-              opacity={0.3}
+              opacity={0.2}
             />
           )}
           {/* Main string line */}
@@ -106,28 +124,9 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
             y1={y}
             x2={width - paddingRight}
             y2={y}
-            stroke={isActiveString ? stringColor : (state === 'muted' ? STRING_COLORS.MUTED : '#8B7355')}
-            strokeWidth={isActiveString ? thickness + 1 : thickness}
+            stroke={lineColor}
+            strokeWidth={state === 'muted' ? thickness + 0.5 : thickness}
           />
-          {/* String name with color indicator */}
-          <Circle
-            cx={paddingLeft - 22}
-            cy={y}
-            r={12}
-            fill={state === 'muted' ? STRING_COLORS.MUTED + '30' : STRING_COLORS.SOUND + '30'}
-            stroke={state === 'muted' ? STRING_COLORS.MUTED : STRING_COLORS.SOUND}
-            strokeWidth={2}
-          />
-          <SvgText
-            x={paddingLeft - 22}
-            y={y + 5}
-            fill={state === 'muted' ? STRING_COLORS.MUTED : STRING_COLORS.SOUND}
-            fontSize={12}
-            fontWeight="bold"
-            textAnchor="middle"
-          >
-            {name}
-          </SvgText>
         </G>
       );
     });
