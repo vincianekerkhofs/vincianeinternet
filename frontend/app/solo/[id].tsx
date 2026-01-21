@@ -30,7 +30,8 @@ export default function SoloDetailScreen() {
         setSolo(foundSolo);
         setTempo(foundSolo.tempo);
       }
-      setLoading(false);
+      // Small delay to ensure state is updated
+      setTimeout(() => setLoading(false), 100);
     }
   }, [id]);
 
@@ -93,28 +94,25 @@ export default function SoloDetailScreen() {
     setCurrentNoteIndex(0);
   };
 
-  // Loading state
-  if (loading) {
+  // Loading or not found state (combined to avoid hook issues)
+  if (loading || !solo) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loadingText}>Cargando solo...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  // Not found state
-  if (!solo) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          <Ionicons name="alert-circle-outline" size={48} color={COLORS.error} />
-          <Text style={styles.loadingText}>Solo no encontrado</Text>
-          <TouchableOpacity style={styles.backButtonLarge} onPress={() => router.back()}>
-            <Text style={styles.backButtonText}>Volver</Text>
-          </TouchableOpacity>
+          {loading ? (
+            <>
+              <ActivityIndicator size="large" color={COLORS.primary} />
+              <Text style={styles.loadingText}>Cargando solo...</Text>
+            </>
+          ) : (
+            <>
+              <Ionicons name="alert-circle-outline" size={48} color={COLORS.error} />
+              <Text style={styles.loadingText}>Solo no encontrado</Text>
+              <TouchableOpacity style={styles.backButtonLarge} onPress={() => router.back()}>
+                <Text style={styles.backButtonText}>Volver</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </SafeAreaView>
     );
