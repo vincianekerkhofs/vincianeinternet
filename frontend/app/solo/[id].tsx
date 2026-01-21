@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,6 +7,8 @@ import { COLORS, FONTS, SPACING, BORDER_RADIUS } from '../../src/constants/theme
 import { getSoloById, GuidedSolo } from '../../src/data/solosContent';
 import { TechniqueFretboard } from '../../src/components/TechniqueFretboard';
 import { DidacticIntroScreen } from '../../src/components/DidacticIntroScreen';
+import { TechniqueWarningBanner } from '../../src/components/TechniqueWarningBanner';
+import { EnhancedMetronome } from '../../src/components/EnhancedMetronome';
 import Slider from '@react-native-community/slider';
 
 const { width } = Dimensions.get('window');
