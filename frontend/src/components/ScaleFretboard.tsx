@@ -277,6 +277,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   cell: {
+    flex: 1,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
