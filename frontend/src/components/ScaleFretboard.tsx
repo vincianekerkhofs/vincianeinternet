@@ -212,9 +212,6 @@ export const ScaleFretboard: React.FC<Props> = ({
 
   return (
     <View style={[styles.container, { width }]}>
-      {/* DEBUG: Verify component rendering */}
-      <Text style={{ color: 'red', fontSize: 16 }}>DEBUG: {scale.notes.length} notas en {scaleName}</Text>
-      
       {/* Top string indicators */}
       {renderTopIndicators()}
       
