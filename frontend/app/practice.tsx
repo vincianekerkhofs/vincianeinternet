@@ -659,6 +659,17 @@ export default function PracticeScreen() {
           </View>
         )}
 
+        {/* Suggested Exercises from Library - shown in all stages */}
+        {(suggestedExercises.warmUp.length > 0 || suggestedExercises.reinforce.length > 0) && (
+          <View style={styles.stageContent}>
+            <SuggestedExercises
+              warmUpExercises={suggestedExercises.warmUp}
+              reinforceExercises={suggestedExercises.reinforce}
+              weekNum={weekNum}
+            />
+          </View>
+        )}
+
         <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
