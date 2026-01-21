@@ -223,6 +223,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1E1810',
     borderRadius: 4,
     marginHorizontal: 15,
+    overflow: 'visible',
   },
   
   fingerText: { color: '#FFF', fontSize: 11, fontWeight: 'bold' },
