@@ -353,6 +353,9 @@ export const ScaleFretboard: React.FC<Props> = ({
 
   return (
     <View style={styles.outerWrapper} onLayout={handleLayout}>
+      {/* Note names info modal */}
+      <NoteNamesModal visible={showNoteModal} onClose={() => setShowNoteModal(false)} />
+      
       {/* Top indicator row */}
       {renderTopIndicators()}
       
@@ -370,7 +373,7 @@ export const ScaleFretboard: React.FC<Props> = ({
             {renderStrings()}
             {renderNotes()}
           </Svg>
-          {renderFingerOverlays()}
+          {!showNoteNames && renderFingerOverlays()}
         </View>
       )}
       
@@ -380,7 +383,7 @@ export const ScaleFretboard: React.FC<Props> = ({
       {/* Position indicator */}
       <Text style={styles.positionText}>Trastes {scale.start}–{scale.start + NUM_FRETS - 1}</Text>
       
-      {/* Legend */}
+      {/* Legend with info button */}
       <View style={styles.legend}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: THEME.ROOT }]} />
@@ -390,7 +393,13 @@ export const ScaleFretboard: React.FC<Props> = ({
           <View style={[styles.legendDot, { backgroundColor: THEME.NOTE }]} />
           <Text style={styles.legendText}>Nota</Text>
         </View>
-        <Text style={styles.fingerHint}>1-4 = Dedos</Text>
+        <TouchableOpacity 
+          style={styles.infoButton} 
+          onPress={() => setShowNoteModal(true)}
+        >
+          <Ionicons name="information-circle-outline" size={18} color={COLORS.primary} />
+          <Text style={styles.infoButtonText}>A=La?</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
