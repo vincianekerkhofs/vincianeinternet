@@ -346,6 +346,9 @@ export default function PracticeScreen() {
           <Text style={styles.headerTitle}>Semana {weekNum} · Día {dayNum}</Text>
           <Text style={styles.headerSubtitle} numberOfLines={1}>{lesson.objective}</Text>
         </View>
+        <TouchableOpacity onPress={() => router.push('/tuner')} style={styles.headerButton}>
+          <Ionicons name="radio-outline" size={24} color={COLORS.primary} />
+        </TouchableOpacity>
         {isCompleted && (
           <Ionicons name="checkmark-circle" size={28} color={COLORS.success} style={{ marginRight: SPACING.sm }} />
         )}
