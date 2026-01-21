@@ -7,8 +7,6 @@ import { COLORS, FONTS, SPACING, BORDER_RADIUS } from '../../src/constants/theme
 import { getSoloById, GuidedSolo } from '../../src/data/solosContent';
 import { TechniqueFretboard } from '../../src/components/TechniqueFretboard';
 import { DidacticIntroScreen } from '../../src/components/DidacticIntroScreen';
-import { TechniqueWarningBanner } from '../../src/components/TechniqueWarningBanner';
-import { EnhancedMetronome } from '../../src/components/EnhancedMetronome';
 import Slider from '@react-native-community/slider';
 
 const { width } = Dimensions.get('window');
