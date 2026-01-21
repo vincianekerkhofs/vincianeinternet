@@ -238,6 +238,10 @@ export default function PracticeScreen() {
     
     isPlayingRef.current = true;
     lastBeatTimeRef.current = ctx.currentTime;
+    currentBeatRef.current = 1;
+    currentChordIndexRef.current = 0;
+    barCountRef.current = 0; // Start at bar 0 (first chord)
+    
     setCurrentBeat(1);
     setCurrentChordIndex(0);
     setIsPlaying(true);
@@ -257,6 +261,11 @@ export default function PracticeScreen() {
       clearTimeout(schedulerIdRef.current);
       schedulerIdRef.current = null;
     }
+    
+    // Reset refs
+    currentBeatRef.current = 1;
+    currentChordIndexRef.current = 0;
+    barCountRef.current = 0;
   };
 
   // Toggle playback
