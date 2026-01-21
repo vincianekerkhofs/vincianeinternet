@@ -65,38 +65,39 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
     
     for (let i = 0; i < 6; i++) {
       const fret = shapeData.frets[i];
-      // Calculate X position to align with strings
-      const x = paddingLeft + (fretWidth / 2) + (i * (fretboardWidth - fretWidth) / 5);
-      const y = paddingTop - 20;
+      // Calculate Y position to align with string
+      const stringY = paddingTop + i * stringSpacing;
+      // X position is at the left edge (nut area)
+      const x = paddingLeft - 3;
       const state = getStringState(i);
       
       if (fret === null) {
-        // MUTED - RED X at top
+        // MUTED - RED X 
         indicators.push(
-          <G key={`top-${i}`}>
-            <Circle cx={x} cy={y} r={14} fill={STRING_COLORS.MUTED} />
+          <G key={`ind-${i}`}>
+            <Circle cx={x} cy={stringY} r={10} fill={STRING_COLORS.MUTED} />
             <SvgText
               x={x}
-              y={y + 5}
+              y={stringY + 4}
               fill="#FFFFFF"
-              fontSize={16}
+              fontSize={12}
               fontWeight="bold"
               textAnchor="middle"
             >
-              ✕
+              X
             </SvgText>
           </G>
         );
       } else if (fret === 0) {
-        // OPEN STRING - GREEN O at top
+        // OPEN STRING - GREEN O
         indicators.push(
-          <G key={`top-${i}`}>
-            <Circle cx={x} cy={y} r={14} fill="none" stroke={STRING_COLORS.SOUND} strokeWidth={2.5} />
+          <G key={`ind-${i}`}>
+            <Circle cx={x} cy={stringY} r={10} fill="none" stroke={STRING_COLORS.SOUND} strokeWidth={2} />
             <SvgText
               x={x}
-              y={y + 5}
+              y={stringY + 4}
               fill={STRING_COLORS.SOUND}
-              fontSize={14}
+              fontSize={11}
               fontWeight="bold"
               textAnchor="middle"
             >
@@ -104,24 +105,8 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
             </SvgText>
           </G>
         );
-      } else {
-        // FRETTED - GREEN filled circle at top with string name
-        indicators.push(
-          <G key={`top-${i}`}>
-            <Circle cx={x} cy={y} r={14} fill={STRING_COLORS.SOUND} />
-            <SvgText
-              x={x}
-              y={y + 5}
-              fill="#FFFFFF"
-              fontSize={11}
-              fontWeight="bold"
-              textAnchor="middle"
-            >
-              {stringNames[i]}
-            </SvgText>
-          </G>
-        );
       }
+      // Fretted notes don't need top indicator - they have dots on fretboard
     }
     return indicators;
   };
