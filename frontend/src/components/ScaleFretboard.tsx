@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, Text } from 'react-native';
 import { COLORS } from '../constants/theme';
+import Svg, { Line, Circle, Rect, G, Text as SvgText } from 'react-native-svg';
 
 interface Props {
   scaleName: string;
@@ -54,13 +55,16 @@ const SCALES: Record<string, {
 
 const STRING_NAMES = ['e', 'B', 'G', 'D', 'A', 'E'];
 const NUM_FRETS = 4;
-const NUM_STRINGS = 6;
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const THEME = {
+  NOTE: '#00D68F',
+  ROOT: '#FF6B35',
+};
 
 export const ScaleFretboard: React.FC<Props> = ({
   scaleName,
-  width = SCREEN_WIDTH - 32,
+  width = 320,
+  height = 260,
   isActive = false,
 }) => {
   const scale = SCALES[scaleName];
@@ -73,168 +77,167 @@ export const ScaleFretboard: React.FC<Props> = ({
     );
   }
 
-  // Build lookup
-  const getNote = (s: number, f: number) => {
-    return scale.notes.find(n => n.s === s && n.f === f);
-  };
+  // SVG dimensions
+  const svgHeight = height - 100; // Space for indicators and legend
+  const paddingTop = 10;
+  const paddingBottom = 10;
+  const paddingLeft = 15;
+  const paddingRight = 15;
   
+  const fretboardWidth = width - paddingLeft - paddingRight;
+  const fretboardHeight = svgHeight - paddingTop - paddingBottom;
+  const fretWidth = fretboardWidth / NUM_FRETS;
+  const stringSpacing = fretboardHeight / 5;
+
+  // Check if string has root
   const stringHasRoot = (strIdx: number) => 
     scale.notes.some(n => n.s === strIdx && n.root);
 
-  // Build flat array of all 24 cells
-  const allCells: { strIdx: number; fretIdx: number }[] = [];
-  for (let s = 0; s < NUM_STRINGS; s++) {
-    for (let f = 0; f < NUM_FRETS; f++) {
-      allCells.push({ strIdx: s, fretIdx: f });
-    }
-  }
+  // Top indicators (same style as ChordFretboard)
+  const renderTopIndicators = () => (
+    <View style={styles.indicatorRow}>
+      {STRING_NAMES.map((name, i) => {
+        const isRoot = stringHasRoot(i);
+        return (
+          <View key={i} style={[styles.indicator, { backgroundColor: isRoot ? THEME.ROOT : THEME.NOTE }]}>
+            <Text style={styles.indicatorText}>{name}</Text>
+          </View>
+        );
+      })}
+    </View>
+  );
 
-  const cellW = (width - 40) / NUM_FRETS;
-  const cellH = 32;
+  // SVG: String lines
+  const renderStrings = () =>
+    STRING_NAMES.map((_, i) => {
+      const y = paddingTop + i * stringSpacing;
+      const thickness = 1.5 + i * 0.4;
+      return (
+        <Line key={`str-${i}`}
+          x1={paddingLeft} y1={y}
+          x2={width - paddingRight} y2={y}
+          stroke="#B8977E" strokeWidth={thickness}
+        />
+      );
+    });
+
+  // SVG: Fret lines (vertical)
+  const renderFrets = () => {
+    const lines = [];
+    for (let i = 0; i <= NUM_FRETS; i++) {
+      const x = paddingLeft + i * fretWidth;
+      const isNut = i === 0;
+      lines.push(
+        <Line key={`fret-${i}`}
+          x1={x} y1={paddingTop}
+          x2={x} y2={paddingTop + fretboardHeight}
+          stroke={isNut ? '#D4D4D4' : '#5A5A5A'}
+          strokeWidth={isNut ? 5 : 2}
+        />
+      );
+    }
+    return lines;
+  };
+
+  // SVG: Note circles
+  const renderNotes = () =>
+    scale.notes.map((note, idx) => {
+      const strIdx = note.s;
+      const fretOffset = note.f;
+      const isRoot = note.root === true;
+      
+      // Position at center of fret cell
+      const x = paddingLeft + (fretOffset + 0.5) * fretWidth;
+      const y = paddingTop + strIdx * stringSpacing;
+      const fill = isRoot ? THEME.ROOT : (isActive ? THEME.NOTE : '#2A2A2A');
+      const stroke = isRoot ? THEME.ROOT : THEME.NOTE;
+      
+      return (
+        <G key={`note-${idx}`}>
+          {/* Glow effect when active */}
+          {isActive && <Circle cx={x} cy={y} r={18} fill={fill} opacity={0.25} />}
+          {/* Main circle */}
+          <Circle cx={x} cy={y} r={14} fill={fill} stroke={stroke} strokeWidth={2} />
+        </G>
+      );
+    });
+
+  // Finger number overlays (positioned absolutely over SVG)
+  const renderFingerOverlays = () =>
+    scale.notes.map((note, idx) => {
+      const strIdx = note.s;
+      const fretOffset = note.f;
+      const finger = note.finger;
+      
+      const x = paddingLeft + (fretOffset + 0.5) * fretWidth;
+      const y = paddingTop + strIdx * stringSpacing;
+      const xPercent = (x / width) * 100;
+      const yPercent = (y / svgHeight) * 100;
+      
+      return (
+        <View key={`fo-${idx}`} style={[styles.fingerOverlay, {
+          left: `${xPercent}%`, top: `${yPercent}%`,
+          transform: [{ translateX: -8 }, { translateY: -8 }]
+        }]}>
+          <Text style={styles.fingerText}>{finger}</Text>
+        </View>
+      );
+    });
+
+  // Fret numbers
+  const renderFretNumbers = () => (
+    <View style={styles.fretNumRow}>
+      {Array.from({ length: NUM_FRETS }, (_, i) => (
+        <View key={i} style={[styles.fretNumCell, { width: fretWidth }]}>
+          <Text style={styles.fretNumText}>{scale.start + i}</Text>
+        </View>
+      ))}
+    </View>
+  );
+
+  // Legend
+  const renderLegend = () => (
+    <View style={styles.legend}>
+      <View style={styles.legendItem}>
+        <View style={[styles.legendDot, { backgroundColor: THEME.ROOT }]} />
+        <Text style={styles.legendText}>Raíz</Text>
+      </View>
+      <View style={styles.legendItem}>
+        <View style={[styles.legendDot, { backgroundColor: THEME.NOTE }]} />
+        <Text style={styles.legendText}>Nota</Text>
+      </View>
+      <Text style={styles.fingerHint}>1-4 = Dedos</Text>
+    </View>
+  );
 
   return (
     <View style={[styles.container, { width }]}>
-      {/* String indicators at top */}
-      <View style={styles.indicatorRow}>
-        {STRING_NAMES.map((name, idx) => (
-          <View 
-            key={idx}
-            style={[
-              styles.indicator,
-              { backgroundColor: stringHasRoot(idx) ? '#FF6B35' : '#00D68F' }
-            ]}
-          >
-            <Text style={styles.indicatorText}>{name}</Text>
-          </View>
-        ))}
+      {/* Top string indicators */}
+      {renderTopIndicators()}
+      
+      {/* SVG Fretboard */}
+      <View style={[styles.svgContainer, { width, height: svgHeight }]}>
+        <Svg width={width} height={svgHeight}>
+          <Rect x={paddingLeft} y={paddingTop} width={fretboardWidth} height={fretboardHeight}
+            fill="#1E1810" rx={4} />
+          {renderFrets()}
+          {renderStrings()}
+          {renderNotes()}
+        </Svg>
+        {/* Finger overlays on top of SVG */}
+        {renderFingerOverlays()}
       </View>
-
-      {/* Fretboard grid */}
-      <View style={[styles.fretboard, { width: width - 20 }]}>
-        {/* Row 0 (high e) */}
-        <View style={styles.row}>
-          {[0, 1, 2, 3].map(f => {
-            const note = getNote(0, f);
-            return (
-              <View key={f} style={styles.cell}>
-                <View style={[styles.string, { height: 1.5 }]} />
-                {note && (
-                  <View style={[styles.note, { backgroundColor: note.root ? '#FF6B35' : (isActive ? '#00D68F' : '#2A2A2A'), borderColor: note.root ? '#FF6B35' : '#00D68F' }]}>
-                    <Text style={styles.finger}>{note.finger}</Text>
-                  </View>
-                )}
-              </View>
-            );
-          })}
-        </View>
-        
-        {/* Row 1 (B) */}
-        <View style={styles.row}>
-          {[0, 1, 2, 3].map(f => {
-            const note = getNote(1, f);
-            return (
-              <View key={f} style={styles.cell}>
-                <View style={[styles.string, { height: 1.9 }]} />
-                {note && (
-                  <View style={[styles.note, { backgroundColor: note.root ? '#FF6B35' : (isActive ? '#00D68F' : '#2A2A2A'), borderColor: note.root ? '#FF6B35' : '#00D68F' }]}>
-                    <Text style={styles.finger}>{note.finger}</Text>
-                  </View>
-                )}
-              </View>
-            );
-          })}
-        </View>
-        
-        {/* Row 2 (G) */}
-        <View style={styles.row}>
-          {[0, 1, 2, 3].map(f => {
-            const note = getNote(2, f);
-            return (
-              <View key={f} style={styles.cell}>
-                <View style={[styles.string, { height: 2.3 }]} />
-                {note && (
-                  <View style={[styles.note, { backgroundColor: note.root ? '#FF6B35' : (isActive ? '#00D68F' : '#2A2A2A'), borderColor: note.root ? '#FF6B35' : '#00D68F' }]}>
-                    <Text style={styles.finger}>{note.finger}</Text>
-                  </View>
-                )}
-              </View>
-            );
-          })}
-        </View>
-        
-        {/* Row 3 (D) */}
-        <View style={styles.row}>
-          {[0, 1, 2, 3].map(f => {
-            const note = getNote(3, f);
-            return (
-              <View key={f} style={styles.cell}>
-                <View style={[styles.string, { height: 2.7 }]} />
-                {note && (
-                  <View style={[styles.note, { backgroundColor: note.root ? '#FF6B35' : (isActive ? '#00D68F' : '#2A2A2A'), borderColor: note.root ? '#FF6B35' : '#00D68F' }]}>
-                    <Text style={styles.finger}>{note.finger}</Text>
-                  </View>
-                )}
-              </View>
-            );
-          })}
-        </View>
-        
-        {/* Row 4 (A) */}
-        <View style={styles.row}>
-          {[0, 1, 2, 3].map(f => {
-            const note = getNote(4, f);
-            return (
-              <View key={f} style={styles.cell}>
-                <View style={[styles.string, { height: 3.1 }]} />
-                {note && (
-                  <View style={[styles.note, { backgroundColor: note.root ? '#FF6B35' : (isActive ? '#00D68F' : '#2A2A2A'), borderColor: note.root ? '#FF6B35' : '#00D68F' }]}>
-                    <Text style={styles.finger}>{note.finger}</Text>
-                  </View>
-                )}
-              </View>
-            );
-          })}
-        </View>
-        
-        {/* Row 5 (E) */}
-        <View style={styles.row}>
-          {[0, 1, 2, 3].map(f => {
-            const note = getNote(5, f);
-            return (
-              <View key={f} style={styles.cell}>
-                <View style={[styles.string, { height: 3.5 }]} />
-                {note && (
-                  <View style={[styles.note, { backgroundColor: note.root ? '#FF6B35' : (isActive ? '#00D68F' : '#2A2A2A'), borderColor: note.root ? '#FF6B35' : '#00D68F' }]}>
-                    <Text style={styles.finger}>{note.finger}</Text>
-                  </View>
-                )}
-              </View>
-            );
-          })}
-        </View>
-      </View>
-
+      
       {/* Fret numbers */}
-      <View style={[styles.fretNumbers, { width: width - 20 }]}>
-        <View style={[styles.fretNum, { width: cellW }]}><Text style={styles.fretNumText}>{scale.start}</Text></View>
-        <View style={[styles.fretNum, { width: cellW }]}><Text style={styles.fretNumText}>{scale.start + 1}</Text></View>
-        <View style={[styles.fretNum, { width: cellW }]}><Text style={styles.fretNumText}>{scale.start + 2}</Text></View>
-        <View style={[styles.fretNum, { width: cellW }]}><Text style={styles.fretNumText}>{scale.start + 3}</Text></View>
+      <View style={{ marginLeft: paddingLeft }}>
+        {renderFretNumbers()}
       </View>
-
-      {/* Position and legend */}
+      
+      {/* Position text */}
       <Text style={styles.posText}>Trastes {scale.start}–{scale.start + NUM_FRETS - 1}</Text>
-      <View style={styles.legend}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: '#FF6B35' }]} />
-          <Text style={styles.legendLabel}>Raíz</Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: '#00D68F' }]} />
-          <Text style={styles.legendLabel}>Nota</Text>
-        </View>
-        <Text style={styles.fingerHint}>1-4 = Dedos</Text>
-      </View>
+      
+      {/* Legend */}
+      {renderLegend()}
     </View>
   );
 };
@@ -245,21 +248,25 @@ const styles = StyleSheet.create({
   },
   errorBox: {
     padding: 20,
+    alignItems: 'center',
   },
   errorText: {
-    color: '#F00',
+    color: '#FF4757',
     fontSize: 14,
   },
+  
+  // Top indicators
   indicatorRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     width: '100%',
     marginBottom: 8,
+    paddingHorizontal: 10,
   },
   indicator: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -268,46 +275,32 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: 'bold',
   },
-  fretboard: {
-    backgroundColor: '#1E1810',
-    borderRadius: 6,
-    paddingVertical: 6,
+  
+  // SVG container
+  svgContainer: {
+    position: 'relative',
   },
-  row: {
-    flexDirection: 'row',
-    width: '100%',
-  },
-  cell: {
-    flex: 1,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minWidth: 0,
-  },
-  string: {
+  
+  // Finger overlays
+  fingerOverlay: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    backgroundColor: '#B8977E',
-  },
-  note: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    borderWidth: 2,
+    width: 16,
+    height: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  finger: {
+  fingerText: {
     color: '#FFF',
     fontSize: 13,
     fontWeight: 'bold',
   },
-  fretNumbers: {
+  
+  // Fret numbers
+  fretNumRow: {
     flexDirection: 'row',
-    marginTop: 4,
+    marginTop: 2,
   },
-  fretNum: {
+  fretNumCell: {
     alignItems: 'center',
   },
   fretNumText: {
@@ -315,15 +308,20 @@ const styles = StyleSheet.create({
     color: '#888',
     fontWeight: '600',
   },
+  
+  // Position text
   posText: {
     marginTop: 6,
     fontSize: 12,
     color: COLORS.primary,
     fontWeight: '600',
   },
+  
+  // Legend
   legend: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 14,
     marginTop: 8,
   },
@@ -337,7 +335,7 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
   },
-  legendLabel: {
+  legendText: {
     fontSize: 11,
     color: '#888',
   },
