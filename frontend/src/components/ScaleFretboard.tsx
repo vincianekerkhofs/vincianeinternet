@@ -1,6 +1,8 @@
 import React from 'react';
 import { View, StyleSheet, Text } from 'react-native';
-import { COLORS } from '../constants/theme';
+import { COLORS, SPACING } from '../constants/theme';
+import { ChordFretboard } from './ChordFretboard';
+import { CHORD_SHAPES } from '../data/curriculum';
 
 interface ScaleFretboardProps {
   scaleName: string;
@@ -9,238 +11,114 @@ interface ScaleFretboardProps {
   isActive?: boolean;
 }
 
-// Scale patterns
-const SCALE_PATTERNS: Record<string, {
+// Scale descriptions for display
+const SCALE_INFO: Record<string, {
   name: string;
-  fretRange: [number, number];
-  notes: { string: number; fret: number; finger: number; isRoot?: boolean }[];
+  pattern: string;
+  fingers: string;
+  tips: string;
 }> = {
   'Am_pent_box1': {
-    name: 'Am Pentatónica - Box 1',
-    fretRange: [5, 8],
-    notes: [
-      { string: 0, fret: 5, finger: 1, isRoot: true },
-      { string: 0, fret: 8, finger: 4 },
-      { string: 1, fret: 5, finger: 1 },
-      { string: 1, fret: 8, finger: 4 },
-      { string: 2, fret: 5, finger: 1 },
-      { string: 2, fret: 7, finger: 3 },
-      { string: 3, fret: 5, finger: 1 },
-      { string: 3, fret: 7, finger: 3 },
-      { string: 4, fret: 5, finger: 1, isRoot: true },
-      { string: 4, fret: 7, finger: 3 },
-      { string: 5, fret: 5, finger: 1, isRoot: true },
-      { string: 5, fret: 8, finger: 4 },
-    ],
+    name: 'La menor Pentatónica - Posición 1',
+    pattern: 'Trastes 5-8 | Todas las cuerdas suenan',
+    fingers: '1-1-1-1-1-1 (traste 5) | 3-3-3 (traste 7) | 4-4-4 (traste 8)',
+    tips: 'La raíz (A) está en las cuerdas 1, 5 y 6 en el traste 5',
   },
   'Am_blues': {
-    name: 'Am Blues',
-    fretRange: [5, 8],
-    notes: [
-      { string: 0, fret: 5, finger: 1, isRoot: true },
-      { string: 0, fret: 8, finger: 4 },
-      { string: 1, fret: 5, finger: 1 },
-      { string: 1, fret: 8, finger: 4 },
-      { string: 2, fret: 5, finger: 1 },
-      { string: 2, fret: 7, finger: 3 },
-      { string: 3, fret: 5, finger: 1 },
-      { string: 3, fret: 7, finger: 3 },
-      { string: 4, fret: 5, finger: 1, isRoot: true },
-      { string: 4, fret: 6, finger: 2 },
-      { string: 4, fret: 7, finger: 3 },
-      { string: 5, fret: 5, finger: 1, isRoot: true },
-      { string: 5, fret: 8, finger: 4 },
-    ],
+    name: 'La menor Blues',
+    pattern: 'Trastes 5-8 | Incluye la "blue note" en traste 6',
+    fingers: '1-1-1-1-1-1 (traste 5) | 2 (traste 6, cuerda A) | 3-3-3 (traste 7) | 4-4-4 (traste 8)',
+    tips: 'La blue note está en el traste 6, cuerda A',
   },
   'C_major_box1': {
-    name: 'C Mayor - Pos 1',
-    fretRange: [7, 10],
-    notes: [
-      { string: 0, fret: 7, finger: 1 },
-      { string: 0, fret: 8, finger: 2, isRoot: true },
-      { string: 0, fret: 10, finger: 4 },
-      { string: 1, fret: 8, finger: 1, isRoot: true },
-      { string: 1, fret: 10, finger: 3 },
-      { string: 2, fret: 7, finger: 1 },
-      { string: 2, fret: 9, finger: 3 },
-      { string: 3, fret: 7, finger: 1 },
-      { string: 3, fret: 9, finger: 3 },
-      { string: 3, fret: 10, finger: 4, isRoot: true },
-      { string: 4, fret: 7, finger: 1 },
-      { string: 4, fret: 8, finger: 2 },
-      { string: 4, fret: 10, finger: 4 },
-      { string: 5, fret: 7, finger: 1 },
-      { string: 5, fret: 8, finger: 2, isRoot: true },
-      { string: 5, fret: 10, finger: 4 },
-    ],
+    name: 'Do Mayor - Posición 1',
+    pattern: 'Trastes 7-10 | Escala de 7 notas',
+    fingers: '1 (trastes 7-8) | 2-3 (trastes 8-9) | 4 (traste 10)',
+    tips: 'La raíz (C) está en traste 8 cuerda 1 y traste 10 cuerda 5',
   },
 };
 
-const COLORS_SCHEME = {
-  NOTE: '#00D68F',
-  ROOT: '#FF6B35',
-  STRING: '#B8977E',
-};
-
+/**
+ * Scale Fretboard Component
+ * Shows the scale using ChordFretboard (single note per string) 
+ * plus detailed text instructions for the full scale pattern
+ */
 export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
   scaleName,
-  width = 340,
-  height = 280,
+  width = 320,
+  height = 260,
   isActive = false,
 }) => {
-  const scaleData = SCALE_PATTERNS[scaleName];
-  if (!scaleData) {
-    return <Text style={{color: '#FF4757'}}>Escala: {scaleName}</Text>;
-  }
-
-  const [startFret, endFret] = scaleData.fretRange;
-  const numFrets = endFret - startFret + 1;
-  const stringNames = ['e', 'B', 'G', 'D', 'A', 'E'];
+  const scaleInfo = SCALE_INFO[scaleName];
+  const chordShape = CHORD_SHAPES[scaleName];
   
-  // Fixed measurements
-  const STRING_GAP = 28;
-  const TOP_PADDING = 20;
-  const FRETBOARD_HEIGHT = TOP_PADDING + STRING_GAP * 5 + TOP_PADDING;
-  const FRETBOARD_WIDTH = width - 30;
-  const FRET_WIDTH = FRETBOARD_WIDTH / numFrets;
+  if (!scaleInfo || !chordShape) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.title}>Escala: {scaleName}</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
-      {/* String indicators */}
-      <View style={styles.indicatorRow}>
-        {stringNames.map((name, i) => (
-          <View key={i} style={styles.indicator}>
-            <Text style={styles.indicatorText}>{name}</Text>
-          </View>
-        ))}
-      </View>
+      {/* Scale name */}
+      <Text style={styles.title}>{scaleInfo.name}</Text>
       
-      {/* Fretboard */}
-      <View style={[styles.fretboard, { width: width - 30, height: FRETBOARD_HEIGHT }]}>
-        {/* Strings - 6 horizontal lines */}
-        {[0, 1, 2, 3, 4, 5].map(i => (
-          <View
-            key={`string-${i}`}
-            style={{
-              position: 'absolute',
-              left: 0,
-              right: 0,
-              top: TOP_PADDING + i * STRING_GAP,
-              height: 2 + i * 0.4,
-              backgroundColor: COLORS_SCHEME.STRING,
-            }}
-          />
-        ))}
+      {/* Use ChordFretboard to show the basic shape */}
+      <ChordFretboard 
+        shape={scaleName as any} 
+        width={width} 
+        height={height - 80} 
+        isActive={isActive} 
+      />
+      
+      {/* Scale pattern info */}
+      <View style={styles.infoCard}>
+        <Text style={styles.infoLabel}>Patrón completo:</Text>
+        <Text style={styles.infoText}>{scaleInfo.pattern}</Text>
         
-        {/* Frets - vertical lines */}
-        {Array.from({ length: numFrets + 1 }).map((_, i) => (
-          <View
-            key={`fret-${i}`}
-            style={{
-              position: 'absolute',
-              top: TOP_PADDING - 5,
-              bottom: TOP_PADDING - 5,
-              left: i * FRET_WIDTH,
-              width: i === 0 ? 4 : 2,
-              backgroundColor: i === 0 ? '#CCC' : '#555',
-            }}
-          />
-        ))}
+        <Text style={styles.infoLabel}>Digitación:</Text>
+        <Text style={styles.infoText}>{scaleInfo.fingers}</Text>
         
-        {/* Notes */}
-        {scaleData.notes.map((note, idx) => {
-          const fretPos = note.fret - startFret;
-          const left = (fretPos + 0.5) * FRET_WIDTH - 11;
-          const top = TOP_PADDING + note.string * STRING_GAP - 11;
-          const bgColor = note.isRoot ? COLORS_SCHEME.ROOT : COLORS_SCHEME.NOTE;
-          
-          return (
-            <View
-              key={`note-${idx}`}
-              style={{
-                position: 'absolute',
-                left,
-                top,
-                width: 22,
-                height: 22,
-                borderRadius: 11,
-                backgroundColor: bgColor,
-                borderWidth: 2,
-                borderColor: '#FFF',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 10 + idx,
-              }}
-            >
-              <Text style={styles.fingerText}>{note.finger}</Text>
-            </View>
-          );
-        })}
-      </View>
-      
-      {/* Fret numbers */}
-      <View style={[styles.fretNumRow, { width: width - 30 }]}>
-        {Array.from({ length: numFrets }).map((_, i) => (
-          <Text key={i} style={[styles.fretNum, { width: FRET_WIDTH }]}>
-            {startFret + i}
-          </Text>
-        ))}
-      </View>
-      
-      <Text style={styles.subtitle}>Trastes {startFret}-{endFret}</Text>
-      
-      {/* Legend */}
-      <View style={styles.legend}>
-        <View style={styles.legendItem}>
-          <View style={[styles.dot, { backgroundColor: COLORS_SCHEME.ROOT }]} />
-          <Text style={styles.legendText}>Raíz</Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.dot, { backgroundColor: COLORS_SCHEME.NOTE }]} />
-          <Text style={styles.legendText}>Notas</Text>
-        </View>
+        <Text style={styles.tipText}>💡 {scaleInfo.tips}</Text>
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { alignItems: 'center', paddingVertical: 8 },
-  
-  indicatorRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
+  container: {
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.primary,
     marginBottom: 8,
-    paddingHorizontal: 15,
   },
-  indicator: {
-    width: 26, height: 26, borderRadius: 13,
-    backgroundColor: '#00D68F',
-    alignItems: 'center', justifyContent: 'center',
+  infoCard: {
+    backgroundColor: COLORS.backgroundCard,
+    borderRadius: 12,
+    padding: SPACING.md,
+    width: '100%',
+    marginTop: SPACING.sm,
   },
-  indicatorText: { color: '#FFF', fontSize: 11, fontWeight: 'bold' },
-  
-  fretboard: {
-    backgroundColor: '#1E1810',
-    borderRadius: 4,
-    marginHorizontal: 15,
-    overflow: 'visible',
+  infoLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textSecondary,
+    marginTop: 4,
   },
-  
-  fingerText: { color: '#FFF', fontSize: 11, fontWeight: 'bold' },
-  
-  fretNumRow: {
-    flexDirection: 'row',
-    marginTop: 6,
-    marginHorizontal: 15,
+  infoText: {
+    fontSize: 14,
+    color: COLORS.text,
+    marginBottom: 8,
   },
-  fretNum: { fontSize: 11, color: '#888', fontWeight: '600', textAlign: 'center' },
-  
-  subtitle: { fontSize: 11, color: COLORS.primary, fontWeight: 'bold', marginTop: 4 },
-  
-  legend: { flexDirection: 'row', justifyContent: 'center', gap: 16, marginTop: 6 },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  dot: { width: 10, height: 10, borderRadius: 5 },
-  legendText: { fontSize: 11, color: '#888' },
+  tipText: {
+    fontSize: 13,
+    color: COLORS.warning,
+    fontStyle: 'italic',
+    marginTop: 4,
+  },
 });
