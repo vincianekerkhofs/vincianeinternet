@@ -147,6 +147,20 @@ export default function TodayScreen() {
           <Text style={styles.startButtonText}>Start Workout</Text>
         </TouchableOpacity>
 
+        {/* Explore Mode Button */}
+        <TouchableOpacity
+          style={styles.exploreButton}
+          onPress={() => router.push('/explore')}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="musical-notes" size={22} color={COLORS.secondary} />
+          <View style={styles.exploreTextContainer}>
+            <Text style={styles.exploreButtonTitle}>Explore Mode</Text>
+            <Text style={styles.exploreButtonSubtitle}>Improvise freely over backing tracks</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
+        </TouchableOpacity>
+
         {/* Routine Blocks */}
         <View style={styles.blocksSection}>
           <Text style={styles.sectionTitle}>Today's Routine</Text>
