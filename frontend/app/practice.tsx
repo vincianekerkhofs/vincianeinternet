@@ -587,7 +587,7 @@ const styles = StyleSheet.create({
   stageContent: { padding: SPACING.md },
   instructionCard: { backgroundColor: COLORS.primary + '15', borderRadius: BORDER_RADIUS.lg, padding: SPACING.lg, marginBottom: SPACING.md },
   instructionText: { fontSize: FONTS.sizes.md, color: COLORS.text, lineHeight: 24, textAlign: 'center' },
-  fretboardContainer: { backgroundColor: COLORS.backgroundCard, borderRadius: BORDER_RADIUS.xl, padding: SPACING.md, marginBottom: SPACING.md, overflow: 'visible' },
+  fretboardContainer: { backgroundColor: COLORS.backgroundCard, borderRadius: 0, padding: SPACING.md, marginBottom: SPACING.md, overflow: 'visible' },
   fretboardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.sm },
   sectionLabel: { fontSize: FONTS.sizes.sm, fontWeight: '600', color: COLORS.textMuted, textTransform: 'uppercase', letterSpacing: 1, marginBottom: SPACING.sm },
   additionalShapes: { marginBottom: SPACING.md },
