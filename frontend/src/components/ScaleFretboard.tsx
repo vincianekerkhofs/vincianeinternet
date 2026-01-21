@@ -279,8 +279,8 @@ const styles = StyleSheet.create({
   cell: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderLeftWidth: 2,
-    borderLeftColor: '#5A5A5A',
+    borderWidth: 1,
+    borderColor: '#F00',
   },
   string: {
     position: 'absolute',
