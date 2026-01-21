@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, Text, LayoutChangeEvent, Animated } from 'react-native';
-import { COLORS, FONTS, SPACING } from '../constants/theme';
+import { View, StyleSheet, Text, LayoutChangeEvent, Animated, TouchableOpacity, Modal } from 'react-native';
+import { COLORS, FONTS, SPACING, BORDER_RADIUS } from '../constants/theme';
 import Svg, { Line, Circle, Rect, G, Path, Defs, LinearGradient, Stop, Text as SvgText } from 'react-native-svg';
 import { SoloNote } from '../data/solosContent';
+import { getNoteAtFret, letterToSolfege, NOTE_MAPPING_REFERENCE } from '../utils/noteNames';
+import { Ionicons } from '@expo/vector-icons';
 
 interface Props {
   notes: SoloNote[][];  // Array of measures
@@ -13,9 +15,11 @@ interface Props {
   numFrets?: number;    // Number of frets to show
   height?: number;
   showAllNotes?: boolean; // Show all notes or just current measure
+  showNoteNames?: boolean; // Show note names on fretboard
 }
 
 const STRING_NAMES = ['e', 'B', 'G', 'D', 'A', 'E'];
+const STRING_NAMES_DUAL = ['e/Mi', 'B/Si', 'G/Sol', 'D/Re', 'A/La', 'E/Mi'];
 
 const THEME = {
   NOTE: '#00D68F',
