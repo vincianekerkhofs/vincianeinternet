@@ -25,14 +25,30 @@ export default function ExercisesScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
   const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
+  const [completedExercises, setCompletedExercises] = useState<string[]>([]);
+  const [completionStats, setCompletionStats] = useState({ percentComplete: 0, totalCompleted: 0 });
 
   useEffect(() => {
     loadInitialData();
   }, []);
 
+  // Refresh completion status when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      loadCompletionStatus();
+    }, [])
+  );
+
   useEffect(() => {
     loadExercises();
   }, [selectedDomain, selectedDifficulty, searchQuery]);
+
+  const loadCompletionStatus = async () => {
+    const completed = await getCompletedExercises();
+    const stats = await getCompletionStats();
+    setCompletedExercises(completed);
+    setCompletionStats(stats);
+  };
 
   const loadInitialData = async () => {
     try {
