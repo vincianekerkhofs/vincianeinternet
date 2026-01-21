@@ -18,7 +18,7 @@ export default function SolosScreen() {
     <TouchableOpacity 
       key={solo.id} 
       style={styles.soloCard}
-      onPress={() => router.push(`/solo/${solo.id}`)}
+      onPress={() => router.push(`/solo/${solo.id}` as any)}
     >
       <View style={styles.soloHeader}>
         <View style={styles.difficultyBadge}>
@@ -68,7 +68,7 @@ export default function SolosScreen() {
     <TouchableOpacity 
       key={comp.id} 
       style={styles.compositionCard}
-      onPress={() => router.push(`/composition/${comp.id}`)}
+      onPress={() => router.push(`/composition/${comp.id}` as any)}
     >
       <View style={styles.compositionHeader}>
         <Ionicons name="map-outline" size={24} color={COLORS.primary} />
