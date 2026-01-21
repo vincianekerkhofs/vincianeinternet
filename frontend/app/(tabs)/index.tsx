@@ -154,6 +154,20 @@ export default function HomeScreen() {
           
           <TouchableOpacity 
             style={styles.quickLink}
+            onPress={() => router.push('/techniques' as any)}
+          >
+            <View style={[styles.quickLinkIcon, { backgroundColor: '#8A7A9A20' }]}>
+              <Ionicons name="hand-left" size={24} color="#8A7A9A" />
+            </View>
+            <Text style={styles.quickLinkTitle}>Técnicas</Text>
+            <Text style={styles.quickLinkSubtitle}>Master Class</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Third row - Tuner */}
+        <View style={styles.quickLinks}>
+          <TouchableOpacity 
+            style={styles.quickLink}
             onPress={() => router.push('/tuner')}
           >
             <View style={[styles.quickLinkIcon, { backgroundColor: COLORS.success + '20' }]}>
@@ -162,6 +176,14 @@ export default function HomeScreen() {
             <Text style={styles.quickLinkTitle}>Afinador</Text>
             <Text style={styles.quickLinkSubtitle}>Afina tu guitarra</Text>
           </TouchableOpacity>
+          
+          <View style={[styles.quickLink, { opacity: 0.4 }]}>
+            <View style={[styles.quickLinkIcon, { backgroundColor: COLORS.textMuted + '20' }]}>
+              <Ionicons name="headset" size={24} color={COLORS.textMuted} />
+            </View>
+            <Text style={styles.quickLinkTitle}>Entrenamiento</Text>
+            <Text style={styles.quickLinkSubtitle}>Próximamente</Text>
+          </View>
         </View>
 
         {/* Tip of the Day */}
