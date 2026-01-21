@@ -238,7 +238,6 @@ export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
           {renderStrings()}
           {renderScaleNotes()}
         </Svg>
-        {renderFingerOverlays()}
       </View>
       
       {renderFretNumbers()}
