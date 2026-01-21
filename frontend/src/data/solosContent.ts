@@ -54,6 +54,520 @@ export interface FullNeckComposition {
 // ===========================================
 
 export const GUIDED_SOLOS: GuidedSolo[] = [
+  // ===========================================
+  // ROCK SOLOS
+  // ===========================================
+  
+  // ROCK SOLO 1 - Classic Rock Lick
+  {
+    id: 'rock_classic_lick',
+    title: 'Riff Clásico de Rock',
+    style: 'Rock',
+    difficulty: 'beginner',
+    bars: 8,
+    tempo: 100,
+    scale: 'Am Pentatonic',
+    positions: [1],
+    objective: 'Dominar el riff rock básico con acentos',
+    didacticIntro: [
+      'El rock es actitud y energía.',
+      'Cada nota debe sonar con fuerza.',
+      'El palm mute da el punch característico.',
+      'Los acentos en 2 y 4 son clave.',
+      'No te contengas, ¡toca con pasión!',
+    ],
+    notes: [
+      [
+        { string: 6, fret: 5, finger: 1, duration: 'q', isRoot: true },
+        { string: 6, fret: 8, finger: 4, duration: 'e' },
+        { string: 6, fret: 5, finger: 1, duration: 'e', isRoot: true },
+        { string: 5, fret: 7, finger: 3, duration: 'q' },
+        { string: 5, fret: 5, finger: 1, duration: 'q', isRoot: true },
+      ],
+      [
+        { string: 4, fret: 7, finger: 3, duration: 'q' },
+        { string: 4, fret: 5, finger: 1, duration: 'q' },
+        { string: 5, fret: 7, finger: 3, duration: 'q' },
+        { string: 5, fret: 5, finger: 1, duration: 'q', isRoot: true },
+      ],
+      [
+        { string: 3, fret: 5, finger: 1, duration: 'e' },
+        { string: 3, fret: 7, finger: 3, duration: 'e', technique: 'bend' },
+        { string: 3, fret: 5, finger: 1, duration: 'q' },
+        { string: 4, fret: 7, finger: 3, duration: 'q' },
+        { string: 4, fret: 5, finger: 1, duration: 'q' },
+      ],
+      [
+        { string: 5, fret: 5, finger: 1, duration: 'h', isRoot: true },
+        { string: 6, fret: 5, finger: 1, duration: 'h', isRoot: true, technique: 'vibrato' },
+      ],
+      [
+        { string: 6, fret: 5, finger: 1, duration: 'e', isRoot: true },
+        { string: 6, fret: 8, finger: 4, duration: 'e' },
+        { string: 5, fret: 5, finger: 1, duration: 'e', isRoot: true },
+        { string: 5, fret: 7, finger: 3, duration: 'e' },
+        { string: 4, fret: 5, finger: 1, duration: 'e' },
+        { string: 4, fret: 7, finger: 3, duration: 'e' },
+        { string: 3, fret: 5, finger: 1, duration: 'q' },
+      ],
+      [
+        { string: 2, fret: 5, finger: 1, duration: 'q' },
+        { string: 2, fret: 8, finger: 4, duration: 'q', technique: 'bend' },
+        { string: 1, fret: 5, finger: 1, duration: 'h', isRoot: true },
+      ],
+      [
+        { string: 1, fret: 8, finger: 4, duration: 'q', technique: 'bend' },
+        { string: 1, fret: 5, finger: 1, duration: 'q', isRoot: true },
+        { string: 2, fret: 8, finger: 4, duration: 'q' },
+        { string: 2, fret: 5, finger: 1, duration: 'q' },
+      ],
+      [
+        { string: 3, fret: 7, finger: 3, duration: 'q' },
+        { string: 5, fret: 5, finger: 1, duration: 'h', isRoot: true, technique: 'vibrato' },
+        { string: 6, fret: 5, finger: 1, duration: 'q', isRoot: true },
+      ],
+    ],
+  },
+
+  // ROCK SOLO 2 - Power Rock
+  {
+    id: 'rock_power_solo',
+    title: 'Power Rock Solo',
+    style: 'Rock',
+    difficulty: 'intermediate',
+    bars: 12,
+    tempo: 120,
+    scale: 'Em Pentatonic',
+    positions: [1, 2],
+    objective: 'Energía constante con cambios de posición',
+    didacticIntro: [
+      'El rock con energía necesita velocidad controlada.',
+      'No corras, mantén el groove.',
+      'Los power chords dan el fundamento.',
+      'El solo debe complementar el riff.',
+      'Usa los silencios como arma secreta.',
+    ],
+    notes: [
+      [
+        { string: 6, fret: 0, finger: 0, duration: 'q', isRoot: true },
+        { string: 6, fret: 3, finger: 3, duration: 'e' },
+        { string: 6, fret: 0, finger: 0, duration: 'e', isRoot: true },
+        { string: 5, fret: 2, finger: 2, duration: 'q' },
+        { string: 5, fret: 0, finger: 0, duration: 'q' },
+      ],
+      [
+        { string: 4, fret: 2, finger: 2, duration: 'q' },
+        { string: 4, fret: 0, finger: 0, duration: 'e' },
+        { string: 3, fret: 2, finger: 2, duration: 'e' },
+        { string: 3, fret: 0, finger: 0, duration: 'q' },
+        { string: 2, fret: 0, finger: 0, duration: 'q' },
+      ],
+      [
+        { string: 1, fret: 0, finger: 0, duration: 'q' },
+        { string: 1, fret: 3, finger: 3, duration: 'q', technique: 'bend' },
+        { string: 1, fret: 0, finger: 0, duration: 'h' },
+      ],
+      [
+        { string: 1, fret: 0, finger: 0, duration: 'q', technique: 'slide' },
+        { string: 1, fret: 5, finger: 1, duration: 'q' },
+        { string: 2, fret: 5, finger: 1, duration: 'q' },
+        { string: 2, fret: 8, finger: 4, duration: 'q' },
+      ],
+      [
+        { string: 1, fret: 5, finger: 1, duration: 'e' },
+        { string: 1, fret: 7, finger: 3, duration: 'e' },
+        { string: 1, fret: 5, finger: 1, duration: 'e' },
+        { string: 2, fret: 8, finger: 4, duration: 'e' },
+        { string: 2, fret: 5, finger: 1, duration: 'q' },
+        { string: 3, fret: 7, finger: 3, duration: 'q' },
+      ],
+      [
+        { string: 3, fret: 5, finger: 1, duration: 'q' },
+        { string: 4, fret: 7, finger: 3, duration: 'q', technique: 'hammer' },
+        { string: 4, fret: 5, finger: 1, duration: 'q' },
+        { string: 5, fret: 7, finger: 3, duration: 'q' },
+      ],
+      [
+        { string: 5, fret: 5, finger: 1, duration: 'q' },
+        { string: 6, fret: 7, finger: 3, duration: 'q' },
+        { string: 6, fret: 5, finger: 1, duration: 'q' },
+        { string: 5, fret: 7, finger: 3, duration: 'q' },
+      ],
+      [
+        { string: 4, fret: 7, finger: 3, duration: 'q', technique: 'bend' },
+        { string: 4, fret: 5, finger: 1, duration: 'q' },
+        { string: 3, fret: 7, finger: 3, duration: 'h', technique: 'vibrato' },
+      ],
+      [
+        { string: 2, fret: 8, finger: 4, duration: 'q' },
+        { string: 2, fret: 5, finger: 1, duration: 'q' },
+        { string: 1, fret: 7, finger: 3, duration: 'q', technique: 'bend' },
+        { string: 1, fret: 5, finger: 1, duration: 'q' },
+      ],
+      [
+        { string: 2, fret: 5, finger: 1, duration: 'q' },
+        { string: 3, fret: 5, finger: 1, duration: 'q' },
+        { string: 4, fret: 5, finger: 1, duration: 'q' },
+        { string: 5, fret: 5, finger: 1, duration: 'q' },
+      ],
+      [
+        { string: 6, fret: 5, finger: 1, duration: 'q', technique: 'slide' },
+        { string: 6, fret: 0, finger: 0, duration: 'q', isRoot: true },
+        { string: 5, fret: 2, finger: 2, duration: 'q' },
+        { string: 5, fret: 0, finger: 0, duration: 'q' },
+      ],
+      [
+        { string: 6, fret: 0, finger: 0, duration: 'w', isRoot: true, technique: 'vibrato' },
+      ],
+    ],
+  },
+
+  // ===========================================
+  // BLUES SOLOS
+  // ===========================================
+  
+  // BLUES SOLO 1 - Slow Blues
+  {
+    id: 'blues_slow_feeling',
+    title: 'Blues Lento con Sentimiento',
+    style: 'Blues',
+    difficulty: 'beginner',
+    bars: 12,
+    tempo: 60,
+    scale: 'Am Blues',
+    positions: [1],
+    objective: 'Expresión y feeling sobre velocidad',
+    didacticIntro: [
+      'El blues es emoción pura.',
+      'Cada nota cuenta una historia.',
+      'Los bends son tu voz.',
+      'Deja respirar las frases.',
+      'El silencio es tan importante como el sonido.',
+      'Toca desde el corazón.',
+    ],
+    notes: [
+      [
+        { string: 2, fret: 5, finger: 1, duration: 'h' },
+        { string: 2, fret: 8, finger: 4, duration: 'h', technique: 'bend' },
+      ],
+      [
+        { string: 1, fret: 5, finger: 1, duration: 'w', isRoot: true, technique: 'vibrato' },
+      ],
+      [
+        { string: 2, fret: 8, finger: 4, duration: 'q', technique: 'bend' },
+        { string: 2, fret: 5, finger: 1, duration: 'q' },
+        { string: 3, fret: 7, finger: 3, duration: 'h' },
+      ],
+      [
+        { string: 3, fret: 5, finger: 1, duration: 'q' },
+        { string: 4, fret: 7, finger: 3, duration: 'q' },
+        { string: 4, fret: 6, finger: 2, duration: 'q' },
+        { string: 4, fret: 5, finger: 1, duration: 'q' },
+      ],
+      [
+        { string: 5, fret: 7, finger: 3, duration: 'h' },
+        { string: 5, fret: 5, finger: 1, duration: 'h', isRoot: true },
+      ],
+      [
+        { string: 6, fret: 8, finger: 4, duration: 'q' },
+        { string: 6, fret: 5, finger: 1, duration: 'h', isRoot: true, technique: 'vibrato' },
+        { string: 5, fret: 5, finger: 1, duration: 'q', isRoot: true },
+      ],
+      [
+        { string: 4, fret: 5, finger: 1, duration: 'q' },
+        { string: 4, fret: 6, finger: 2, duration: 'q' },
+        { string: 4, fret: 7, finger: 3, duration: 'h', technique: 'bend' },
+      ],
+      [
+        { string: 3, fret: 5, finger: 1, duration: 'q' },
+        { string: 3, fret: 7, finger: 3, duration: 'q', technique: 'vibrato' },
+        { string: 2, fret: 5, finger: 1, duration: 'h' },
+      ],
+      [
+        { string: 2, fret: 8, finger: 4, duration: 'q', technique: 'bend' },
+        { string: 2, fret: 5, finger: 1, duration: 'q' },
+        { string: 1, fret: 8, finger: 4, duration: 'h', technique: 'bend' },
+      ],
+      [
+        { string: 1, fret: 5, finger: 1, duration: 'w', isRoot: true, technique: 'vibrato' },
+      ],
+      [
+        { string: 2, fret: 5, finger: 1, duration: 'q' },
+        { string: 3, fret: 5, finger: 1, duration: 'q' },
+        { string: 4, fret: 5, finger: 1, duration: 'q' },
+        { string: 5, fret: 5, finger: 1, duration: 'q', isRoot: true },
+      ],
+      [
+        { string: 6, fret: 5, finger: 1, duration: 'w', isRoot: true, technique: 'vibrato' },
+      ],
+    ],
+  },
+
+  // BLUES SOLO 2 - Shuffle Blues
+  {
+    id: 'blues_shuffle_solo',
+    title: 'Solo Shuffle Blues',
+    style: 'Blues',
+    difficulty: 'intermediate',
+    bars: 12,
+    tempo: 75,
+    scale: 'Am Blues',
+    positions: [1],
+    objective: 'Dominar el ritmo shuffle con la blue note',
+    didacticIntro: [
+      'El shuffle es el corazón del blues.',
+      'Largo-corto, largo-corto.',
+      'La blue note añade tensión.',
+      'Resuelve siempre a la raíz.',
+      'El groove es más importante que las notas.',
+    ],
+    notes: [
+      [
+        { string: 5, fret: 5, finger: 1, duration: 'q', isRoot: true },
+        { string: 5, fret: 7, finger: 3, duration: 'e' },
+        { string: 5, fret: 5, finger: 1, duration: 'e', isRoot: true },
+        { string: 4, fret: 5, finger: 1, duration: 'q' },
+        { string: 4, fret: 6, finger: 2, duration: 'q' },
+      ],
+      [
+        { string: 4, fret: 7, finger: 3, duration: 'q', technique: 'bend' },
+        { string: 4, fret: 5, finger: 1, duration: 'q' },
+        { string: 3, fret: 5, finger: 1, duration: 'q' },
+        { string: 3, fret: 7, finger: 3, duration: 'q' },
+      ],
+      [
+        { string: 2, fret: 5, finger: 1, duration: 'e' },
+        { string: 2, fret: 8, finger: 4, duration: 'e', technique: 'bend' },
+        { string: 2, fret: 5, finger: 1, duration: 'q' },
+        { string: 1, fret: 5, finger: 1, duration: 'h', isRoot: true },
+      ],
+      [
+        { string: 1, fret: 8, finger: 4, duration: 'q', technique: 'bend' },
+        { string: 1, fret: 5, finger: 1, duration: 'q', isRoot: true },
+        { string: 2, fret: 8, finger: 4, duration: 'q' },
+        { string: 2, fret: 5, finger: 1, duration: 'q' },
+      ],
+      [
+        { string: 3, fret: 7, finger: 3, duration: 'q' },
+        { string: 3, fret: 5, finger: 1, duration: 'q' },
+        { string: 4, fret: 7, finger: 3, duration: 'q' },
+        { string: 4, fret: 6, finger: 2, duration: 'q' },
+      ],
+      [
+        { string: 4, fret: 5, finger: 1, duration: 'h' },
+        { string: 5, fret: 7, finger: 3, duration: 'q' },
+        { string: 5, fret: 5, finger: 1, duration: 'q', isRoot: true },
+      ],
+      [
+        { string: 6, fret: 5, finger: 1, duration: 'q', isRoot: true },
+        { string: 6, fret: 8, finger: 4, duration: 'e' },
+        { string: 6, fret: 5, finger: 1, duration: 'e', isRoot: true },
+        { string: 5, fret: 5, finger: 1, duration: 'q', isRoot: true },
+        { string: 5, fret: 7, finger: 3, duration: 'q' },
+      ],
+      [
+        { string: 4, fret: 5, finger: 1, duration: 'q' },
+        { string: 4, fret: 6, finger: 2, duration: 'q' },
+        { string: 4, fret: 7, finger: 3, duration: 'h', technique: 'vibrato' },
+      ],
+      [
+        { string: 3, fret: 5, finger: 1, duration: 'q' },
+        { string: 3, fret: 7, finger: 3, duration: 'q', technique: 'bend' },
+        { string: 2, fret: 5, finger: 1, duration: 'h' },
+      ],
+      [
+        { string: 2, fret: 8, finger: 4, duration: 'q', technique: 'bend' },
+        { string: 2, fret: 5, finger: 1, duration: 'q' },
+        { string: 3, fret: 7, finger: 3, duration: 'q' },
+        { string: 3, fret: 5, finger: 1, duration: 'q' },
+      ],
+      [
+        { string: 4, fret: 7, finger: 3, duration: 'q' },
+        { string: 4, fret: 5, finger: 1, duration: 'q' },
+        { string: 5, fret: 7, finger: 3, duration: 'q' },
+        { string: 5, fret: 5, finger: 1, duration: 'q', isRoot: true },
+      ],
+      [
+        { string: 6, fret: 5, finger: 1, duration: 'w', isRoot: true, technique: 'vibrato' },
+      ],
+    ],
+  },
+
+  // ===========================================
+  // METAL SOLOS
+  // ===========================================
+  
+  // METAL SOLO 1 - Metal Intro
+  {
+    id: 'metal_power_intro',
+    title: 'Intro Metal Poderoso',
+    style: 'Metal',
+    difficulty: 'intermediate',
+    bars: 8,
+    tempo: 140,
+    scale: 'Em Pentatonic',
+    positions: [1],
+    objective: 'Precisión y velocidad con palm mute',
+    didacticIntro: [
+      'El metal requiere precisión absoluta.',
+      'Palm mute apretado en las notas graves.',
+      'Púa alternada para velocidad.',
+      'Cada nota debe ser clara como un cristal.',
+      'La distorsión amplifica los errores.',
+      'Practica lento, toca rápido.',
+    ],
+    notes: [
+      [
+        { string: 6, fret: 0, finger: 0, duration: 'e', isRoot: true },
+        { string: 6, fret: 0, finger: 0, duration: 'e', isRoot: true },
+        { string: 6, fret: 0, finger: 0, duration: 'e', isRoot: true },
+        { string: 6, fret: 3, finger: 3, duration: 'e' },
+        { string: 6, fret: 5, finger: 1, duration: 'e' },
+        { string: 6, fret: 3, finger: 3, duration: 'e' },
+        { string: 6, fret: 0, finger: 0, duration: 'q', isRoot: true },
+      ],
+      [
+        { string: 5, fret: 2, finger: 2, duration: 'e' },
+        { string: 5, fret: 0, finger: 0, duration: 'e' },
+        { string: 6, fret: 3, finger: 3, duration: 'e' },
+        { string: 6, fret: 0, finger: 0, duration: 'e', isRoot: true },
+        { string: 6, fret: 0, finger: 0, duration: 'h', isRoot: true },
+      ],
+      [
+        { string: 4, fret: 2, finger: 2, duration: 'e' },
+        { string: 4, fret: 0, finger: 0, duration: 'e' },
+        { string: 3, fret: 2, finger: 2, duration: 'e' },
+        { string: 3, fret: 0, finger: 0, duration: 'e' },
+        { string: 2, fret: 0, finger: 0, duration: 'q' },
+        { string: 1, fret: 0, finger: 0, duration: 'q' },
+      ],
+      [
+        { string: 1, fret: 3, finger: 3, duration: 'q', technique: 'bend' },
+        { string: 1, fret: 0, finger: 0, duration: 'q' },
+        { string: 2, fret: 3, finger: 3, duration: 'q' },
+        { string: 2, fret: 0, finger: 0, duration: 'q' },
+      ],
+      [
+        { string: 6, fret: 0, finger: 0, duration: 'e', isRoot: true },
+        { string: 6, fret: 0, finger: 0, duration: 'e', isRoot: true },
+        { string: 6, fret: 1, finger: 1, duration: 'e' },
+        { string: 6, fret: 2, finger: 2, duration: 'e' },
+        { string: 6, fret: 3, finger: 3, duration: 'e' },
+        { string: 6, fret: 2, finger: 2, duration: 'e' },
+        { string: 6, fret: 0, finger: 0, duration: 'q', isRoot: true },
+      ],
+      [
+        { string: 5, fret: 0, finger: 0, duration: 'e' },
+        { string: 5, fret: 2, finger: 2, duration: 'e' },
+        { string: 5, fret: 3, finger: 3, duration: 'e' },
+        { string: 5, fret: 2, finger: 2, duration: 'e' },
+        { string: 5, fret: 0, finger: 0, duration: 'h' },
+      ],
+      [
+        { string: 4, fret: 0, finger: 0, duration: 'e' },
+        { string: 4, fret: 2, finger: 2, duration: 'e' },
+        { string: 4, fret: 4, finger: 4, duration: 'e' },
+        { string: 4, fret: 2, finger: 2, duration: 'e' },
+        { string: 4, fret: 0, finger: 0, duration: 'e' },
+        { string: 5, fret: 2, finger: 2, duration: 'e' },
+        { string: 6, fret: 0, finger: 0, duration: 'q', isRoot: true },
+      ],
+      [
+        { string: 6, fret: 0, finger: 0, duration: 'w', isRoot: true, technique: 'vibrato' },
+      ],
+    ],
+  },
+
+  // METAL SOLO 2 - Shred Mini
+  {
+    id: 'metal_shred_mini',
+    title: 'Mini Shred de Metal',
+    style: 'Metal',
+    difficulty: 'advanced',
+    bars: 8,
+    tempo: 160,
+    scale: 'Em Pentatonic',
+    positions: [1, 2],
+    objective: 'Velocidad con hammer-ons y pull-offs',
+    didacticIntro: [
+      'El shred es economía de movimiento.',
+      'Hammer-ons y pull-offs ahorran púas.',
+      'La mano izquierda hace el trabajo.',
+      'Relaja la tensión, aumenta la velocidad.',
+      'Practica cada frase aislada.',
+      'Luego conecta todo el solo.',
+    ],
+    notes: [
+      [
+        { string: 1, fret: 5, finger: 1, duration: 'e' },
+        { string: 1, fret: 7, finger: 3, duration: 'e', technique: 'hammer' },
+        { string: 1, fret: 8, finger: 4, duration: 'e', technique: 'pull' },
+        { string: 1, fret: 7, finger: 3, duration: 'e' },
+        { string: 1, fret: 5, finger: 1, duration: 'e' },
+        { string: 2, fret: 8, finger: 4, duration: 'e' },
+        { string: 2, fret: 5, finger: 1, duration: 'q' },
+      ],
+      [
+        { string: 3, fret: 5, finger: 1, duration: 'e' },
+        { string: 3, fret: 7, finger: 3, duration: 'e', technique: 'hammer' },
+        { string: 4, fret: 5, finger: 1, duration: 'e' },
+        { string: 4, fret: 7, finger: 3, duration: 'e', technique: 'hammer' },
+        { string: 5, fret: 5, finger: 1, duration: 'e' },
+        { string: 5, fret: 7, finger: 3, duration: 'e', technique: 'hammer' },
+        { string: 6, fret: 5, finger: 1, duration: 'q' },
+      ],
+      [
+        { string: 6, fret: 5, finger: 1, duration: 'e' },
+        { string: 5, fret: 7, finger: 3, duration: 'e' },
+        { string: 5, fret: 5, finger: 1, duration: 'e' },
+        { string: 4, fret: 7, finger: 3, duration: 'e' },
+        { string: 4, fret: 5, finger: 1, duration: 'e' },
+        { string: 3, fret: 7, finger: 3, duration: 'e' },
+        { string: 3, fret: 5, finger: 1, duration: 'q' },
+      ],
+      [
+        { string: 2, fret: 5, finger: 1, duration: 'e' },
+        { string: 2, fret: 8, finger: 4, duration: 'e' },
+        { string: 1, fret: 5, finger: 1, duration: 'e' },
+        { string: 1, fret: 8, finger: 4, duration: 'e' },
+        { string: 1, fret: 8, finger: 4, duration: 'h', technique: 'bend' },
+      ],
+      [
+        { string: 1, fret: 8, finger: 4, duration: 'e', technique: 'slide' },
+        { string: 1, fret: 10, finger: 1, duration: 'e' },
+        { string: 1, fret: 12, finger: 3, duration: 'e', technique: 'hammer' },
+        { string: 1, fret: 10, finger: 1, duration: 'e', technique: 'pull' },
+        { string: 2, fret: 10, finger: 1, duration: 'e' },
+        { string: 2, fret: 12, finger: 3, duration: 'e', technique: 'hammer' },
+        { string: 2, fret: 10, finger: 1, duration: 'q', technique: 'pull' },
+      ],
+      [
+        { string: 3, fret: 9, finger: 1, duration: 'e' },
+        { string: 3, fret: 12, finger: 4, duration: 'e', technique: 'hammer' },
+        { string: 4, fret: 9, finger: 1, duration: 'e' },
+        { string: 4, fret: 12, finger: 4, duration: 'e', technique: 'hammer' },
+        { string: 5, fret: 10, finger: 1, duration: 'e' },
+        { string: 5, fret: 12, finger: 3, duration: 'e', technique: 'hammer' },
+        { string: 6, fret: 12, finger: 3, duration: 'q', isRoot: true },
+      ],
+      [
+        { string: 6, fret: 12, finger: 3, duration: 'e', isRoot: true, technique: 'slide' },
+        { string: 6, fret: 5, finger: 1, duration: 'e' },
+        { string: 5, fret: 7, finger: 3, duration: 'e' },
+        { string: 5, fret: 5, finger: 1, duration: 'e' },
+        { string: 4, fret: 7, finger: 3, duration: 'q' },
+        { string: 4, fret: 5, finger: 1, duration: 'q' },
+      ],
+      [
+        { string: 6, fret: 0, finger: 0, duration: 'w', isRoot: true, technique: 'vibrato' },
+      ],
+    ],
+  },
+
+  // ===========================================
+  // PENTATONIC SOLOS (original ones)
+  // ===========================================
+  
   // PENTATONIC BOX 1 SOLO
   {
     id: 'pent_box1_intro',
