@@ -163,11 +163,12 @@ export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
                 width: 22,
                 height: 22,
                 borderRadius: 11,
-                backgroundColor: isActive ? bgColor : '#333',
+                backgroundColor: bgColor,
                 borderWidth: 2,
-                borderColor: bgColor,
+                borderColor: '#FFF',
                 alignItems: 'center',
                 justifyContent: 'center',
+                zIndex: 10 + idx,
               }}
             >
               <Text style={styles.fingerText}>{note.finger}</Text>
