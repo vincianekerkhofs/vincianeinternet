@@ -122,7 +122,7 @@ export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
 
   // Fretboard with strings, frets and notes
   const renderFretboard = () => (
-    <View style={[styles.fretboard, { width: fretboardWidth, height: fretboardHeight }]}>
+    <View style={[styles.fretboard, { width: fretboardWidth, height: fretboardHeight, paddingVertical: 15 }]}>
       {/* Strings */}
       {[0, 1, 2, 3, 4, 5].map(i => (
         <View
@@ -130,7 +130,7 @@ export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
           style={[
             styles.string,
             {
-              top: i * stringSpacing,
+              top: 15 + i * stringSpacing,
               height: 2 + i * 0.5,
               backgroundColor: isActive ? COLORS_SCHEME.NOTE : COLORS_SCHEME.STRING,
             },
@@ -157,7 +157,7 @@ export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
       {scaleData.notes.map((note, idx) => {
         const fretPos = note.fret - startFret;
         const left = (fretPos + 0.5) * fretWidth - 12;
-        const top = note.string * stringSpacing - 12;
+        const top = 15 + note.string * stringSpacing - 12;
         const color = note.isRoot ? COLORS_SCHEME.ROOT : COLORS_SCHEME.NOTE;
         
         return (
