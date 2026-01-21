@@ -57,12 +57,123 @@ const SCALES: Record<string, {
 };
 
 const STRING_NAMES = ['e', 'B', 'G', 'D', 'A', 'E'];
+// Dual naming: letter/solfege
+const STRING_NAMES_DUAL = ['e/Mi', 'B/Si', 'G/Sol', 'D/Re', 'A/La', 'E/Mi'];
 const NUM_FRETS = 4;
 
 const THEME = {
   NOTE: '#00D68F',
   ROOT: '#FF6B35',
 };
+
+// Note Names Info Modal Component
+const NoteNamesModal: React.FC<{ visible: boolean; onClose: () => void }> = ({ visible, onClose }) => (
+  <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <View style={modalStyles.overlay}>
+      <View style={modalStyles.container}>
+        <View style={modalStyles.header}>
+          <Text style={modalStyles.title}>Equivalencia de Notas</Text>
+          <TouchableOpacity onPress={onClose} style={modalStyles.closeBtn}>
+            <Ionicons name="close" size={24} color={COLORS.text} />
+          </TouchableOpacity>
+        </View>
+        <Text style={modalStyles.subtitle}>Notación Anglosajona ↔ Solfeo Latino</Text>
+        <View style={modalStyles.table}>
+          {NOTE_MAPPING_REFERENCE.slice(0, 7).map((item, idx) => (
+            <View key={idx} style={modalStyles.row}>
+              <Text style={modalStyles.letter}>{item.letter}</Text>
+              <Text style={modalStyles.equals}>=</Text>
+              <Text style={modalStyles.solfege}>{item.solfege}</Text>
+            </View>
+          ))}
+        </View>
+        <Text style={modalStyles.note}>
+          # = sostenido (sharp) · b = bemol (flat)
+        </Text>
+        <Text style={modalStyles.example}>
+          Ejemplo: F# = Fa# · Bb = Sib
+        </Text>
+      </View>
+    </View>
+  </Modal>
+);
+
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.lg,
+  },
+  container: {
+    backgroundColor: COLORS.backgroundCard,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.xl,
+    width: '100%',
+    maxWidth: 320,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  title: {
+    fontSize: FONTS.sizes.lg,
+    fontWeight: '800',
+    color: COLORS.text,
+  },
+  closeBtn: {
+    padding: 4,
+  },
+  subtitle: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.textSecondary,
+    marginBottom: SPACING.lg,
+  },
+  table: {
+    marginBottom: SPACING.md,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.surfaceLight,
+  },
+  letter: {
+    flex: 1,
+    fontSize: FONTS.sizes.lg,
+    fontWeight: '700',
+    color: COLORS.primary,
+    textAlign: 'center',
+  },
+  equals: {
+    fontSize: FONTS.sizes.lg,
+    color: COLORS.textMuted,
+    marginHorizontal: SPACING.sm,
+  },
+  solfege: {
+    flex: 1,
+    fontSize: FONTS.sizes.lg,
+    fontWeight: '700',
+    color: COLORS.success,
+    textAlign: 'center',
+  },
+  note: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.textMuted,
+    textAlign: 'center',
+    marginTop: SPACING.sm,
+  },
+  example: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.primary,
+    textAlign: 'center',
+    marginTop: SPACING.xs,
+  },
+});
 
 export const ScaleFretboard: React.FC<Props> = ({
   scaleName,
