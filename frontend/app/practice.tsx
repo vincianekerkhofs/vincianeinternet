@@ -18,6 +18,7 @@ import { ChordFretboard } from '../src/components/ChordFretboard';
 import { ScaleFretboard } from '../src/components/ScaleFretboard';
 import { StrumVisualizer } from '../src/components/StrumVisualizer';
 import { WeekIntroModal } from '../src/components/WeekIntroModal';
+import { SuggestedExercises } from '../src/components/SuggestedExercises';
 import { useStore } from '../src/store/useStore';
 import { 
   CURRICULUM, 
@@ -29,6 +30,8 @@ import {
 } from '../src/data/curriculum';
 import { getStrumPatternByStyle, STRUM_PATTERNS } from '../src/data/strumPatterns';
 import { getWeekIntro } from '../src/data/pedagogicalContent';
+import { getSuggestedExercises } from '../src/data/exerciseMapping';
+import { getExercises } from '../src/services/api';
 import { 
   isExerciseComplete, 
   markExerciseComplete, 
