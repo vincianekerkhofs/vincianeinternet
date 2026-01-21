@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,9 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons'
+import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import { COLORS, FONTS, SPACING, BORDER_RADIUS, getDifficultyColor, getDomainColor } from '../src/constants/theme';
@@ -18,68 +17,77 @@ import { getExercise } from '../src/services/api';
 import { Fretboard, FretboardNote } from '../src/components/Fretboard';
 import { TabDisplay, TabNote } from '../src/components/TabDisplay';
 import { useStore } from '../src/store/useStore';
-import { useMetronome } from '../src/hooks/useMetronome';
+import { usePlaybackEngine } from '../src/hooks/usePlaybackEngine';
 import { generateExerciseNotes, tabNotesToFretboard, calculateFretRange } from '../src/utils/exerciseNotes';
 
 const { width } = Dimensions.get('window');
+const TOTAL_BEATS = 8;
 
 export default function PracticeScreen() {
   const { exerciseId } = useLocalSearchParams<{ exerciseId: string }>();
   const [exercise, setExercise] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentBeat, setCurrentBeat] = useState(1);
   const [showInfo, setShowInfo] = useState(false);
-  const [metronomeEnabled, setMetronomeEnabled] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(true);
   const [loopEnabled, setLoopEnabled] = useState(true);
+  const [showFingering, setShowFingering] = useState(true);
   const { bpm, setBpm } = useStore();
   
-  const totalBeats = 8;
-  const playbackRef = useRef<NodeJS.Timeout | null>(null);
-  
-  // Exercise notes
+  // Exercise notes state
   const [exerciseNotes, setExerciseNotes] = useState<TabNote[]>([]);
   const [fretRange, setFretRange] = useState({ startFret: 0, numFrets: 5 });
   
-  // Fretboard notes derived from current beat
+  // Fretboard notes
   const [currentFretboardNotes, setCurrentFretboardNotes] = useState<FretboardNote[]>([]);
   const [previewFretboardNotes, setPreviewFretboardNotes] = useState<FretboardNote[]>([]);
   const [allFretboardNotes, setAllFretboardNotes] = useState<FretboardNote[]>([]);
 
-  // Metronome
-  const { audioReady, needsUserInteraction, initAudio } = useMetronome({
+  // Unified playback engine - SINGLE SOURCE OF TRUTH for timing
+  const {
+    isPlaying,
+    currentBeat,
+    audioReady,
+    needsUserInteraction,
+    start,
+    stop,
+    toggle,
+    initAudio,
+  } = usePlaybackEngine({
     bpm,
-    enabled: isPlaying && metronomeEnabled,
+    totalBeats: TOTAL_BEATS,
+    loop: loopEnabled,
+    soundEnabled,
     volume: 0.6,
-    onBeat: (beat) => {
-      setCurrentBeat(beat);
+    onBeatChange: (beat) => {
+      // Update fretboard visualization when beat changes
+      if (exerciseNotes.length > 0) {
+        const { allNotes, currentNotes, previewNotes } = tabNotesToFretboard(exerciseNotes, beat);
+        setAllFretboardNotes(allNotes);
+        setCurrentFretboardNotes(currentNotes);
+        setPreviewFretboardNotes(previewNotes);
+      }
     },
   });
 
-  // Load exercise
+  // Load exercise on mount
   useEffect(() => {
     if (exerciseId) {
       loadExercise();
     }
     return () => {
-      stopPlayback();
+      stop();
     };
   }, [exerciseId]);
 
-  // Update fretboard when beat changes
+  // Update fretboard when not playing (for initial display)
   useEffect(() => {
-    if (exerciseNotes.length > 0) {
-      const { allNotes, currentNotes, previewNotes } = tabNotesToFretboard(exerciseNotes, currentBeat);
+    if (exerciseNotes.length > 0 && !isPlaying) {
+      const { allNotes, currentNotes, previewNotes } = tabNotesToFretboard(exerciseNotes, 1);
       setAllFretboardNotes(allNotes);
-      setCurrentFretboardNotes(currentNotes);
+      setCurrentFretboardNotes([]);
       setPreviewFretboardNotes(previewNotes);
-      
-      // Debug logging
-      if (currentNotes.length > 0) {
-        console.log(`Beat ${currentBeat}: Current notes:`, currentNotes);
-      }
     }
-  }, [currentBeat, exerciseNotes]);
+  }, [exerciseNotes, isPlaying]);
 
   const loadExercise = async () => {
     try {
@@ -87,7 +95,7 @@ export default function PracticeScreen() {
       setExercise(data);
       setBpm(data.bpm_start || 80);
       
-      // Generate or use exercise notes
+      // Generate exercise notes with fingering
       const notes = generateExerciseNotes(exerciseId as string);
       setExerciseNotes(notes);
       
@@ -96,67 +104,15 @@ export default function PracticeScreen() {
       setFretRange(range);
       
       // Initialize fretboard display
-      const { allNotes } = tabNotesToFretboard(notes, 1);
+      const { allNotes, previewNotes } = tabNotesToFretboard(notes, 1);
       setAllFretboardNotes(allNotes);
+      setPreviewFretboardNotes(previewNotes);
     } catch (error) {
       console.error('Error loading exercise:', error);
     } finally {
       setLoading(false);
     }
   };
-
-  const stopPlayback = () => {
-    if (playbackRef.current) {
-      clearInterval(playbackRef.current);
-      playbackRef.current = null;
-    }
-    setIsPlaying(false);
-  };
-
-  const togglePlay = useCallback(async () => {
-    if (isPlaying) {
-      stopPlayback();
-      setCurrentBeat(1);
-    } else {
-      // Initialize audio on user interaction
-      if (Platform.OS === 'web') {
-        await initAudio();
-      }
-      
-      setIsPlaying(true);
-      setCurrentBeat(1);
-      
-      // If metronome is disabled, handle beat progression manually
-      if (!metronomeEnabled) {
-        const beatInterval = (60 / bpm) * 1000;
-        playbackRef.current = setInterval(() => {
-          setCurrentBeat((prev) => {
-            const next = prev + 1;
-            if (next > totalBeats) {
-              if (loopEnabled) {
-                return 1;
-              } else {
-                stopPlayback();
-                return 1;
-              }
-            }
-            return next;
-          });
-        }, beatInterval);
-      }
-    }
-  }, [isPlaying, bpm, metronomeEnabled, loopEnabled, initAudio]);
-
-  // Handle loop completion
-  useEffect(() => {
-    if (isPlaying && currentBeat > totalBeats) {
-      if (loopEnabled) {
-        setCurrentBeat(1);
-      } else {
-        stopPlayback();
-      }
-    }
-  }, [currentBeat, isPlaying, loopEnabled]);
 
   const adjustBpm = (delta: number) => {
     const newBpm = Math.max(40, Math.min(200, bpm + delta));
@@ -166,6 +122,13 @@ export default function PracticeScreen() {
   const handleSliderChange = (value: number) => {
     setBpm(Math.round(value));
   };
+
+  // Toggle sound WITHOUT affecting playback position
+  const handleSoundToggle = useCallback(() => {
+    setSoundEnabled(prev => !prev);
+    // Note: The playback engine reads soundEnabled via ref, 
+    // so toggling doesn't reset timing
+  }, []);
 
   if (loading) {
     return (
@@ -269,21 +232,33 @@ export default function PracticeScreen() {
             currentNotes={currentFretboardNotes}
             previewNotes={previewFretboardNotes}
             width={width - SPACING.lg * 2}
-            height={180}
+            height={200}
             startFret={fretRange.startFret}
             numFrets={fretRange.numFrets}
+            showFingering={showFingering}
           />
         </View>
 
         {/* Tab Display */}
         <View style={styles.tabSection}>
-          <Text style={styles.sectionLabel}>Tablature</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionLabel}>Tablature</Text>
+            <TouchableOpacity 
+              style={styles.fingeringToggle}
+              onPress={() => setShowFingering(!showFingering)}
+            >
+              <Text style={[styles.fingeringToggleText, showFingering && styles.fingeringToggleActive]}>
+                {showFingering ? 'Fingering ON' : 'Fingering OFF'}
+              </Text>
+            </TouchableOpacity>
+          </View>
           <TabDisplay
             notes={exerciseNotes}
             currentBeat={currentBeat}
-            totalBeats={totalBeats}
+            totalBeats={TOTAL_BEATS}
             timeSignature="4/4"
             isPlaying={isPlaying}
+            showFingering={showFingering}
           />
         </View>
 
@@ -352,7 +327,7 @@ export default function PracticeScreen() {
           </View>
         )}
 
-        <View style={{ height: 140 }} />
+        <View style={{ height: 150 }} />
       </ScrollView>
 
       {/* Play Controls */}
@@ -375,7 +350,7 @@ export default function PracticeScreen() {
         {/* Play Button */}
         <TouchableOpacity
           style={[styles.playButton, isPlaying && styles.playButtonActive]}
-          onPress={togglePlay}
+          onPress={toggle}
           activeOpacity={0.8}
         >
           <Ionicons
@@ -385,18 +360,18 @@ export default function PracticeScreen() {
           />
         </TouchableOpacity>
 
-        {/* Metronome Button */}
+        {/* Sound Button - toggles WITHOUT resetting playback */}
         <TouchableOpacity 
-          style={[styles.controlButton, metronomeEnabled && styles.controlButtonActive]} 
-          onPress={() => setMetronomeEnabled(!metronomeEnabled)}
+          style={[styles.controlButton, soundEnabled && styles.controlButtonActive]} 
+          onPress={handleSoundToggle}
         >
           <Ionicons 
-            name={metronomeEnabled ? 'musical-notes' : 'musical-notes-outline'} 
+            name={soundEnabled ? 'volume-high' : 'volume-mute'} 
             size={24} 
-            color={metronomeEnabled ? COLORS.primary : COLORS.textMuted} 
+            color={soundEnabled ? COLORS.primary : COLORS.textMuted} 
           />
-          <Text style={[styles.controlLabel, metronomeEnabled && styles.controlLabelActive]}>
-            {metronomeEnabled ? 'Sound On' : 'Sound Off'}
+          <Text style={[styles.controlLabel, soundEnabled && styles.controlLabelActive]}>
+            {soundEnabled ? 'Sound' : 'Muted'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -569,6 +544,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     marginBottom: SPACING.lg,
   },
+  fingeringToggle: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+  },
+  fingeringToggleText: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.textMuted,
+    fontWeight: '500',
+  },
+  fingeringToggleActive: {
+    color: COLORS.secondary,
+  },
   tempoSection: {
     paddingHorizontal: SPACING.lg,
     marginBottom: SPACING.lg,
@@ -680,6 +667,7 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
     padding: SPACING.sm,
     borderRadius: BORDER_RADIUS.md,
+    minWidth: 70,
   },
   controlButtonActive: {
     backgroundColor: COLORS.primary + '20',
