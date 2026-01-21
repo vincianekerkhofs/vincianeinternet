@@ -172,6 +172,7 @@ export default function ProgramScreen() {
                       {phaseWeeks.map((week: any) => {
                         const isCurrentWeek = week.number === progress.current_week;
                         const isCompleted = week.number < progress.current_week;
+                        const isLocked = week.number >= 25; // Paywall: weeks 25-52 are locked
 
                         return (
                           <TouchableOpacity
@@ -180,19 +181,28 @@ export default function ProgramScreen() {
                               styles.weekItem,
                               isCurrentWeek && styles.weekItemCurrent,
                               isCompleted && styles.weekItemCompleted,
+                              isLocked && styles.weekItemLocked,
                             ]}
                             onPress={() => {
+                              if (isLocked) {
+                                // Show lock message or paywall
+                                return;
+                              }
                               // Navigate to week detail
                             }}
+                            disabled={isLocked}
                           >
                             <View
                               style={[
                                 styles.weekIndicator,
                                 isCurrentWeek && { backgroundColor: color },
                                 isCompleted && { backgroundColor: COLORS.success },
+                                isLocked && styles.weekIndicatorLocked,
                               ]}
                             >
-                              {isCompleted ? (
+                              {isLocked ? (
+                                <Ionicons name="lock-closed" size={12} color={COLORS.textMuted} />
+                              ) : isCompleted ? (
                                 <Ionicons name="checkmark" size={12} color={COLORS.text} />
                               ) : (
                                 <Text style={styles.weekNumber}>{week.number}</Text>
@@ -202,11 +212,17 @@ export default function ProgramScreen() {
                               style={[
                                 styles.weekTitle,
                                 isCurrentWeek && { color: COLORS.text },
+                                isLocked && styles.weekTitleLocked,
                               ]}
                               numberOfLines={1}
                             >
                               {week.title}
                             </Text>
+                            {isLocked && (
+                              <View style={styles.proBadge}>
+                                <Text style={styles.proBadgeText}>PRO</Text>
+                              </View>
+                            )}
                           </TouchableOpacity>
                         );
                       })}
