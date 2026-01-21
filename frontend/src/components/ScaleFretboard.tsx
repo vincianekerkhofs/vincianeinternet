@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import React, { useState } from 'react';
+import { View, StyleSheet, Text, LayoutChangeEvent } from 'react-native';
 import { COLORS } from '../constants/theme';
 import Svg, { Line, Circle, Rect, G } from 'react-native-svg';
 
@@ -63,10 +63,12 @@ const THEME = {
 
 export const ScaleFretboard: React.FC<Props> = ({
   scaleName,
-  width = 320,
   height = 260,
   isActive = false,
 }) => {
+  // Use onLayout to get REAL measured width
+  const [measuredWidth, setMeasuredWidth] = useState(0);
+  
   const scale = SCALES[scaleName];
   
   if (!scale) {
@@ -77,14 +79,24 @@ export const ScaleFretboard: React.FC<Props> = ({
     );
   }
 
-  // SVG dimensions - SAME PATTERN AS ChordFretboard
+  const handleLayout = (event: LayoutChangeEvent) => {
+    const { width } = event.nativeEvent.layout;
+    if (width > 0 && width !== measuredWidth) {
+      setMeasuredWidth(width);
+    }
+  };
+
+  // Use measured width or fallback
+  const actualWidth = measuredWidth || 300;
+  
+  // SVG dimensions based on REAL measured width
   const svgHeight = height - 100;
   const paddingTop = 15;
   const paddingBottom = 20;
-  const paddingLeft = 10;
-  const paddingRight = 10;
+  const paddingLeft = 15;
+  const paddingRight = 15;
   
-  const fretboardWidth = width - paddingLeft - paddingRight;
+  const fretboardWidth = actualWidth - paddingLeft - paddingRight;
   const fretboardHeight = svgHeight - paddingTop - paddingBottom;
   const fretWidth = fretboardWidth / NUM_FRETS;
   const stringSpacing = fretboardHeight / 5;
@@ -92,7 +104,7 @@ export const ScaleFretboard: React.FC<Props> = ({
   const stringHasRoot = (strIdx: number) => 
     scale.notes.some(n => n.s === strIdx && n.root);
 
-  // TOP ROW: String indicators - SAME PATTERN AS ChordFretboard
+  // TOP ROW: String indicators
   const renderTopIndicators = () => (
     <View style={styles.indicatorRow}>
       {STRING_NAMES.map((name, i) => {
@@ -114,7 +126,7 @@ export const ScaleFretboard: React.FC<Props> = ({
       return (
         <Line key={`str-${i}`}
           x1={paddingLeft} y1={y}
-          x2={width - paddingRight} y2={y}
+          x2={actualWidth - paddingRight} y2={y}
           stroke="#B8977E" strokeWidth={thickness}
         />
       );
@@ -138,7 +150,7 @@ export const ScaleFretboard: React.FC<Props> = ({
     return lines;
   };
 
-  // SVG: Note circles - SAME PATTERN AS ChordFretboard's renderFingerDots
+  // SVG: Note circles
   const renderNotes = () => {
     const dots = [];
     for (let i = 0; i < scale.notes.length; i++) {
@@ -162,8 +174,9 @@ export const ScaleFretboard: React.FC<Props> = ({
     return dots;
   };
 
-  // Finger overlays - SAME PATTERN AS ChordFretboard
+  // Finger overlays
   const renderFingerOverlays = () => {
+    if (actualWidth <= 0) return null;
     const overlays = [];
     for (let i = 0; i < scale.notes.length; i++) {
       const note = scale.notes[i];
@@ -173,7 +186,7 @@ export const ScaleFretboard: React.FC<Props> = ({
       
       const x = paddingLeft + (fretOffset + 0.5) * fretWidth;
       const y = paddingTop + strIdx * stringSpacing;
-      const xPercent = (x / width) * 100;
+      const xPercent = (x / actualWidth) * 100;
       const yPercent = (y / svgHeight) * 100;
       
       overlays.push(
@@ -188,7 +201,7 @@ export const ScaleFretboard: React.FC<Props> = ({
     return overlays;
   };
 
-  // Fret numbers - SAME PATTERN AS ChordFretboard
+  // Fret numbers
   const renderFretNumbers = () => (
     <View style={styles.fretNumRow}>
       {Array.from({ length: NUM_FRETS }, (_, i) => (
@@ -198,23 +211,27 @@ export const ScaleFretboard: React.FC<Props> = ({
   );
 
   return (
-    <View style={styles.container}>
+    <View style={styles.outerWrapper} onLayout={handleLayout}>
       {/* Top indicator row */}
       {renderTopIndicators()}
       
-      {/* Fretboard SVG */}
-      <View style={styles.svgContainer}>
-        <Svg width={width} height={svgHeight}>
-          <Rect x={paddingLeft} y={paddingTop} width={fretboardWidth} height={fretboardHeight}
-            fill="#1E1810" rx={4} />
-          {renderFrets()}
-          {renderStrings()}
-          {renderNotes()}
-          {/* DEBUG: Simple test circle at fixed position */}
-          <Circle cx={100} cy={50} r={20} fill="#FF0000" />
-        </Svg>
-        {renderFingerOverlays()}
-      </View>
+      {/* SVG Fretboard - only render when we have measured width */}
+      {measuredWidth > 0 && (
+        <View style={styles.svgContainer}>
+          <Svg 
+            width={actualWidth} 
+            height={svgHeight}
+            viewBox={`0 0 ${actualWidth} ${svgHeight}`}
+          >
+            <Rect x={paddingLeft} y={paddingTop} width={fretboardWidth} height={fretboardHeight}
+              fill="#1E1810" rx={4} />
+            {renderFrets()}
+            {renderStrings()}
+            {renderNotes()}
+          </Svg>
+          {renderFingerOverlays()}
+        </View>
+      )}
       
       {/* Fret numbers */}
       {renderFretNumbers()}
@@ -239,10 +256,17 @@ export const ScaleFretboard: React.FC<Props> = ({
 };
 
 const styles = StyleSheet.create({
+  // Outer wrapper - ensures full width expansion
+  outerWrapper: {
+    width: '100%',
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    overflow: 'visible',
+  },
   container: { alignItems: 'center' },
   errorText: { color: '#FF4757', fontSize: 14, padding: 20 },
   
-  // Top indicator row - SAME AS ChordFretboard
+  // Top indicator row
   indicatorRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -256,17 +280,21 @@ const styles = StyleSheet.create({
   },
   indicatorText: { color: '#FFF', fontSize: 11, fontWeight: 'bold' },
   
-  // SVG container - SAME AS ChordFretboard
-  svgContainer: { position: 'relative' },
+  // SVG container - no width constraints, overflow visible
+  svgContainer: { 
+    position: 'relative',
+    overflow: 'visible',
+    alignSelf: 'stretch',
+  },
   
-  // Finger overlays - SAME AS ChordFretboard
+  // Finger overlays
   fingerOverlay: {
     position: 'absolute', width: 16, height: 16,
     alignItems: 'center', justifyContent: 'center',
   },
   fingerText: { color: '#FFF', fontSize: 13, fontWeight: 'bold' },
   
-  // Fret numbers - SAME AS ChordFretboard
+  // Fret numbers
   fretNumRow: {
     flexDirection: 'row',
     justifyContent: 'space-around',
