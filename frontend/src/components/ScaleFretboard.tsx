@@ -140,8 +140,9 @@ export const ScaleFretboard: React.FC<Props> = ({
   };
 
   // SVG: Note circles
-  const renderNotes = () =>
-    scale.notes.map((note, idx) => {
+  const renderNotes = () => {
+    console.log('renderNotes called, notes count:', scale.notes.length);
+    return scale.notes.map((note, idx) => {
       const strIdx = note.s;
       const fretOffset = note.f;
       const isRoot = note.root === true;
@@ -152,6 +153,8 @@ export const ScaleFretboard: React.FC<Props> = ({
       const fill = isRoot ? THEME.ROOT : (isActive ? THEME.NOTE : '#2A2A2A');
       const stroke = isRoot ? THEME.ROOT : THEME.NOTE;
       
+      console.log(`Note ${idx}: string=${strIdx}, fret=${fretOffset}, x=${x}, y=${y}`);
+      
       return (
         <G key={`note-${idx}`}>
           {/* Glow effect when active */}
@@ -161,6 +164,7 @@ export const ScaleFretboard: React.FC<Props> = ({
         </G>
       );
     });
+  };
 
   // Finger number overlays (positioned absolutely over SVG)
   const renderFingerOverlays = () =>
