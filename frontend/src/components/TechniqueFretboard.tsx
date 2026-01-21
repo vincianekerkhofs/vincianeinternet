@@ -5,6 +5,9 @@ import Svg, { Line, Circle, Rect, G, Path, Defs, LinearGradient, Stop, Text as S
 import { SoloNote } from '../data/solosContent';
 import { getNoteAtFret, letterToSolfege, NOTE_MAPPING_REFERENCE } from '../utils/noteNames';
 import { Ionicons } from '@expo/vector-icons';
+import { getTechniqueById, mapSoloTechniqueToId, TechniqueDefinition } from '../data/techniques';
+import { getSoloTechniqueIcon } from './TechniqueIcons';
+import { TechniqueMicroTutorial } from './TechniqueMicroTutorial';
 
 interface Props {
   notes: SoloNote[][];  // Array of measures
