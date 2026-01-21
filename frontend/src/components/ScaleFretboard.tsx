@@ -236,6 +236,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     position: 'relative',
     marginHorizontal: 20,
+    overflow: 'visible',
   },
   string: {
     position: 'absolute',
