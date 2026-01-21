@@ -194,18 +194,40 @@ export default function ExercisesScreen() {
       <View style={styles.listContainer}>
         <FlashList
           data={exercises}
-          renderItem={({ item }) => (
-            <ExerciseCard
-              exercise={item}
-              onPress={() => {
-                router.push({
-                  pathname: '/practice',
-                  params: { exerciseId: item.id },
-                });
-              }}
-            />
-          )}
-          estimatedItemSize={180}
+          renderItem={({ item }) => {
+            const isComplete = completedExercises.includes(item.id);
+            return (
+              <TouchableOpacity
+                style={[styles.exerciseItem, isComplete && styles.exerciseItemComplete]}
+                onPress={() => {
+                  router.push({
+                    pathname: '/practice',
+                    params: { exerciseId: item.id },
+                  });
+                }}
+              >
+                <View style={styles.exerciseContent}>
+                  <View style={styles.exerciseHeader}>
+                    <Text style={styles.exerciseTitle} numberOfLines={1}>{item.title}</Text>
+                    {isComplete && (
+                      <Ionicons name="checkmark-circle" size={20} color={COLORS.success} />
+                    )}
+                  </View>
+                  <View style={styles.exerciseMeta}>
+                    <View style={[styles.domainBadge, { backgroundColor: getDomainColor(item.domain) + '30' }]}>
+                      <Text style={[styles.domainBadgeText, { color: getDomainColor(item.domain) }]}>
+                        {item.domain?.split(' ')[0] || 'General'}
+                      </Text>
+                    </View>
+                    <Text style={styles.difficultyText}>{item.difficulty_tier}</Text>
+                    <Text style={styles.tempoText}>{item.bpm_start}-{item.bpm_target} BPM</Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
+              </TouchableOpacity>
+            );
+          }}
+          estimatedItemSize={80}
           contentContainerStyle={styles.listContent}
           ListEmptyComponent={
             <View style={styles.emptyState}>
