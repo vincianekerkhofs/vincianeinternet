@@ -25,10 +25,10 @@ export interface WeekIntro {
 // Contenido pedagógico para semanas 7-24
 export const WEEK_INTROS: Record<number, WeekIntro> = {
   // ==================================================
-  // SEMANA 7: PENTATÓNICA MENOR - FUNDAMENTO REAL
+  // SEMANA 6: PENTATÓNICA MENOR - FUNDAMENTO REAL
   // ==================================================
-  7: {
-    weekId: 7,
+  6: {
+    weekId: 6,
     title: 'Pentatónica Menor - Tu Primera Escala Real',
     whatYouWillLearn: [
       'La caja 1 de la pentatónica menor',
@@ -48,21 +48,52 @@ export const WEEK_INTROS: Record<number, WeekIntro> = {
   },
 
   // ==================================================
-  // SEMANA 8: CONECTANDO CAJAS PENTATÓNICAS
+  // SEMANA 7: ACORDES CON CEJILLA (BARRE CHORDS)
+  // ==================================================
+  7: {
+    weekId: 7,
+    title: 'Acordes con Cejilla - Desbloqueando Todo el Mástil',
+    whatYouWillLearn: [
+      'Cejilla parcial (2-3 cuerdas) sin dolor',
+      'F Mayor completo con forma E',
+      'Fm menor con forma Em',
+      'Bb con forma A',
+      'Cambios entre formas E y A',
+      'Progresión I-V-vi-IV con cejillas'
+    ],
+    whyItMatters: 'Las cejillas te dan acceso a TODOS los acordes mayores y menores en cualquier posición del mástil. Sin cejillas, estás limitado a 8-10 acordes. Con cejillas, tienes cientos.',
+    stylesUsed: ['Rock', 'Punk', 'Pop', 'Reggae'],
+    warmUp: [
+      { name: 'Presión gradual', duration: '2 min', focus: 'left', description: 'Presiona solo cuerdas 1-2-3 con dedo 1. 5 segundos presión, 5 segundos descanso.', bpm: { min: 0, max: 0 } },
+      { name: 'Estiramiento de muñeca', duration: '1 min', focus: 'left', description: 'Rotaciones de muñeca suaves. La cejilla requiere muñeca flexible y relajada.' },
+      { name: 'Forma E sin cejilla', duration: '2 min', focus: 'left', description: 'Practica la forma de E con dedos 2-3-4. Luego añade el dedo 1 como barra.', bpm: { min: 40, max: 50 } }
+    ],
+    consolidates: ['Acordes abiertos', 'Cambios de acordes', 'Ritmo básico', 'Power chords'],
+    unlocks: ['Todos los acordes mayores/menores', 'Movilidad total en el mástil', 'Canciones en cualquier tonalidad', 'Transposición fácil']
+  },
+
+  // ==================================================
+  // SEMANA 8: OCTAVAS + FUNK
   // ==================================================
   8: {
     weekId: 8,
-    title: 'Conectando Cajas Pentatónicas',
+    title: 'Octavas y Ritmo Funk',
     whatYouWillLearn: [
-      'Caja 2 de la pentatónica menor',
-      'Conexión horizontal entre cajas',
-      'Slides como herramienta de transición',
-      'Mini solo guiado de 8 compases'
+      'Forma de octavas (cuerdas 6-4 y 5-3)',
+      'Muting con mano derecha',
+      'Ritmo funk de 16th notes',
+      'Groove con ghost notes'
     ],
-    whyItMatters: 'Un solo real no se queda en una posición. Aprender a conectar cajas te permite moverte por todo el mástil con fluidez y crear frases más interesantes.',
-    stylesUsed: ['Rock', 'Blues'],
+    whyItMatters: 'Las octavas crean líneas melódicas poderosas. El funk desarrolla tu mano derecha como ningún otro estilo. Precisión rítmica = profesionalismo.',
+    stylesUsed: ['Funk', 'R&B', 'Rock', 'Pop'],
     warmUp: [
-      { name: 'Slide cromático', duration: '2 min', focus: 'left', description: 'Traste 5-7-5 con slide. Suave, sin cortar el sonido.', bpm: { min: 50, max: 70 } },
+      { name: 'Muting practice', duration: '2 min', focus: 'right', description: 'Silencia cuerdas con palma. Golpe percusivo, sin nota.', bpm: { min: 70, max: 90 } },
+      { name: 'Octava shape', duration: '2 min', focus: 'left', description: 'Forma de octava: dedo 1 y 3 (o 4). Cuerdas intermedias mudas.', bpm: { min: 60, max: 80 } },
+      { name: '16th subdivisions', duration: '1 min', focus: 'right', description: 'Cuenta 1-e-&-a constante. Mano siempre en movimiento.', bpm: { min: 60, max: 80 } }
+    ],
+    consolidates: ['Power chords', 'Ritmo básico', 'Coordinación'],
+    unlocks: ['Líneas melódicas avanzadas', 'Ritmos complejos', 'Técnica funk']
+  },
       { name: 'Cambio de cuerda', duration: '2 min', focus: 'both', description: 'Alternar cuerdas 1-2-3 con púa alternada.', bpm: { min: 60, max: 80 } },
       { name: 'Desplazamiento diagonal', duration: '1 min', focus: 'fretboard', description: 'Traste 5 cuerda 6 → Traste 8 cuerda 1. Visualiza el camino.' }
     ],
