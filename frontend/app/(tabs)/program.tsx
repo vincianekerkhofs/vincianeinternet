@@ -409,6 +409,30 @@ const styles = StyleSheet.create({
   weekItemCompleted: {
     opacity: 0.6,
   },
+  weekItemLocked: {
+    opacity: 0.5,
+    backgroundColor: COLORS.surfaceLight + '30',
+  },
+  weekIndicatorLocked: {
+    backgroundColor: COLORS.surfaceLight,
+    borderWidth: 1,
+    borderColor: COLORS.textMuted + '40',
+  },
+  weekTitleLocked: {
+    color: COLORS.textMuted,
+    fontStyle: 'italic',
+  },
+  proBadge: {
+    backgroundColor: COLORS.warning,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.sm,
+  },
+  proBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: COLORS.background,
+  },
   weekIndicator: {
     width: 24,
     height: 24,
