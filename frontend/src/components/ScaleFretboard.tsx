@@ -62,8 +62,9 @@ const STRING_NAMES_DUAL = ['e/Mi', 'B/Si', 'G/Sol', 'D/Re', 'A/La', 'E/Mi'];
 const NUM_FRETS = 4;
 
 const THEME = {
-  NOTE: '#00D68F',
-  ROOT: '#FF6B35',
+  NOTE: COLORS.secondary,      // Teal orgánico para notas
+  ROOT: COLORS.rootNote,       // Rust-naranja cálido para raíces
+  ACTIVE: COLORS.activeNote,   // Ámbar para nota activa
 };
 
 // Note Names Info Modal Component
