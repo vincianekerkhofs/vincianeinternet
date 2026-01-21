@@ -363,7 +363,7 @@ export const TechniqueFretboard: React.FC<Props> = ({
     </View>
   );
 
-  // Technique legend
+  // Technique legend with info button
   const renderLegend = () => (
     <View style={styles.legend}>
       <View style={styles.legendItem}>
@@ -382,15 +382,29 @@ export const TechniqueFretboard: React.FC<Props> = ({
         <View style={[styles.legendDot, { backgroundColor: THEME.VIBRATO }]} />
         <Text style={styles.legendText}>Vibrato</Text>
       </View>
+      <TouchableOpacity 
+        style={styles.infoButton} 
+        onPress={() => setShowNoteModal(true)}
+      >
+        <Ionicons name="information-circle-outline" size={16} color={COLORS.primary} />
+        <Text style={styles.infoButtonText}>A=La?</Text>
+      </TouchableOpacity>
     </View>
   );
 
   // Current bar info
   const currentBarNotes = notes[currentBar] || [];
   const currentNote = currentBarNotes[currentNoteIndex];
+  
+  // Get current note name if playing
+  const currentNoteName = currentNote ? getNoteAtFret(currentNote.string, currentNote.fret) : '';
+  const currentNoteSolfege = currentNoteName ? letterToSolfege(currentNoteName) : '';
 
   return (
     <View style={styles.outerWrapper} onLayout={handleLayout}>
+      {/* Note names info modal */}
+      <NoteNamesInfoModal />
+      
       {/* String indicators */}
       {renderStringIndicators()}
       
@@ -424,10 +438,15 @@ export const TechniqueFretboard: React.FC<Props> = ({
       {/* Position indicator */}
       <Text style={styles.positionText}>Trastes {startFret}–{startFret + numFrets - 1}</Text>
       
-      {/* Current note info */}
+      {/* Current note info with dual naming */}
       {isPlaying && currentNote && (
         <View style={styles.currentNoteInfo}>
           <Text style={styles.currentNoteLabel}>Compás {currentBar + 1}</Text>
+          {currentNoteName && (
+            <View style={styles.noteNameBadge}>
+              <Text style={styles.noteNameText}>{currentNoteName} ({currentNoteSolfege})</Text>
+            </View>
+          )}
           {currentNote.technique && (
             <View style={[styles.techniqueBadge, { backgroundColor: getTechniqueColor(currentNote.technique) + '40' }]}>
               <Text style={[styles.techniqueText, { color: getTechniqueColor(currentNote.technique) }]}>
