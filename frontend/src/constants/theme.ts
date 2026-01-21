@@ -1,57 +1,69 @@
 export const COLORS = {
-  // Primary palette - guitar-themed
-  primary: '#FF6B35',      // Warm orange - like guitar strings under stage lights
-  primaryDark: '#E55A2B',
-  primaryLight: '#FF8F66',
+  // =============================================
+  // GUITAR GUIDE PRO - ORGANIC COLOR SYSTEM
+  // Premium, musical, wood-inspired palette
+  // =============================================
   
-  // Secondary
-  secondary: '#00D4AA',    // Teal accent
-  secondaryDark: '#00B394',
+  // Primary palette - Warm amber (musical, wood-like)
+  primary: '#D4A574',        // Warm amber - like acoustic guitar wood
+  primaryDark: '#B8956A',    // Darker amber
+  primaryLight: '#E8C49A',   // Light amber glow
   
-  // Background - dark studio feel
-  background: '#0A0A0F',
-  backgroundLight: '#12121A',
-  backgroundCard: '#1A1A24',
-  backgroundElevated: '#22222E',
+  // Secondary - Deep teal/olive (organic, natural)
+  secondary: '#5A8A7A',      // Deep teal-olive
+  secondaryDark: '#3D5A50',  // Forest green-teal
+  secondaryLight: '#7AAA9A', // Light teal
   
-  // Surface
-  surface: '#1E1E28',
-  surfaceLight: '#2A2A36',
+  // Background - Warm dark gray (NOT pure black)
+  background: '#1A1A1F',     // Deep charcoal with warmth
+  backgroundLight: '#202025', // Slightly lighter charcoal
+  backgroundCard: '#252530',  // Card surfaces
+  backgroundElevated: '#2D2D38', // Elevated elements
   
-  // Text
-  text: '#FFFFFF',
-  textSecondary: '#A0A0B0',
-  textMuted: '#6B6B7B',
+  // Surface - Warm grays
+  surface: '#28282F',        // Surface base
+  surfaceLight: '#363640',   // Light surface
   
-  // Fretboard colors
-  fretboard: '#2D1810',
-  fret: '#C9A96B',
-  string: '#D4D4D4',
-  stringHighlight: '#FF6B35',
+  // Text - Warm whites
+  text: '#F5F5F0',           // Warm white (not pure white)
+  textSecondary: '#A8A8B0',  // Muted text
+  textMuted: '#6B6B75',      // Very muted
   
-  // Status
-  success: '#00D68F',
-  warning: '#FFB547',
-  error: '#FF4757',
-  info: '#00C2FF',
+  // Fretboard colors - Natural wood tones
+  fretboard: '#2D1810',      // Dark rosewood
+  fret: '#C9A96B',           // Brass frets
+  string: '#D4D4D4',         // Steel strings
+  stringHighlight: '#D4A574', // Warm amber highlight
   
-  // Difficulty colors
-  beginner: '#00D68F',
-  intermediate: '#FFB547',
-  advanced: '#FF6B35',
-  pro: '#FF4757',
+  // Playback states (CRITICAL - no color conflicts)
+  activeNote: '#D4A574',     // Warm amber = PLAYING NOW
+  referenceNote: '#7A8A9A',  // Soft blue-gray = reference
+  completedNote: '#5A7A6A',  // Muted green = DONE (never for active)
+  rootNote: '#C4785A',       // Warm rust-orange for roots
   
-  // Domain colors
-  timing: '#00C2FF',
-  strumming: '#00D68F',
-  picking: '#FFB547',
-  fretting: '#FF6B35',
-  chords: '#9D4EDD',
-  scales: '#00D4AA',
-  lead: '#FF4757',
-  techniques: '#FF8F66',
-  application: '#00B394',
-  improvisation: '#E55A2B',
+  // Status - Refined, less neon
+  success: '#5A8A6A',        // Muted sage green
+  warning: '#C9A060',        // Warm gold
+  error: '#B85A5A',          // Muted red
+  info: '#6A8A9A',           // Soft blue-gray
+  
+  // Difficulty colors - Organic progression
+  beginner: '#6A9A7A',       // Sage green
+  intermediate: '#C9A060',   // Warm gold
+  advanced: '#C4785A',       // Rust orange
+  pro: '#9A5A6A',            // Deep mauve
+  
+  // Domain colors - Musical, harmonious
+  timing: '#6A8A9A',         // Soft blue
+  strumming: '#6A9A7A',      // Sage green
+  picking: '#C9A060',        // Warm gold
+  fretting: '#D4A574',       // Amber
+  chords: '#8A7A9A',         // Soft purple
+  scales: '#5A8A7A',         // Teal-olive
+  lead: '#C4785A',           // Rust orange
+  techniques: '#B89A7A',     // Warm tan
+  application: '#5A7A6A',    // Forest green
+  improvisation: '#9A7A6A',  // Warm mauve
 };
 
 export const FONTS = {
