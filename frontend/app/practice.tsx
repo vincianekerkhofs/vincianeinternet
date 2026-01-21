@@ -277,13 +277,6 @@ export default function PracticeScreen() {
     }
   };
 
-  // Restart scheduler when BPM changes (real-time update)
-  useEffect(() => {
-    if (isPlaying && audioContextRef.current) {
-      // Don't restart, just update - the scheduler reads bpm directly
-    }
-  }, [bpm]);
-
   const navigateToDay = (week: number, day: number) => {
     if (week >= 25) return;
     stopPlayback();
