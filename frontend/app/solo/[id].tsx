@@ -108,6 +108,17 @@ export default function SoloDetailScreen() {
     );
   }
 
+  // Extract unique techniques from solo
+  const soloTechniques = useMemo(() => {
+    const techniques = new Set<string>();
+    solo.notes.flat().forEach(note => {
+      if (note.technique) {
+        techniques.add(note.technique);
+      }
+    });
+    return Array.from(techniques);
+  }, [solo]);
+
   // Create didactic intro from solo data
   const soloIntro = {
     id: solo.id,
