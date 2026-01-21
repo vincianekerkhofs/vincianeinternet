@@ -393,7 +393,11 @@ export default function PracticeScreen() {
               <View style={styles.fretboardHeader}>
                 <Text style={styles.sectionLabel}>Practica a {bpm} BPM</Text>
               </View>
-              <ChordFretboard shape={currentShape} width={width - SPACING.lg * 2} height={240} isActive={isPlaying} />
+              {SCALE_SHAPES.includes(currentShape) ? (
+                <ScaleFretboard scaleName={currentShape} width={width - SPACING.lg * 2} height={260} isActive={isPlaying} />
+              ) : (
+                <ChordFretboard shape={currentShape} width={width - SPACING.lg * 2} height={240} isActive={isPlaying} />
+              )}
             </View>
 
             {lesson.practice.cue && (
