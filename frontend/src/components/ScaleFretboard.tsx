@@ -230,27 +230,23 @@ export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
       {renderStringIndicators()}
       
       <View style={[styles.svgContainer, {borderWidth: 2, borderColor: 'red'}]}>
-        <Svg width={width} height={svgHeight}>
+        <Svg width={width} height={200}>
           {/* Background */}
-          <Rect x={0} y={0} width={width} height={svgHeight} fill="#1E1810" />
+          <Rect x={0} y={0} width={width} height={200} fill="#1E1810" />
           
-          {/* Render all notes directly */}
-          {scaleData.notes.map((note, idx) => {
-            const fretPos = note.fret - startFret;
-            const x = paddingLeft + (fretPos + 0.5) * fretWidth;
-            const y = paddingTop + note.string * stringSpacing;
-            const color = note.isRoot ? COLORS_SCHEME.ROOT : COLORS_SCHEME.NOTE;
-            
-            return (
-              <Circle key={`note-${idx}`} cx={x} cy={y} r={12} fill={color} />
-            );
-          })}
+          {/* Test circles at fixed positions */}
+          <Circle cx={50} cy={20} r={12} fill={COLORS_SCHEME.ROOT} />
+          <Circle cx={100} cy={50} r={12} fill={COLORS_SCHEME.NOTE} />
+          <Circle cx={150} cy={80} r={12} fill={COLORS_SCHEME.ROOT} />
+          <Circle cx={200} cy={110} r={12} fill={COLORS_SCHEME.NOTE} />
+          <Circle cx={250} cy={140} r={12} fill={COLORS_SCHEME.ROOT} />
+          <Circle cx={300} cy={170} r={12} fill={COLORS_SCHEME.NOTE} />
         </Svg>
       </View>
       
       {renderFretNumbers()}
       
-      <Text style={styles.startFret}>Trastes {startFret}-{endFret} | SVG:{svgHeight} | Spacing:{stringSpacing.toFixed(0)}</Text>
+      <Text style={styles.startFret}>TEST MODE</Text>
       
       <View style={styles.legend}>
         <View style={styles.legendItem}>
