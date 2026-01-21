@@ -10,14 +10,16 @@ export interface TabNote {
   direction?: 'up' | 'down';
   technique?: string;   // H, P, S, B, etc.
   isMute?: boolean;
+  finger?: number;      // 1-4 for left hand fingering
 }
 
 interface TabDisplayProps {
   notes: TabNote[];
-  currentBeat: number;  // Current playback position (1-based)
+  currentBeat: number;
   totalBeats?: number;
   timeSignature?: string;
   isPlaying?: boolean;
+  showFingering?: boolean;
 }
 
 export const TabDisplay: React.FC<TabDisplayProps> = ({
@@ -26,11 +28,10 @@ export const TabDisplay: React.FC<TabDisplayProps> = ({
   totalBeats = 8,
   timeSignature = '4/4',
   isPlaying = false,
+  showFingering = true,
 }) => {
-  // Standard guitar string order: e B G D A E (high to low, displayed top to bottom)
   const stringNames = ['e', 'B', 'G', 'D', 'A', 'E'];
   
-  // Get note at a specific position
   const getNoteAtPosition = (stringIndex: number, beat: number): TabNote | null => {
     return notes.find(n => 
       n.stringIndex === stringIndex && 
@@ -38,17 +39,15 @@ export const TabDisplay: React.FC<TabDisplayProps> = ({
     ) || null;
   };
 
-  // Get picking direction at beat
   const getDirectionAtBeat = (beat: number): string | null => {
     const noteWithDirection = notes.find(n => 
       Math.floor(n.startBeat) === beat && n.direction
     );
-    if (noteWithDirection?.direction === 'down') return '↓';
-    if (noteWithDirection?.direction === 'up') return '↑';
+    if (noteWithDirection?.direction === 'down') return '⬇';
+    if (noteWithDirection?.direction === 'up') return '⬆';
     return null;
   };
 
-  // Render a single string row
   const renderString = (stringIndex: number, stringName: string) => {
     const positions = [];
     
@@ -58,6 +57,7 @@ export const TabDisplay: React.FC<TabDisplayProps> = ({
       const isPastBeat = currentBeat > beat && isPlaying;
       
       let displayValue = '-';
+      let fingerValue: number | undefined;
       let hasNote = false;
       
       if (note) {
@@ -66,6 +66,7 @@ export const TabDisplay: React.FC<TabDisplayProps> = ({
           displayValue = 'x';
         } else {
           displayValue = String(note.fret);
+          fingerValue = note.finger;
         }
       }
       
@@ -78,16 +79,26 @@ export const TabDisplay: React.FC<TabDisplayProps> = ({
             isPastBeat && hasNote && styles.tabPositionPast,
           ]}
         >
-          <Text style={[
-            styles.tabNote,
-            hasNote && styles.tabNoteWithValue,
-            isCurrentBeat && hasNote && styles.tabNoteActive,
-            isPastBeat && hasNote && styles.tabNotePast,
-            !hasNote && styles.tabLine,
-          ]}>
-            {displayValue}
-          </Text>
-          {/* Technique marker */}
+          <View style={styles.noteContainer}>
+            <Text style={[
+              styles.tabNote,
+              hasNote && styles.tabNoteWithValue,
+              isCurrentBeat && hasNote && styles.tabNoteActive,
+              isPastBeat && hasNote && styles.tabNotePast,
+              !hasNote && styles.tabLine,
+            ]}>
+              {displayValue}
+            </Text>
+            {/* Finger number display */}
+            {showFingering && fingerValue && (
+              <Text style={[
+                styles.fingerNumber,
+                isCurrentBeat && styles.fingerNumberActive,
+              ]}>
+                ({fingerValue})
+              </Text>
+            )}
+          </View>
           {note?.technique && (
             <Text style={styles.techniqueMarker}>{note.technique}</Text>
           )}
@@ -113,7 +124,6 @@ export const TabDisplay: React.FC<TabDisplayProps> = ({
     );
   };
 
-  // Render picking direction row
   const renderPickingDirections = () => {
     const directions = [];
     
@@ -145,7 +155,6 @@ export const TabDisplay: React.FC<TabDisplayProps> = ({
     );
   };
 
-  // Render beat numbers
   const renderBeatNumbers = () => {
     const beats = [];
     
@@ -186,10 +195,16 @@ export const TabDisplay: React.FC<TabDisplayProps> = ({
         </View>
       </ScrollView>
       
-      {/* Playback indicator */}
       {isPlaying && (
         <View style={styles.playbackIndicator}>
           <View style={[styles.playbackDot, { left: `${((currentBeat - 1) / totalBeats) * 100}%` }]} />
+        </View>
+      )}
+      
+      {/* Fingering legend */}
+      {showFingering && (
+        <View style={styles.fingeringLegend}>
+          <Text style={styles.legendText}>Fingers: 1=index 2=middle 3=ring 4=pinky</Text>
         </View>
       )}
     </View>
@@ -208,7 +223,7 @@ const styles = StyleSheet.create({
   stringRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 26,
+    height: 28,
   },
   stringName: {
     width: 20,
@@ -226,8 +241,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tabPosition: {
-    width: 32,
-    height: 24,
+    width: 44,
+    height: 26,
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 4,
@@ -238,22 +253,35 @@ const styles = StyleSheet.create({
   tabPositionPast: {
     backgroundColor: COLORS.success + '30',
   },
+  noteContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
   tabNote: {
     fontSize: FONTS.sizes.md,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   tabNoteWithValue: {
     color: COLORS.primary,
   },
   tabNoteActive: {
     color: COLORS.text,
-    fontWeight: '700',
   },
   tabNotePast: {
     color: COLORS.success,
   },
   tabLine: {
     color: COLORS.textMuted,
+    fontWeight: '400',
+  },
+  fingerNumber: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.secondary,
+    fontWeight: '600',
+    marginLeft: 1,
+  },
+  fingerNumberActive: {
+    color: COLORS.text,
   },
   tabSeparator: {
     fontSize: FONTS.sizes.md,
@@ -262,13 +290,13 @@ const styles = StyleSheet.create({
   },
   techniqueMarker: {
     position: 'absolute',
-    top: -8,
-    fontSize: 8,
-    color: COLORS.secondary,
+    top: -6,
+    fontSize: 9,
+    color: COLORS.warning,
     fontWeight: '700',
   },
   pickingDirection: {
-    fontSize: FONTS.sizes.lg,
+    fontSize: FONTS.sizes.md,
     color: COLORS.textMuted,
     fontWeight: '700',
   },
@@ -298,5 +326,16 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     top: -4,
     marginLeft: -6,
+  },
+  fingeringLegend: {
+    marginTop: SPACING.sm,
+    paddingTop: SPACING.sm,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.surfaceLight,
+  },
+  legendText: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.textMuted,
+    textAlign: 'center',
   },
 });
