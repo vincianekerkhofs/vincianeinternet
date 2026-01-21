@@ -139,20 +139,28 @@ export const ScaleFretboard: React.FC<Props> = ({
     return lines;
   };
 
-  // SVG: Note circles - HARDCODED POSITIONS FOR DEBUG
-  const renderNotes = () => {
-    // Hardcode 4 notes at different x positions to test
-    const testNotes = [
-      { x: 50, y: 50, color: '#FF0000' },   // Red at left
-      { x: 120, y: 50, color: '#00FF00' },  // Green
-      { x: 190, y: 50, color: '#0000FF' },  // Blue  
-      { x: 260, y: 50, color: '#FFFF00' },  // Yellow at right
-    ];
-    
-    return testNotes.map((note, idx) => (
-      <Circle key={`test-${idx}`} cx={note.x} cy={note.y} r={14} fill={note.color} />
-    ));
-  };
+  // SVG: Note circles
+  const renderNotes = () =>
+    scale.notes.map((note, idx) => {
+      const strIdx = note.s;
+      const fretOffset = note.f;
+      const isRoot = note.root === true;
+      
+      // Position at center of fret cell
+      const x = paddingLeft + (fretOffset + 0.5) * fretWidth;
+      const y = paddingTop + strIdx * stringSpacing;
+      const fill = isRoot ? THEME.ROOT : (isActive ? THEME.NOTE : '#2A2A2A');
+      const stroke = isRoot ? THEME.ROOT : THEME.NOTE;
+      
+      return (
+        <G key={`note-${idx}`}>
+          {/* Glow effect when active */}
+          {isActive && <Circle cx={x} cy={y} r={18} fill={fill} opacity={0.25} />}
+          {/* Main circle */}
+          <Circle cx={x} cy={y} r={14} fill={fill} stroke={stroke} strokeWidth={2} />
+        </G>
+      );
+    });
 
   // Finger number overlays (positioned absolutely over SVG)
   const renderFingerOverlays = () =>
