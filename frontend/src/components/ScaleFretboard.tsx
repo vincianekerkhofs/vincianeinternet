@@ -1,16 +1,19 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { COLORS } from '../constants/theme';
+import Svg, { Line, Circle, Rect, G } from 'react-native-svg';
 
 interface Props {
   scaleName: string;
+  width?: number;
+  height?: number;
   isActive?: boolean;
 }
 
-// Scale data - notes list format
+// Scale data
 const SCALES: Record<string, { name: string; start: number; notes: { s: number; f: number; finger: number; root?: boolean }[] }> = {
   'Am_pent_box1': {
-    name: 'Am Pentatónica - Box 1',
+    name: 'Am Pentatónica',
     start: 5,
     notes: [
       { s: 0, f: 0, finger: 1, root: true }, { s: 0, f: 3, finger: 4 },
@@ -50,112 +53,192 @@ const SCALES: Record<string, { name: string; start: number; notes: { s: number; 
 const STR_NAMES = ['e', 'B', 'G', 'D', 'A', 'E'];
 const { width: SW } = Dimensions.get('window');
 
-export const ScaleFretboard: React.FC<Props> = ({ scaleName, isActive = false }) => {
+const COLORS_SCHEME = {
+  NOTE: '#00D68F',
+  ROOT: '#FF6B35',
+};
+
+export const ScaleFretboard: React.FC<Props> = ({
+  scaleName,
+  width = SW - 32,
+  height = 220,
+  isActive = false,
+}) => {
   const scale = SCALES[scaleName];
   if (!scale) return <Text style={{color:'red'}}>?</Text>;
 
   const NUM_FRETS = 4;
-  const CELL_W = Math.floor((SW - 90) / NUM_FRETS);
+  const svgHeight = height - 60;
+  const paddingTop = 15;
+  const paddingBottom = 20;
+  const paddingLeft = 15;
+  const paddingRight = 15;
+  const fretboardWidth = width - paddingLeft - paddingRight;
+  const fretboardHeight = svgHeight - paddingTop - paddingBottom;
+  const fretWidth = fretboardWidth / NUM_FRETS;
+  const stringSpacing = fretboardHeight / 5;
 
   const hasRoot = (si: number) => scale.notes.some(n => n.s === si && n.root);
-  const getNote = (si: number, fi: number) => scale.notes.find(n => n.s === si && n.f === fi);
 
-  // String Label Component
-  const StrLabel = ({ si }: { si: number }) => {
-    const root = hasRoot(si);
-    return (
-      <View style={[s.strLbl, root ? s.strLblRoot : s.strLblNote]}>
-        <Text style={s.strLblTxt}>{STR_NAMES[si]}</Text>
-      </View>
-    );
+  // Top indicators (same structure as ChordFretboard)
+  const renderTopIndicators = () => (
+    <View style={styles.indicatorRow}>
+      {STR_NAMES.map((name, i) => (
+        <View key={i} style={hasRoot(i) ? styles.indRoot : styles.indNote}>
+          <Text style={styles.indText}>{name}</Text>
+        </View>
+      ))}
+    </View>
+  );
+
+  // SVG strings
+  const renderStrings = () => 
+    STR_NAMES.map((_, i) => {
+      const y = paddingTop + i * stringSpacing;
+      const thickness = 1.5 + i * 0.5;
+      return (
+        <G key={`s-${i}`}>
+          {isActive && (
+            <Line x1={paddingLeft} y1={y} x2={width - paddingRight} y2={y}
+              stroke={COLORS_SCHEME.NOTE} strokeWidth={thickness + 5} opacity={0.3} />
+          )}
+          <Line x1={paddingLeft} y1={y} x2={width - paddingRight} y2={y}
+            stroke={isActive ? COLORS_SCHEME.NOTE : '#B8977E'} strokeWidth={thickness} />
+        </G>
+      );
+    });
+
+  // SVG frets
+  const renderFrets = () => {
+    const frets = [];
+    for (let i = 0; i <= NUM_FRETS; i++) {
+      const x = paddingLeft + i * fretWidth;
+      frets.push(
+        <Line key={`f-${i}`} x1={x} y1={paddingTop} x2={x} y2={paddingTop + fretboardHeight}
+          stroke={i === 0 ? '#CCC' : '#555'} strokeWidth={i === 0 ? 5 : 2} />
+      );
+    }
+    return frets;
   };
 
-  // Note Circle Component  
-  const NoteCircle = ({ note }: { note: { finger: number; root?: boolean } }) => (
-    <View style={[s.noteC, note.root ? s.noteCRoot : s.noteCNote, isActive && s.noteCActive]}>
-      <Text style={s.noteCTxt}>{note.finger}</Text>
+  // SVG notes (all scale notes)
+  const renderNotes = () =>
+    scale.notes.map((note, idx) => {
+      const x = paddingLeft + (note.f + 0.5) * fretWidth;
+      const y = paddingTop + note.s * stringSpacing;
+      const color = note.root ? COLORS_SCHEME.ROOT : COLORS_SCHEME.NOTE;
+      return (
+        <G key={`n-${idx}`}>
+          {isActive && <Circle cx={x} cy={y} r={16} fill={color} opacity={0.3} />}
+          <Circle cx={x} cy={y} r={12} fill={isActive ? color : '#222'} stroke={color} strokeWidth={2} />
+        </G>
+      );
+    });
+
+  // Finger overlays (React Native Views)
+  const renderFingerOverlays = () =>
+    scale.notes.map((note, idx) => {
+      const xPct = ((paddingLeft + (note.f + 0.5) * fretWidth) / width) * 100;
+      const yPct = ((paddingTop + note.s * stringSpacing) / svgHeight) * 100;
+      return (
+        <View key={`fo-${idx}`} style={[styles.fingerOverlay, {
+          left: `${xPct}%`, top: `${yPct}%`,
+          transform: [{ translateX: -6 }, { translateY: -8 }]
+        }]}>
+          <Text style={styles.fingerText}>{note.finger}</Text>
+        </View>
+      );
+    });
+
+  // Fret numbers
+  const renderFretNumbers = () => (
+    <View style={styles.fretNumRow}>
+      {Array.from({ length: NUM_FRETS }).map((_, i) => (
+        <Text key={i} style={[styles.fretNum, { width: fretWidth }]}>{scale.start + i}</Text>
+      ))}
     </View>
   );
 
   return (
-    <View style={s.container}>
-      <Text style={s.title}>{scale.name}</Text>
-      <Text style={s.sub}>Trastes {scale.start}-{scale.start + NUM_FRETS - 1}</Text>
+    <View style={styles.container}>
+      {/* Top indicators */}
+      {renderTopIndicators()}
       
-      {/* Fretboard */}
-      <View style={s.board}>
-        {STR_NAMES.map((_, si) => (
-          <View key={si} style={s.row}>
-            <StrLabel si={si} />
-            
-            {[0, 1, 2, 3].map(fi => {
-              const note = getNote(si, fi);
-              return (
-                <View key={fi} style={[s.cell, { width: CELL_W }]}>
-                  <View style={fi === 0 ? s.nut : s.fret} />
-                  {note ? <NoteCircle note={note} /> : <View style={[s.strLine, { height: 2 + si * 0.5 }]} />}
-                </View>
-              );
-            })}
-          </View>
-        ))}
-        
-        {/* Fret numbers */}
-        <View style={s.fnRow}>
-          <View style={{ width: 34 }} />
-          {[0, 1, 2, 3].map(fi => (
-            <View key={fi} style={[s.fnCell, { width: CELL_W }]}>
-              <Text style={s.fnTxt}>{scale.start + fi}</Text>
-            </View>
-          ))}
-        </View>
+      {/* SVG Fretboard */}
+      <View style={styles.svgContainer}>
+        <Svg width={width} height={svgHeight}>
+          <Rect x={paddingLeft} y={paddingTop} width={fretboardWidth} height={fretboardHeight}
+            fill="#1E1810" rx={4} />
+          {renderFrets()}
+          {renderStrings()}
+          {renderNotes()}
+        </Svg>
+        {renderFingerOverlays()}
       </View>
       
+      {/* Fret numbers */}
+      {renderFretNumbers()}
+      
+      <Text style={styles.posText}>Trastes {scale.start}-{scale.start + NUM_FRETS - 1}</Text>
+      
       {/* Legend */}
-      <View style={s.leg}>
-        <View style={s.legItem}><View style={[s.legDot, { backgroundColor: '#FF6B35' }]} /><Text style={s.legTxt}>Raíz</Text></View>
-        <View style={s.legItem}><View style={[s.legDot, { backgroundColor: '#00D68F' }]} /><Text style={s.legTxt}>Notas</Text></View>
-        <Text style={[s.legTxt, { color: '#00D68F' }]}>✓ Todas suenan</Text>
+      <View style={styles.legend}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: COLORS_SCHEME.ROOT }]} />
+          <Text style={styles.legendText}>Raíz</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: COLORS_SCHEME.NOTE }]} />
+          <Text style={styles.legendText}>Notas</Text>
+        </View>
+        <Text style={[styles.legendText, { color: COLORS_SCHEME.NOTE }]}>✓ Todas suenan</Text>
       </View>
     </View>
   );
 };
 
-const s = StyleSheet.create({
-  container: { alignItems: 'center', padding: 8 },
-  title: { fontSize: 15, fontWeight: 'bold', color: COLORS.primary },
-  sub: { fontSize: 12, color: '#888', marginBottom: 8 },
+const styles = StyleSheet.create({
+  container: { alignItems: 'center' },
   
-  board: { backgroundColor: '#1E1810', borderRadius: 6, padding: 8 },
+  // Indicator row (same as ChordFretboard)
+  indicatorRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    marginBottom: 8,
+    paddingHorizontal: 10,
+  },
+  indNote: {
+    width: 28, height: 28, borderRadius: 14,
+    backgroundColor: '#00D68F',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  indRoot: {
+    width: 28, height: 28, borderRadius: 14,
+    backgroundColor: '#FF6B35',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  indText: { color: '#FFF', fontSize: 11, fontWeight: 'bold' },
   
-  row: { flexDirection: 'row', alignItems: 'center', height: 36 },
+  svgContainer: { position: 'relative' },
   
-  // String labels as View+Text
-  strLbl: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', marginRight: 6 },
-  strLblNote: { backgroundColor: '#00D68F' },
-  strLblRoot: { backgroundColor: '#FF6B35' },
-  strLblTxt: { color: '#FFF', fontSize: 11, fontWeight: 'bold' },
+  fingerOverlay: {
+    position: 'absolute', width: 12, height: 16,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  fingerText: { color: '#FFF', fontSize: 11, fontWeight: 'bold' },
   
-  cell: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', height: 32 },
+  fretNumRow: {
+    flexDirection: 'row',
+    paddingLeft: 15,
+    marginTop: -5,
+  },
+  fretNum: { textAlign: 'center', fontSize: 11, color: '#888', fontWeight: '600' },
   
-  nut: { width: 4, height: 28, backgroundColor: '#AAA', marginRight: 2 },
-  fret: { width: 2, height: 28, backgroundColor: '#555', marginRight: 2 },
+  posText: { fontSize: 11, color: COLORS.primary, fontWeight: 'bold', marginTop: 4 },
   
-  strLine: { flex: 1, backgroundColor: '#A08060' },
-  
-  // Note circles as View+Text
-  noteC: { width: 26, height: 26, borderRadius: 13, borderWidth: 2, alignItems: 'center', justifyContent: 'center', backgroundColor: '#222' },
-  noteCNote: { borderColor: '#00D68F' },
-  noteCRoot: { borderColor: '#FF6B35' },
-  noteCActive: { backgroundColor: '#00D68F' },
-  noteCTxt: { color: '#FFF', fontSize: 13, fontWeight: 'bold' },
-  
-  fnRow: { flexDirection: 'row', marginTop: 4 },
-  fnCell: { alignItems: 'center' },
-  fnTxt: { fontSize: 10, color: '#888' },
-  
-  leg: { flexDirection: 'row', gap: 12, marginTop: 10, alignItems: 'center' },
-  legItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  legDot: { width: 10, height: 10, borderRadius: 5 },
-  legTxt: { fontSize: 11, color: '#888' },
+  legend: { flexDirection: 'row', gap: 14, marginTop: 8, alignItems: 'center' },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  legendDot: { width: 10, height: 10, borderRadius: 5 },
+  legendText: { fontSize: 11, color: '#888' },
 });
