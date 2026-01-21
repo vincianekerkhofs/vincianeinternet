@@ -102,6 +102,10 @@ export default function PracticeScreen() {
   useEffect(() => {
     loadLesson();
     checkCompletion();
+    // Show week intro for weeks 6+ on day 1
+    if (weekIntro && dayNum === 1) {
+      setShowWeekIntro(true);
+    }
     return () => stopPlayback();
   }, [weekNum, dayNum]);
 
