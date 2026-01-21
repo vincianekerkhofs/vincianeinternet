@@ -2,38 +2,72 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { COLORS, FONTS, SPACING, BORDER_RADIUS } from '../constants/theme';
 
-interface TabNote {
-  string: number;
-  fret: number | string;
-  beat: number;
+export interface TabNote {
+  stringIndex: number;  // 0=high e, 5=low E
+  fret: number | null;  // null for muted (X)
+  startBeat: number;    // 1-based beat position
+  duration?: number;    // in beats
   direction?: 'up' | 'down';
-  technique?: string;
+  technique?: string;   // H, P, S, B, etc.
+  isMute?: boolean;
 }
 
 interface TabDisplayProps {
   notes: TabNote[];
-  currentBeat?: number;
+  currentBeat: number;  // Current playback position (1-based)
+  totalBeats?: number;
   timeSignature?: string;
+  isPlaying?: boolean;
 }
 
 export const TabDisplay: React.FC<TabDisplayProps> = ({
   notes = [],
-  currentBeat = 0,
+  currentBeat = 1,
+  totalBeats = 8,
   timeSignature = '4/4',
+  isPlaying = false,
 }) => {
+  // Standard guitar string order: e B G D A E (high to low, displayed top to bottom)
   const stringNames = ['e', 'B', 'G', 'D', 'A', 'E'];
-  const beatsPerMeasure = parseInt(timeSignature.split('/')[0]) || 4;
   
-  // Group notes by beat
+  // Get note at a specific position
   const getNoteAtPosition = (stringIndex: number, beat: number): TabNote | null => {
-    return notes.find(n => n.string === stringIndex && Math.floor(n.beat) === beat) || null;
+    return notes.find(n => 
+      n.stringIndex === stringIndex && 
+      Math.floor(n.startBeat) === beat
+    ) || null;
   };
 
+  // Get picking direction at beat
+  const getDirectionAtBeat = (beat: number): string | null => {
+    const noteWithDirection = notes.find(n => 
+      Math.floor(n.startBeat) === beat && n.direction
+    );
+    if (noteWithDirection?.direction === 'down') return '↓';
+    if (noteWithDirection?.direction === 'up') return '↑';
+    return null;
+  };
+
+  // Render a single string row
   const renderString = (stringIndex: number, stringName: string) => {
     const positions = [];
-    for (let beat = 1; beat <= beatsPerMeasure * 2; beat++) {
+    
+    for (let beat = 1; beat <= totalBeats; beat++) {
       const note = getNoteAtPosition(stringIndex, beat);
-      const isCurrentBeat = Math.floor(currentBeat) === beat;
+      const isCurrentBeat = Math.floor(currentBeat) === beat && isPlaying;
+      const isPastBeat = currentBeat > beat && isPlaying;
+      
+      let displayValue = '-';
+      let hasNote = false;
+      
+      if (note) {
+        hasNote = true;
+        if (note.isMute || note.fret === null) {
+          displayValue = 'x';
+        } else {
+          displayValue = String(note.fret);
+        }
+      }
       
       positions.push(
         <View 
@@ -41,17 +75,21 @@ export const TabDisplay: React.FC<TabDisplayProps> = ({
           style={[
             styles.tabPosition,
             isCurrentBeat && styles.tabPositionActive,
+            isPastBeat && hasNote && styles.tabPositionPast,
           ]}
         >
-          {note ? (
-            <Text style={[
-              styles.tabNote,
-              isCurrentBeat && styles.tabNoteActive,
-            ]}>
-              {note.fret}
-            </Text>
-          ) : (
-            <Text style={styles.tabLine}>-</Text>
+          <Text style={[
+            styles.tabNote,
+            hasNote && styles.tabNoteWithValue,
+            isCurrentBeat && hasNote && styles.tabNoteActive,
+            isPastBeat && hasNote && styles.tabNotePast,
+            !hasNote && styles.tabLine,
+          ]}>
+            {displayValue}
+          </Text>
+          {/* Technique marker */}
+          {note?.technique && (
+            <Text style={styles.techniqueMarker}>{note.technique}</Text>
           )}
         </View>
       );
@@ -59,7 +97,13 @@ export const TabDisplay: React.FC<TabDisplayProps> = ({
 
     return (
       <View key={stringIndex} style={styles.stringRow}>
-        <Text style={styles.stringName}>{stringName}</Text>
+        <Text style={[
+          styles.stringName,
+          notes.some(n => n.stringIndex === stringIndex && Math.floor(n.startBeat) === Math.floor(currentBeat)) && 
+          isPlaying && styles.stringNameActive
+        ]}>
+          {stringName}
+        </Text>
         <View style={styles.stringLine}>
           <Text style={styles.tabSeparator}>|</Text>
           {positions}
@@ -69,20 +113,26 @@ export const TabDisplay: React.FC<TabDisplayProps> = ({
     );
   };
 
-  // Render picking directions
-  const renderPickingDirection = () => {
+  // Render picking direction row
+  const renderPickingDirections = () => {
     const directions = [];
-    for (let beat = 1; beat <= beatsPerMeasure * 2; beat++) {
-      const noteWithDirection = notes.find(n => Math.floor(n.beat) === beat && n.direction);
+    
+    for (let beat = 1; beat <= totalBeats; beat++) {
+      const direction = getDirectionAtBeat(beat);
+      const isCurrentBeat = Math.floor(currentBeat) === beat && isPlaying;
+      
       directions.push(
         <View key={beat} style={styles.tabPosition}>
-          <Text style={styles.pickingDirection}>
-            {noteWithDirection?.direction === 'down' ? '↓' : 
-             noteWithDirection?.direction === 'up' ? '↑' : ' '}
+          <Text style={[
+            styles.pickingDirection,
+            isCurrentBeat && styles.pickingDirectionActive,
+          ]}>
+            {direction || ' '}
           </Text>
         </View>
       );
     }
+    
     return (
       <View style={styles.stringRow}>
         <Text style={styles.stringName}></Text>
@@ -95,14 +145,53 @@ export const TabDisplay: React.FC<TabDisplayProps> = ({
     );
   };
 
+  // Render beat numbers
+  const renderBeatNumbers = () => {
+    const beats = [];
+    
+    for (let beat = 1; beat <= totalBeats; beat++) {
+      const isCurrentBeat = Math.floor(currentBeat) === beat && isPlaying;
+      
+      beats.push(
+        <View key={beat} style={styles.tabPosition}>
+          <Text style={[
+            styles.beatNumber,
+            isCurrentBeat && styles.beatNumberActive,
+          ]}>
+            {beat}
+          </Text>
+        </View>
+      );
+    }
+    
+    return (
+      <View style={styles.stringRow}>
+        <Text style={styles.stringName}></Text>
+        <View style={styles.stringLine}>
+          <Text style={styles.tabSeparator}> </Text>
+          {beats}
+          <Text style={styles.tabSeparator}> </Text>
+        </View>
+      </View>
+    );
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
         <View style={styles.tabContainer}>
-          {renderPickingDirection()}
+          {renderBeatNumbers()}
+          {renderPickingDirections()}
           {stringNames.map((name, index) => renderString(index, name))}
         </View>
       </ScrollView>
+      
+      {/* Playback indicator */}
+      {isPlaying && (
+        <View style={styles.playbackIndicator}>
+          <View style={[styles.playbackDot, { left: `${((currentBeat - 1) / totalBeats) * 100}%` }]} />
+        </View>
+      )}
     </View>
   );
 };
@@ -114,12 +203,12 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
   },
   tabContainer: {
-    fontFamily: 'monospace',
+    minWidth: '100%',
   },
   stringRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 24,
+    height: 26,
   },
   stringName: {
     width: 20,
@@ -128,42 +217,86 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     textAlign: 'center',
   },
+  stringNameActive: {
+    color: COLORS.primary,
+    fontWeight: '700',
+  },
   stringLine: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   tabPosition: {
-    width: 28,
+    width: 32,
+    height: 24,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: 4,
   },
   tabPositionActive: {
-    backgroundColor: COLORS.primary + '30',
-    borderRadius: 4,
+    backgroundColor: COLORS.primary,
+  },
+  tabPositionPast: {
+    backgroundColor: COLORS.success + '30',
   },
   tabNote: {
     fontSize: FONTS.sizes.md,
-    fontWeight: '700',
+    fontWeight: '600',
+  },
+  tabNoteWithValue: {
     color: COLORS.primary,
-    fontFamily: 'monospace',
   },
   tabNoteActive: {
     color: COLORS.text,
+    fontWeight: '700',
+  },
+  tabNotePast: {
+    color: COLORS.success,
   },
   tabLine: {
-    fontSize: FONTS.sizes.md,
     color: COLORS.textMuted,
-    fontFamily: 'monospace',
   },
   tabSeparator: {
     fontSize: FONTS.sizes.md,
     color: COLORS.textMuted,
-    fontFamily: 'monospace',
     marginHorizontal: 4,
+  },
+  techniqueMarker: {
+    position: 'absolute',
+    top: -8,
+    fontSize: 8,
+    color: COLORS.secondary,
+    fontWeight: '700',
   },
   pickingDirection: {
     fontSize: FONTS.sizes.lg,
-    color: COLORS.secondary,
+    color: COLORS.textMuted,
     fontWeight: '700',
+  },
+  pickingDirectionActive: {
+    color: COLORS.secondary,
+  },
+  beatNumber: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.textMuted,
+  },
+  beatNumberActive: {
+    color: COLORS.primary,
+    fontWeight: '700',
+  },
+  playbackIndicator: {
+    height: 3,
+    backgroundColor: COLORS.surfaceLight,
+    borderRadius: 2,
+    marginTop: SPACING.sm,
+    position: 'relative',
+  },
+  playbackDot: {
+    position: 'absolute',
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: COLORS.primary,
+    top: -4,
+    marginLeft: -6,
   },
 });

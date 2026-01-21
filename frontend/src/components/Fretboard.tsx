@@ -1,10 +1,21 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { COLORS, FONTS, SPACING } from '../constants/theme';
+import { View, StyleSheet } from 'react-native';
+import { COLORS, SPACING } from '../constants/theme';
 import Svg, { Line, Circle, Rect, Text as SvgText } from 'react-native-svg';
 
+export interface FretboardNote {
+  stringIndex: number;  // 0=high e, 5=low E
+  fret: number | null;  // null for muted
+  isMute?: boolean;
+  isActive?: boolean;   // Currently being played
+  isPreview?: boolean;  // Next note preview
+  finger?: number;
+}
+
 interface FretboardProps {
-  activeNotes?: { string: number; fret: number; finger?: number }[];
+  notes?: FretboardNote[];
+  currentNotes?: FretboardNote[];  // Currently active notes
+  previewNotes?: FretboardNote[];  // Next notes preview
   width?: number;
   height?: number;
   startFret?: number;
@@ -12,7 +23,9 @@ interface FretboardProps {
 }
 
 export const Fretboard: React.FC<FretboardProps> = ({
-  activeNotes = [],
+  notes = [],
+  currentNotes = [],
+  previewNotes = [],
   width = 340,
   height = 160,
   startFret = 0,
@@ -22,6 +35,8 @@ export const Fretboard: React.FC<FretboardProps> = ({
   const fretWidth = (width - padding * 2) / numFrets;
   const stringSpacing = (height - padding * 2) / 5;
   
+  // Standard guitar tuning: E A D G B e (low to high)
+  // But displayed top to bottom as: e B G D A E
   const stringNames = ['e', 'B', 'G', 'D', 'A', 'E'];
   const fretMarkers = [3, 5, 7, 9, 12, 15, 17, 19, 21];
 
@@ -29,6 +44,10 @@ export const Fretboard: React.FC<FretboardProps> = ({
     return stringNames.map((name, i) => {
       const y = padding + i * stringSpacing;
       const thickness = 1 + (i * 0.3);
+      
+      // Check if this string has a current note
+      const hasCurrentNote = currentNotes.some(n => n.stringIndex === i);
+      
       return (
         <React.Fragment key={`string-${i}`}>
           <Line
@@ -36,15 +55,15 @@ export const Fretboard: React.FC<FretboardProps> = ({
             y1={y}
             x2={width - padding}
             y2={y}
-            stroke={COLORS.string}
-            strokeWidth={thickness}
+            stroke={hasCurrentNote ? COLORS.stringHighlight : COLORS.string}
+            strokeWidth={hasCurrentNote ? thickness + 1 : thickness}
           />
           <SvgText
             x={padding - 15}
             y={y + 4}
-            fill={COLORS.textSecondary}
+            fill={hasCurrentNote ? COLORS.primary : COLORS.textSecondary}
             fontSize={10}
-            fontWeight="500"
+            fontWeight={hasCurrentNote ? 'bold' : '500'}
           >
             {name}
           </SvgText>
@@ -99,12 +118,12 @@ export const Fretboard: React.FC<FretboardProps> = ({
         const isDouble = fretNum === 12;
         if (isDouble) {
           markers.push(
-            <Circle key={`marker-${i}-1`} cx={x} cy={padding + stringSpacing * 1.5} r={4} fill={COLORS.textMuted} />,
-            <Circle key={`marker-${i}-2`} cx={x} cy={padding + stringSpacing * 3.5} r={4} fill={COLORS.textMuted} />
+            <Circle key={`marker-${i}-1`} cx={x} cy={padding + stringSpacing * 1.5} r={4} fill={COLORS.textMuted} opacity={0.5} />,
+            <Circle key={`marker-${i}-2`} cx={x} cy={padding + stringSpacing * 3.5} r={4} fill={COLORS.textMuted} opacity={0.5} />
           );
         } else {
           markers.push(
-            <Circle key={`marker-${i}`} cx={x} cy={height / 2} r={4} fill={COLORS.textMuted} />
+            <Circle key={`marker-${i}`} cx={x} cy={height / 2} r={4} fill={COLORS.textMuted} opacity={0.5} />
           );
         }
       }
@@ -112,46 +131,97 @@ export const Fretboard: React.FC<FretboardProps> = ({
     return markers;
   };
 
-  const renderActiveNotes = () => {
-    return activeNotes.map((note, i) => {
-      const fretIndex = note.fret - startFret;
-      if (fretIndex < 0 || fretIndex > numFrets) return null;
-      
-      const x = note.fret === 0 
-        ? padding - 10 
-        : padding + (fretIndex - 0.5) * fretWidth;
-      const y = padding + note.string * stringSpacing;
-      
+  const renderNote = (note: FretboardNote, index: number, type: 'current' | 'preview' | 'static') => {
+    const fret = note.fret ?? 0;
+    const fretIndex = fret - startFret;
+    
+    // Skip notes outside visible range
+    if (fretIndex < 0 || fretIndex > numFrets) return null;
+    
+    const x = fret === 0 
+      ? padding - 10 
+      : padding + (fretIndex - 0.5) * fretWidth;
+    const y = padding + note.stringIndex * stringSpacing;
+    
+    // Handle muted strings
+    if (note.isMute || note.fret === null) {
+      const color = type === 'current' ? COLORS.primary : 
+                    type === 'preview' ? COLORS.primaryLight : COLORS.textMuted;
       return (
-        <React.Fragment key={`note-${i}`}>
+        <React.Fragment key={`note-${type}-${index}`}>
+          <SvgText
+            x={x}
+            y={y + 5}
+            fill={color}
+            fontSize={16}
+            fontWeight="bold"
+            textAnchor="middle"
+          >
+            X
+          </SvgText>
+        </React.Fragment>
+      );
+    }
+    
+    // Determine colors based on type
+    let fillColor = COLORS.primary;
+    let strokeColor = COLORS.primaryLight;
+    let opacity = 1;
+    let radius = 14;
+    
+    if (type === 'preview') {
+      fillColor = COLORS.primary + '60';
+      strokeColor = COLORS.primaryLight + '60';
+      opacity = 0.6;
+      radius = 12;
+    } else if (type === 'static') {
+      fillColor = COLORS.surfaceLight;
+      strokeColor = COLORS.textMuted;
+      opacity = 0.5;
+      radius = 10;
+    }
+    
+    return (
+      <React.Fragment key={`note-${type}-${index}`}>
+        {/* Glow effect for current notes */}
+        {type === 'current' && (
           <Circle
             cx={x}
             cy={y}
-            r={12}
+            r={radius + 4}
             fill={COLORS.primary}
-            stroke={COLORS.primaryLight}
-            strokeWidth={2}
+            opacity={0.3}
           />
-          {note.finger && (
-            <SvgText
-              x={x}
-              y={y + 4}
-              fill={COLORS.text}
-              fontSize={11}
-              fontWeight="bold"
-              textAnchor="middle"
-            >
-              {note.finger}
-            </SvgText>
-          )}
-        </React.Fragment>
-      );
-    });
+        )}
+        <Circle
+          cx={x}
+          cy={y}
+          r={radius}
+          fill={fillColor}
+          stroke={strokeColor}
+          strokeWidth={2}
+          opacity={opacity}
+        />
+        {/* Fret number or finger */}
+        <SvgText
+          x={x}
+          y={y + 5}
+          fill={type === 'static' ? COLORS.textMuted : COLORS.text}
+          fontSize={type === 'current' ? 12 : 10}
+          fontWeight="bold"
+          textAnchor="middle"
+          opacity={opacity}
+        >
+          {note.finger || fret}
+        </SvgText>
+      </React.Fragment>
+    );
   };
 
   return (
     <View style={styles.container}>
       <Svg width={width} height={height}>
+        {/* Fretboard wood */}
         <Rect
           x={padding}
           y={padding}
@@ -163,7 +233,15 @@ export const Fretboard: React.FC<FretboardProps> = ({
         {renderFretMarkers()}
         {renderFrets()}
         {renderStrings()}
-        {renderActiveNotes()}
+        
+        {/* Static/all notes (dimmed) */}
+        {notes.map((note, i) => renderNote(note, i, 'static'))}
+        
+        {/* Preview notes (next notes) */}
+        {previewNotes.map((note, i) => renderNote(note, i, 'preview'))}
+        
+        {/* Current active notes (highlighted) */}
+        {currentNotes.map((note, i) => renderNote(note, i, 'current'))}
       </Svg>
     </View>
   );
