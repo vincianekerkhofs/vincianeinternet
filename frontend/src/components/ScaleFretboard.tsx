@@ -98,10 +98,11 @@ export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
   const stringNames = ['e', 'B', 'G', 'D', 'A', 'E'];
   
   // Fixed measurements
-  const STRING_GAP = 28; // Gap between strings
-  const FRET_WIDTH = (width - 60) / numFrets;
+  const STRING_GAP = 28;
   const TOP_PADDING = 20;
   const FRETBOARD_HEIGHT = TOP_PADDING + STRING_GAP * 5 + TOP_PADDING;
+  const FRETBOARD_WIDTH = width - 30;
+  const FRET_WIDTH = FRETBOARD_WIDTH / numFrets;
 
   return (
     <View style={styles.container}>
