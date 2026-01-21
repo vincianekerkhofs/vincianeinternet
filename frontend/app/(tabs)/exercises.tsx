@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,11 +10,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { COLORS, FONTS, SPACING, BORDER_RADIUS, getDifficultyColor, getDomainColor } from '../../src/constants/theme';
 import { getExercises, getDomains, getDifficulties } from '../../src/services/api';
 import { ExerciseCard } from '../../src/components/ExerciseCard';
+import { getCompletedExercises, getCompletionStats } from '../../src/utils/completionStorage';
 
 export default function ExercisesScreen() {
   const [exercises, setExercises] = useState<any[]>([]);
