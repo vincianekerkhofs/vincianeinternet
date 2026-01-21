@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Text } from 'react-native';
 import { COLORS } from '../constants/theme';
 import Svg, { Line, Circle, Rect, Text as SvgText, G } from 'react-native-svg';
 import { CHORD_SHAPES, ChordShape } from '../data/curriculum';
