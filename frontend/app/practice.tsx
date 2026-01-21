@@ -343,6 +343,15 @@ export default function PracticeScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Week Introduction Modal (for weeks 7+) */}
+      {weekIntro && (
+        <WeekIntroModal
+          intro={weekIntro}
+          visible={showWeekIntro}
+          onContinue={() => setShowWeekIntro(false)}
+        />
+      )}
+      
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => { stopPlayback(); router.back(); }} style={styles.headerButton}>
@@ -352,6 +361,12 @@ export default function PracticeScreen() {
           <Text style={styles.headerTitle}>Semana {weekNum} · Día {dayNum}</Text>
           <Text style={styles.headerSubtitle} numberOfLines={1}>{lesson.objective}</Text>
         </View>
+        {/* Info button to show week intro */}
+        {weekIntro && (
+          <TouchableOpacity onPress={() => setShowWeekIntro(true)} style={styles.headerButton}>
+            <Ionicons name="information-circle-outline" size={24} color={COLORS.primary} />
+          </TouchableOpacity>
+        )}
         <TouchableOpacity onPress={() => router.push('/tuner')} style={styles.headerButton}>
           <Ionicons name="radio-outline" size={24} color={COLORS.primary} />
         </TouchableOpacity>
