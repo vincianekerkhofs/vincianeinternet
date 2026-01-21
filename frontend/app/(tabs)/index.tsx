@@ -65,7 +65,7 @@ export default function HomeScreen() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.greeting}>Guitar Gym</Text>
+          <Text style={styles.greeting}>Guitar Guide Pro</Text>
           <Text style={styles.subtitle}>Tu progreso</Text>
         </View>
 
