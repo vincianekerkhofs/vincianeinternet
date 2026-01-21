@@ -231,12 +231,20 @@ export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
       
       <View style={styles.svgContainer}>
         <Svg width={width} height={svgHeight}>
-          <Rect x={paddingLeft} y={paddingTop} width={fretboardWidth} height={fretboardHeight}
-            fill="#1E1810" rx={4} />
-          {renderFretMarkers()}
-          {renderFrets()}
-          {renderStrings()}
-          {renderScaleNotes()}
+          {/* Background */}
+          <Rect x={0} y={0} width={width} height={svgHeight} fill="#1E1810" />
+          
+          {/* Render all notes directly */}
+          {scaleData.notes.map((note, idx) => {
+            const fretPos = note.fret - startFret;
+            const x = paddingLeft + (fretPos + 0.5) * fretWidth;
+            const y = paddingTop + note.string * stringSpacing;
+            const color = note.isRoot ? COLORS_SCHEME.ROOT : COLORS_SCHEME.NOTE;
+            
+            return (
+              <Circle key={`note-${idx}`} cx={x} cy={y} r={12} fill={color} />
+            );
+          })}
         </Svg>
       </View>
       
