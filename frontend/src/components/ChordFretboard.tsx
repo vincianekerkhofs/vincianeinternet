@@ -344,11 +344,11 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
       <View style={styles.legend}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: STRING_COLORS.SOUND }]} />
-          <SvgText style={styles.legendText}>Suena</SvgText>
+          <Text style={styles.legendText}>Suena</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: STRING_COLORS.MUTED }]} />
-          <SvgText style={styles.legendText}>Silenciar</SvgText>
+          <Text style={styles.legendText}>Silenciar</Text>
         </View>
       </View>
     </View>
