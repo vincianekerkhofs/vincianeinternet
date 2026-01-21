@@ -22,14 +22,14 @@ const STRING_NAMES = ['e', 'B', 'G', 'D', 'A', 'E'];
 const STRING_NAMES_DUAL = ['e/Mi', 'B/Si', 'G/Sol', 'D/Re', 'A/La', 'E/Mi'];
 
 const THEME = {
-  NOTE: '#00D68F',
-  ROOT: '#FF6B35',
-  ACTIVE: '#FFFFFF',
-  BEND: '#FF4757',
-  SLIDE: '#00C2FF',
-  HAMMER: '#9D4EDD',
-  PULL: '#FFB547',
-  VIBRATO: '#00D4AA',
+  NOTE: COLORS.secondary,       // Teal orgánico para notas
+  ROOT: COLORS.rootNote,        // Rust-naranja cálido para raíces
+  ACTIVE: COLORS.activeNote,    // Ámbar para nota activa
+  BEND: COLORS.error,           // Rojo apagado para bend
+  SLIDE: COLORS.info,           // Azul-gris suave para slide
+  HAMMER: '#8A7A9A',            // Púrpura suave para hammer
+  PULL: COLORS.warning,         // Dorado cálido para pull
+  VIBRATO: COLORS.secondaryLight, // Teal claro para vibrato
 };
 
 // Get technique color
