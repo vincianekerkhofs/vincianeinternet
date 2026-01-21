@@ -14,6 +14,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import { COLORS, FONTS, SPACING, BORDER_RADIUS } from '../src/constants/theme';
 import { ChordFretboard } from '../src/components/ChordFretboard';
+import { ScaleFretboard } from '../src/components/ScaleFretboard';
 import { useStore } from '../src/store/useStore';
 import { 
   CURRICULUM, 
@@ -32,6 +33,9 @@ import {
 const { width } = Dimensions.get('window');
 
 type Stage = 'aprender' | 'practicar' | 'aplicar';
+
+// Scale shapes that should use ScaleFretboard
+const SCALE_SHAPES = ['Am_pent_box1', 'Am_blues', 'C_major_box1'];
 
 export default function PracticeScreen() {
   const params = useLocalSearchParams<{ week?: string; day?: string }>();
