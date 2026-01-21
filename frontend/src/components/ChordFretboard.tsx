@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, StyleSheet, Text } from 'react-native';
 import { COLORS } from '../constants/theme';
-import Svg, { Line, Circle, Rect, Text as SvgText, G, Path } from 'react-native-svg';
+import Svg, { Line, Circle, Rect, Text as SvgText, G } from 'react-native-svg';
 import { CHORD_SHAPES, ChordShape } from '../data/curriculum';
 
 interface ChordFretboardProps {
@@ -12,19 +12,14 @@ interface ChordFretboardProps {
   currentBeat?: number;
 }
 
-// String colors for visual clarity - HIGHLY SATURATED
+// String colors for visual clarity
 const STRING_COLORS = {
   SOUND: '#00D68F',      // Bright GREEN - must sound
   MUTED: '#FF4757',      // Bright RED - must NOT sound
-  OPEN: '#00D68F',       // Same green for open strings
 };
 
 /**
- * CHORD FRETBOARD - Premium visualization
- * 
- * STRING COLOR CODING:
- * - GREEN strings = must sound (play this string)
- * - RED strings = must NOT sound (mute this string)
+ * CHORD FRETBOARD - Premium visualization with separate indicator column
  */
 export const ChordFretboard: React.FC<ChordFretboardProps> = ({
   shape,
@@ -38,12 +33,15 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
     return null;
   }
 
-  const paddingTop = 30;
-  const paddingBottom = 30;
-  const paddingLeft = 20;
-  const paddingRight = 15;
+  const indicatorColumnWidth = 36;
+  const fretboardOnlyWidth = width - indicatorColumnWidth;
   
-  const fretboardWidth = width - paddingLeft - paddingRight;
+  const paddingTop = 25;
+  const paddingBottom = 25;
+  const paddingLeft = 10;
+  const paddingRight = 10;
+  
+  const fretboardWidth = fretboardOnlyWidth - paddingLeft - paddingRight;
   const fretboardHeight = height - paddingTop - paddingBottom;
   const numFrets = 5;
   const fretWidth = fretboardWidth / numFrets;
@@ -59,7 +57,38 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
     return 'sound';
   };
 
-  // Render strings with BOLD color coding
+  // Render string indicators as React Native views (OUTSIDE SVG)
+  const renderStringIndicators = () => {
+    return stringNames.map((name, i) => {
+      const fret = shapeData.frets[i];
+      const state = getStringState(i);
+      
+      if (fret === null) {
+        // MUTED - RED X
+        return (
+          <View key={`ind-${i}`} style={[styles.indicator, styles.indicatorMuted]}>
+            <Text style={styles.indicatorTextMuted}>X</Text>
+          </View>
+        );
+      } else if (fret === 0) {
+        // OPEN - GREEN O
+        return (
+          <View key={`ind-${i}`} style={[styles.indicator, styles.indicatorOpen]}>
+            <Text style={styles.indicatorTextOpen}>O</Text>
+          </View>
+        );
+      } else {
+        // FRETTED - GREEN filled with string name
+        return (
+          <View key={`ind-${i}`} style={[styles.indicator, styles.indicatorFretted]}>
+            <Text style={styles.indicatorTextFretted}>{name}</Text>
+          </View>
+        );
+      }
+    });
+  };
+
+  // Render strings with color coding
   const renderStrings = () => {
     return stringNames.map((name, i) => {
       const y = paddingTop + i * stringSpacing;
@@ -68,30 +97,31 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
       const isMuted = state === 'muted';
       const isActiveString = isActive && !isMuted;
       
-      // Color based on whether string should sound or not
       const stringColor = isMuted ? STRING_COLORS.MUTED : '#B8977E';
       const glowColor = isMuted ? STRING_COLORS.MUTED : STRING_COLORS.SOUND;
       
       return (
         <G key={`string-${i}`}>
           {/* Glow effect */}
-          <Line
-            x1={paddingLeft}
-            y1={y}
-            x2={width - paddingRight}
-            y2={y}
-            stroke={glowColor}
-            strokeWidth={isMuted ? baseThickness + 8 : (isActiveString ? baseThickness + 8 : 0)}
-            opacity={isMuted ? 0.3 : (isActiveString ? 0.4 : 0)}
-          />
+          {(isMuted || isActiveString) && (
+            <Line
+              x1={paddingLeft}
+              y1={y}
+              x2={fretboardOnlyWidth - paddingRight}
+              y2={y}
+              stroke={glowColor}
+              strokeWidth={baseThickness + 6}
+              opacity={isMuted ? 0.35 : (isActiveString ? 0.4 : 0)}
+            />
+          )}
           {/* Main string */}
           <Line
             x1={paddingLeft}
             y1={y}
-            x2={width - paddingRight}
+            x2={fretboardOnlyWidth - paddingRight}
             y2={y}
             stroke={stringColor}
-            strokeWidth={baseThickness + (isMuted ? 1 : 0)}
+            strokeWidth={baseThickness}
           />
         </G>
       );
@@ -113,20 +143,19 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
           x2={x}
           y2={paddingTop + fretboardHeight}
           stroke={isNut ? '#D4D4D4' : '#5A5A5A'}
-          strokeWidth={isNut ? 6 : 2}
+          strokeWidth={isNut ? 5 : 2}
         />
       );
       
-      // Fret numbers
       if (i > 0) {
         const fretNum = startFret + i;
         frets.push(
           <SvgText
             key={`fret-num-${i}`}
             x={x - fretWidth / 2}
-            y={height - 8}
+            y={height - 6}
             fill={COLORS.textMuted}
-            fontSize={12}
+            fontSize={11}
             fontWeight="600"
             textAnchor="middle"
           >
@@ -141,13 +170,13 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
         <SvgText
           key="position"
           x={paddingLeft + 5}
-          y={height - 8}
+          y={height - 6}
           fill={COLORS.primary}
-          fontSize={11}
+          fontSize={10}
           fontWeight="bold"
           textAnchor="start"
         >
-          Traste {startFret}
+          {startFret}fr
         </SvgText>
       );
     }
@@ -181,7 +210,7 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
     return markers;
   };
 
-  // Render finger dots on fretboard
+  // Render finger dots
   const renderFingerDots = () => {
     const notes = [];
     
@@ -189,73 +218,32 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
       const fret = shapeData.frets[stringIndex];
       const finger = shapeData.fingers[stringIndex];
       const y = paddingTop + stringIndex * stringSpacing;
-      const state = getStringState(stringIndex);
       
-      if (fret === null) {
-        // MUTED - Draw X on the string
-        const xPos = paddingLeft + fretWidth * 0.3;
-        notes.push(
-          <G key={`mute-${stringIndex}`}>
-            <Circle cx={xPos} cy={y} r={12} fill={STRING_COLORS.MUTED} />
-            <SvgText
-              x={xPos}
-              y={y + 5}
-              fill="#FFFFFF"
-              fontSize={14}
-              fontWeight="bold"
-              textAnchor="middle"
-            >
-              X
-            </SvgText>
-          </G>
-        );
-        continue;
-      }
+      // Skip muted and open strings - they don't have dots on fretboard
+      if (fret === null || fret === 0) continue;
       
-      if (fret === 0) {
-        // OPEN - Draw O on the string
-        const xPos = paddingLeft + fretWidth * 0.3;
-        notes.push(
-          <G key={`open-${stringIndex}`}>
-            <Circle cx={xPos} cy={y} r={12} fill="none" stroke={STRING_COLORS.SOUND} strokeWidth={2.5} />
-            <SvgText
-              x={xPos}
-              y={y + 5}
-              fill={STRING_COLORS.SOUND}
-              fontSize={12}
-              fontWeight="bold"
-              textAnchor="middle"
-            >
-              O
-            </SvgText>
-          </G>
-        );
-        continue;
-      }
-      
-      // Fretted note
       const fretIndex = fret - startFret;
       const x = paddingLeft + (fretIndex - 0.5) * fretWidth;
       
       notes.push(
         <G key={`note-${stringIndex}`}>
           {isActive && (
-            <Circle cx={x} cy={y} r={20} fill={STRING_COLORS.SOUND} opacity={0.25} />
+            <Circle cx={x} cy={y} r={18} fill={STRING_COLORS.SOUND} opacity={0.25} />
           )}
           <Circle
             cx={x}
             cy={y}
-            r={15}
+            r={14}
             fill={isActive ? STRING_COLORS.SOUND : '#2A2A2A'}
             stroke={STRING_COLORS.SOUND}
-            strokeWidth={2.5}
+            strokeWidth={2}
           />
           {finger !== null && finger !== 0 && (
             <SvgText
               x={x}
               y={y + 5}
               fill="#FFFFFF"
-              fontSize={14}
+              fontSize={13}
               fontWeight="bold"
               textAnchor="middle"
             >
@@ -271,22 +259,28 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
 
   return (
     <View style={styles.container}>
-      <Svg width={width} height={height}>
-        {/* Fretboard background */}
-        <Rect
-          x={paddingLeft}
-          y={paddingTop}
-          width={fretboardWidth}
-          height={fretboardHeight}
-          fill="#1E1810"
-          rx={4}
-        />
+      <View style={styles.fretboardRow}>
+        {/* Left indicator column */}
+        <View style={[styles.indicatorColumn, { height: fretboardHeight, marginTop: paddingTop }]}>
+          {renderStringIndicators()}
+        </View>
         
-        {renderFretMarkers()}
-        {renderFrets()}
-        {renderStrings()}
-        {renderFingerDots()}
-      </Svg>
+        {/* Fretboard SVG */}
+        <Svg width={fretboardOnlyWidth} height={height}>
+          <Rect
+            x={paddingLeft}
+            y={paddingTop}
+            width={fretboardWidth}
+            height={fretboardHeight}
+            fill="#1E1810"
+            rx={4}
+          />
+          {renderFretMarkers()}
+          {renderFrets()}
+          {renderStrings()}
+          {renderFingerDots()}
+        </Svg>
+      </View>
       
       {/* Legend */}
       <View style={styles.legend}>
@@ -306,6 +300,48 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
+  },
+  fretboardRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  indicatorColumn: {
+    width: 36,
+    justifyContent: 'space-between',
+    paddingVertical: 2,
+  },
+  indicator: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  indicatorMuted: {
+    backgroundColor: STRING_COLORS.MUTED,
+  },
+  indicatorOpen: {
+    backgroundColor: 'transparent',
+    borderWidth: 2.5,
+    borderColor: STRING_COLORS.SOUND,
+  },
+  indicatorFretted: {
+    backgroundColor: STRING_COLORS.SOUND,
+  },
+  indicatorTextMuted: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  indicatorTextOpen: {
+    color: STRING_COLORS.SOUND,
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
+  indicatorTextFretted: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: 'bold',
   },
   legend: {
     flexDirection: 'row',
