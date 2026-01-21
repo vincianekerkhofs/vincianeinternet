@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -14,6 +14,7 @@ const { width } = Dimensions.get('window');
 export default function SoloDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [solo, setSolo] = useState<GuidedSolo | null>(null);
+  const [loading, setLoading] = useState(true);
   const [showIntro, setShowIntro] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentBar, setCurrentBar] = useState(0);
@@ -22,28 +23,6 @@ export default function SoloDetailScreen() {
   
   const playbackRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Extract unique techniques from solo - MUST be before any conditional returns
-  const soloTechniques = useMemo(() => {
-    if (!solo) return [];
-    const techniques = new Set<string>();
-    solo.notes.flat().forEach(note => {
-      if (note.technique) {
-        techniques.add(note.technique);
-      }
-    });
-    return Array.from(techniques);
-  }, [solo]);
-
-  // Calculate fret range from notes - MUST be before any conditional returns
-  const fretRange = useMemo(() => {
-    if (!solo) return { minFret: 0, maxFret: 5, numFrets: 5 };
-    const allFrets = solo.notes.flat().map(n => n.fret);
-    const minFret = Math.max(0, Math.min(...allFrets) - 1);
-    const maxFret = Math.max(...allFrets) + 1;
-    const numFrets = Math.max(5, maxFret - minFret + 1);
-    return { minFret, maxFret, numFrets };
-  }, [solo]);
-
   useEffect(() => {
     if (id) {
       const foundSolo = getSoloById(id);
@@ -51,6 +30,7 @@ export default function SoloDetailScreen() {
         setSolo(foundSolo);
         setTempo(foundSolo.tempo);
       }
+      setLoading(false);
     }
   }, [id]);
 
@@ -65,10 +45,8 @@ export default function SoloDetailScreen() {
   // Playback logic
   useEffect(() => {
     if (isPlaying && solo) {
-      // Calculate interval based on tempo and note durations
-      // Simplified: each note gets equal time based on tempo
-      const beatDuration = 60000 / tempo; // ms per beat
-      const noteInterval = beatDuration / 2; // Eighth note default
+      const beatDuration = 60000 / tempo;
+      const noteInterval = beatDuration / 2;
       
       playbackRef.current = setInterval(() => {
         setCurrentNoteIndex(prev => {
@@ -76,10 +54,8 @@ export default function SoloDetailScreen() {
           if (!currentBarNotes) return 0;
           
           if (prev >= currentBarNotes.length - 1) {
-            // Move to next bar
             setCurrentBar(prevBar => {
               if (prevBar >= solo.notes.length - 1) {
-                // End of solo
                 setIsPlaying(false);
                 return 0;
               }
@@ -102,9 +78,8 @@ export default function SoloDetailScreen() {
   }, [isPlaying, currentBar, solo, tempo]);
 
   const handlePlayPause = () => {
-    if (!isPlaying) {
-      // Start from beginning if at end
-      if (solo && currentBar >= solo.notes.length - 1 && currentNoteIndex >= (solo.notes[currentBar]?.length || 0) - 1) {
+    if (!isPlaying && solo) {
+      if (currentBar >= solo.notes.length - 1 && currentNoteIndex >= (solo.notes[currentBar]?.length || 0) - 1) {
         setCurrentBar(0);
         setCurrentNoteIndex(0);
       }
@@ -118,24 +93,45 @@ export default function SoloDetailScreen() {
     setCurrentNoteIndex(0);
   };
 
-  if (!solo) {
+  // Loading state
+  if (loading) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
           <Text style={styles.loadingText}>Cargando solo...</Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  // Create didactic intro from solo data (non-hook, after null check is OK)
+  // Not found state
+  if (!solo) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Ionicons name="alert-circle-outline" size={48} color={COLORS.error} />
+          <Text style={styles.loadingText}>Solo no encontrado</Text>
+          <TouchableOpacity style={styles.backButtonLarge} onPress={() => router.back()}>
+            <Text style={styles.backButtonText}>Volver</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Calculate fret range from notes
+  const allFrets = solo.notes.flat().map(n => n.fret);
+  const minFret = Math.max(0, Math.min(...allFrets) - 1);
+  const maxFret = Math.max(...allFrets) + 1;
+  const numFrets = Math.max(5, maxFret - minFret + 1);
+
   const soloIntro = {
     id: solo.id,
     title: solo.title,
     icon: 'musical-notes-outline',
     lines: solo.didacticIntro,
   };
-
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -161,34 +157,20 @@ export default function SoloDetailScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Solo Info Card */}
-        <View style={styles.infoCard}>
-          <View style={styles.infoRow}>
-            <View style={styles.infoItem}>
-              <Ionicons name="speedometer-outline" size={18} color={COLORS.primary} />
-              <Text style={styles.infoLabel}>{tempo} BPM</Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Ionicons name="musical-notes" size={18} color={COLORS.primary} />
-              <Text style={styles.infoLabel}>{solo.scale}</Text>
-            </View>
-            <View style={styles.infoItem}>
-              <Ionicons name="layers-outline" size={18} color={COLORS.primary} />
-              <Text style={styles.infoLabel}>{solo.bars} compases</Text>
-            </View>
+        {/* Key & Scale Info */}
+        <View style={styles.infoRow}>
+          <View style={styles.infoBadge}>
+            <Ionicons name="musical-note" size={14} color={COLORS.primary} />
+            <Text style={styles.infoText}>{solo.key}</Text>
           </View>
-          
-          {/* Positions used */}
-          {solo.positions.length > 0 && (
-            <View style={styles.positionsContainer}>
-              <Text style={styles.positionsLabel}>Posiciones:</Text>
-              <View style={styles.positionBadges}>
-                {solo.positions.map(pos => (
-                  <View key={pos} style={styles.positionBadge}>
-                    <Text style={styles.positionBadgeText}>Caja {pos}</Text>
-                  </View>
-                ))}
-              </View>
+          <View style={styles.infoBadge}>
+            <Ionicons name="layers" size={14} color={COLORS.secondary} />
+            <Text style={styles.infoText}>{solo.scale}</Text>
+          </View>
+          {solo.positions && solo.positions.length > 0 && (
+            <View style={styles.infoBadge}>
+              <Ionicons name="navigate" size={14} color={COLORS.warning} />
+              <Text style={styles.infoText}>{solo.positions.join(', ')}</Text>
             </View>
           )}
         </View>
@@ -199,11 +181,6 @@ export default function SoloDetailScreen() {
           <Text style={styles.objectiveText}>{solo.objective}</Text>
         </View>
 
-        {/* Technique Warning Banner - temporarily disabled for debugging */}
-        {/* {soloTechniques.length > 0 && (
-          <TechniqueWarningBanner techniques={soloTechniques} />
-        )} */}
-
         {/* Fretboard Visualization */}
         <View style={styles.fretboardContainer}>
           <Text style={styles.sectionTitle}>DIAPASÓN</Text>
@@ -212,94 +189,74 @@ export default function SoloDetailScreen() {
             currentBar={currentBar}
             currentNoteIndex={currentNoteIndex}
             isPlaying={isPlaying}
-            startFret={fretRange.minFret}
-            numFrets={fretRange.numFrets}
+            startFret={minFret}
+            numFrets={numFrets}
             height={300}
             showAllNotes={true}
           />
         </View>
 
-        {/* Progress Indicator */}
-        <View style={styles.progressSection}>
-          <Text style={styles.progressLabel}>
+        {/* Bar Counter */}
+        <View style={styles.barCounter}>
+          <Text style={styles.barText}>
             Compás {currentBar + 1} de {solo.notes.length}
           </Text>
-          <View style={styles.progressBar}>
-            <View 
-              style={[
-                styles.progressFill, 
-                { width: `${((currentBar + 1) / solo.notes.length) * 100}%` }
-              ]} 
+        </View>
+
+        {/* Playback Controls */}
+        <View style={styles.controlsContainer}>
+          <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
+            <Ionicons name="refresh" size={24} color={COLORS.text} />
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.playButton, isPlaying && styles.playButtonActive]}
+            onPress={handlePlayPause}
+          >
+            <Ionicons 
+              name={isPlaying ? "pause" : "play"} 
+              size={32} 
+              color={COLORS.text} 
             />
+          </TouchableOpacity>
+          
+          <View style={styles.tempoContainer}>
+            <Text style={styles.tempoValue}>{tempo}</Text>
+            <Text style={styles.tempoLabel}>BPM</Text>
           </View>
         </View>
 
-        {/* Tempo Control */}
-        <View style={styles.tempoSection}>
-          <Text style={styles.tempoLabel}>Tempo: {tempo} BPM</Text>
+        {/* Tempo Slider */}
+        <View style={styles.tempoSliderContainer}>
+          <Text style={styles.tempoSliderLabel}>40</Text>
           <Slider
             style={styles.tempoSlider}
             minimumValue={40}
-            maximumValue={120}
+            maximumValue={180}
             value={tempo}
-            onValueChange={setTempo}
-            step={5}
+            onValueChange={(value) => setTempo(Math.round(value))}
             minimumTrackTintColor={COLORS.primary}
             maximumTrackTintColor={COLORS.surfaceLight}
             thumbTintColor={COLORS.primary}
           />
-          <View style={styles.tempoMarkers}>
-            <Text style={styles.tempoMarkerText}>Lento</Text>
-            <Text style={styles.tempoMarkerText}>Original ({solo.tempo})</Text>
-            <Text style={styles.tempoMarkerText}>Rápido</Text>
-          </View>
+          <Text style={styles.tempoSliderLabel}>180</Text>
         </View>
 
-        {/* Transition Points (if any) */}
-        {solo.transitionPoints && solo.transitionPoints.length > 0 && (
-          <View style={styles.transitionsSection}>
-            <Text style={styles.sectionTitle}>TRANSICIONES DE ESCALA</Text>
-            {solo.transitionPoints.map((tp, idx) => (
-              <View key={idx} style={styles.transitionCard}>
-                <View style={styles.transitionHeader}>
-                  <Ionicons name="swap-horizontal" size={18} color={COLORS.info} />
-                  <Text style={styles.transitionBar}>Compás {tp.bar}</Text>
-                </View>
-                <Text style={styles.transitionScales}>
-                  {tp.fromScale} → {tp.toScale}
-                </Text>
-                <Text style={styles.transitionExplanation}>{tp.explanation}</Text>
+        {/* Tips Section */}
+        {solo.tips && solo.tips.length > 0 && (
+          <View style={styles.tipsContainer}>
+            <Text style={styles.sectionTitle}>CONSEJOS</Text>
+            {solo.tips.map((tip, index) => (
+              <View key={index} style={styles.tipRow}>
+                <Ionicons name="bulb-outline" size={16} color={COLORS.warning} />
+                <Text style={styles.tipText}>{tip}</Text>
               </View>
             ))}
           </View>
         )}
 
-        <View style={{ height: 120 }} />
+        <View style={{ height: 40 }} />
       </ScrollView>
-
-      {/* Playback Controls */}
-      <View style={styles.playbackControls}>
-        <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-          <Ionicons name="refresh" size={24} color={COLORS.text} />
-        </TouchableOpacity>
-        
-        <TouchableOpacity style={styles.playButton} onPress={handlePlayPause}>
-          <Ionicons 
-            name={isPlaying ? 'pause' : 'play'} 
-            size={32} 
-            color={COLORS.text} 
-          />
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={styles.loopButton}
-          onPress={() => {
-            // Future: toggle loop mode
-          }}
-        >
-          <Ionicons name="repeat" size={24} color={COLORS.textMuted} />
-        </TouchableOpacity>
-      </View>
     </SafeAreaView>
   );
 }
@@ -313,244 +270,180 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: SPACING.md,
   },
   loadingText: {
-    fontSize: FONTS.sizes.lg,
-    color: COLORS.textSecondary,
+    fontSize: FONTS.sizes.md,
+    color: COLORS.textMuted,
+    marginTop: SPACING.sm,
   },
-  
-  // Header
+  backButtonLarge: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    marginTop: SPACING.lg,
+  },
+  backButtonText: {
+    color: COLORS.text,
+    fontWeight: '600',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.surfaceLight,
   },
   backButton: {
-    padding: SPACING.sm,
+    padding: SPACING.xs,
   },
   headerCenter: {
     flex: 1,
-    alignItems: 'center',
+    marginLeft: SPACING.sm,
   },
   headerTitle: {
     fontSize: FONTS.sizes.lg,
-    fontWeight: '800',
+    fontWeight: '700',
     color: COLORS.text,
   },
   headerSubtitle: {
     fontSize: FONTS.sizes.sm,
-    color: COLORS.primary,
+    color: COLORS.textMuted,
   },
   helpButton: {
-    padding: SPACING.sm,
+    padding: SPACING.xs,
   },
-  
-  // Content
   content: {
     flex: 1,
-    paddingHorizontal: SPACING.md,
-  },
-  
-  // Info Card
-  infoCard: {
-    backgroundColor: COLORS.backgroundCard,
-    borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.md,
-    marginTop: SPACING.md,
   },
   infoRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
   },
-  infoItem: {
+  infoBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-  },
-  infoLabel: {
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.textSecondary,
-  },
-  positionsContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: SPACING.md,
-    paddingTop: SPACING.md,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.surfaceLight,
-  },
-  positionsLabel: {
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.textMuted,
-    marginRight: SPACING.sm,
-  },
-  positionBadges: {
-    flexDirection: 'row',
+    backgroundColor: COLORS.backgroundCard,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.round,
     gap: SPACING.xs,
   },
-  positionBadge: {
-    backgroundColor: COLORS.success + '20',
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
-    borderRadius: BORDER_RADIUS.sm,
+  infoText: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.text,
+    fontWeight: '500',
   },
-  positionBadgeText: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.success,
-    fontWeight: '600',
-  },
-  
-  // Objective
   objectiveCard: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
+    alignItems: 'flex-start',
     backgroundColor: COLORS.success + '15',
-    borderRadius: BORDER_RADIUS.md,
     padding: SPACING.md,
-    marginTop: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    gap: SPACING.sm,
+    marginBottom: SPACING.lg,
   },
   objectiveText: {
     flex: 1,
     fontSize: FONTS.sizes.sm,
     color: COLORS.success,
-    fontWeight: '500',
-  },
-  
-  // Fretboard
-  fretboardContainer: {
-    marginTop: SPACING.xl,
-  },
-  sectionTitle: {
-    fontSize: FONTS.sizes.xs,
-    fontWeight: '800',
-    color: COLORS.textMuted,
-    letterSpacing: 1,
-    marginBottom: SPACING.md,
-  },
-  
-  // Progress
-  progressSection: {
-    marginTop: SPACING.lg,
-  },
-  progressLabel: {
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.xs,
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: COLORS.surfaceLight,
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: COLORS.primary,
-    borderRadius: 3,
-  },
-  
-  // Tempo
-  tempoSection: {
-    marginTop: SPACING.xl,
-    backgroundColor: COLORS.backgroundCard,
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.md,
-  },
-  tempoLabel: {
-    fontSize: FONTS.sizes.md,
-    fontWeight: '700',
-    color: COLORS.text,
-    textAlign: 'center',
-  },
-  tempoSlider: {
-    width: '100%',
-    height: 40,
-  },
-  tempoMarkers: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  tempoMarkerText: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.textMuted,
-  },
-  
-  // Transitions
-  transitionsSection: {
-    marginTop: SPACING.xl,
-  },
-  transitionCard: {
-    backgroundColor: COLORS.info + '15',
-    borderRadius: BORDER_RADIUS.md,
-    padding: SPACING.md,
-    marginBottom: SPACING.sm,
-  },
-  transitionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-    marginBottom: SPACING.xs,
-  },
-  transitionBar: {
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.info,
-    fontWeight: '600',
-  },
-  transitionScales: {
-    fontSize: FONTS.sizes.md,
-    color: COLORS.text,
-    fontWeight: '700',
-    marginBottom: SPACING.xs,
-  },
-  transitionExplanation: {
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.textSecondary,
     lineHeight: 20,
   },
-  
-  // Playback Controls
-  playbackControls: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
+  fretboardContainer: {
+    marginBottom: SPACING.lg,
+  },
+  sectionTitle: {
+    fontSize: FONTS.sizes.sm,
+    fontWeight: '700',
+    color: COLORS.textMuted,
+    marginBottom: SPACING.sm,
+    letterSpacing: 1,
+  },
+  barCounter: {
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  barText: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.textSecondary,
+    fontWeight: '500',
+  },
+  controlsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.xl,
-    backgroundColor: COLORS.backgroundCard,
-    paddingVertical: SPACING.lg,
-    paddingBottom: SPACING.xl,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.surfaceLight,
+    marginBottom: SPACING.md,
   },
   resetButton: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: COLORS.surfaceLight,
+    backgroundColor: COLORS.backgroundCard,
     alignItems: 'center',
     justifyContent: 'center',
   },
   playButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  loopButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: COLORS.surfaceLight,
+  playButtonActive: {
+    backgroundColor: COLORS.error,
+  },
+  tempoContainer: {
     alignItems: 'center',
-    justifyContent: 'center',
+    minWidth: 48,
+  },
+  tempoValue: {
+    fontSize: FONTS.sizes.xl,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  tempoLabel: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.textMuted,
+  },
+  tempoSliderContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    marginBottom: SPACING.lg,
+  },
+  tempoSlider: {
+    flex: 1,
+    height: 40,
+    marginHorizontal: SPACING.sm,
+  },
+  tempoSliderLabel: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.textMuted,
+    minWidth: 30,
+    textAlign: 'center',
+  },
+  tipsContainer: {
+    backgroundColor: COLORS.backgroundCard,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.md,
+  },
+  tipRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
+  },
+  tipText: {
+    flex: 1,
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.textSecondary,
+    lineHeight: 20,
   },
 });
