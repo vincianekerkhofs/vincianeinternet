@@ -135,12 +135,22 @@ export const Fretboard: React.FC<FretboardProps> = ({
     const fret = note.fret ?? 0;
     const fretIndex = fret - startFret;
     
-    // Skip notes outside visible range
-    if (fretIndex < 0 || fretIndex > numFrets) return null;
+    // Skip notes outside visible range (with some tolerance)
+    if (fretIndex < -0.5 || fretIndex > numFrets + 0.5) return null;
     
-    const x = fret === 0 
-      ? padding - 10 
-      : padding + (fretIndex - 0.5) * fretWidth;
+    // Calculate x position
+    // For fret 0, show before nut
+    // For other frets, center between frets
+    let x: number;
+    if (fret === 0) {
+      x = padding - 12;
+    } else if (fretIndex <= 0) {
+      // Note is at or before start fret - show at left edge
+      x = padding + fretWidth * 0.5;
+    } else {
+      x = padding + (fretIndex - 0.5) * fretWidth;
+    }
+    
     const y = padding + note.stringIndex * stringSpacing;
     
     // Handle muted strings
