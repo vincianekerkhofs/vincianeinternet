@@ -101,3 +101,73 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Test the GUITAR GUIDE app's core functionality. The app is a Spanish-language guitar learning application."
+
+frontend:
+  - task: "Scale Fretboard Visualization (Week 6, Day 1)"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/src/components/ScaleFretboard.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "Initial testing - need to verify scale fretboard shows ALL 12 notes with finger numbers (1-4), orange circles for ROOT notes, green circles for regular notes, fret numbers 5-8 displayed at bottom, string indicators (e,B,G,D,A,E) at top with correct colors"
+
+  - task: "Chord Progression Auto-Advance in APLICAR Mode (Week 1, Day 5)"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/app/practice.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "Initial testing - need to verify chord progression 'C | G | Am | G' displays, first chord (C) is highlighted, PLAY button works, chord changes automatically after 8 seconds (2 bars at 50 BPM), fretboard diagram updates to show new chord"
+
+  - task: "Program Screen Completion Refresh"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/app/(tabs)/program.tsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "Initial testing - need to verify Week 1 is expanded with days visible, days show completion status (0% or checkmark), completion status updates after marking day as complete"
+
+  - task: "General UI Checks"
+    implemented: true
+    working: "NA"
+    file: "/app/frontend/app"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+        - agent: "testing"
+        - comment: "Initial testing - need to verify all text is in Spanish, chords show GREEN for strings that sound, RED X for muted strings, touch targets are adequate size, no visual glitches or overlapping elements"
+
+metadata:
+  created_by: "testing_agent"
+  version: "1.0"
+  test_sequence: 1
+
+test_plan:
+  current_focus:
+    - "Scale Fretboard Visualization (Week 6, Day 1)"
+    - "Chord Progression Auto-Advance in APLICAR Mode (Week 1, Day 5)"
+    - "Program Screen Completion Refresh"
+    - "General UI Checks"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    - agent: "testing"
+    - message: "Starting comprehensive testing of Guitar Guide app core functionality. Testing will be performed in mobile dimensions (390x844) as specified. Will test scale fretboard visualization, chord progression auto-advance, program screen completion refresh, and general UI checks."
