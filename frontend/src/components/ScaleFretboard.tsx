@@ -104,9 +104,9 @@ export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
   const numFrets = endFret - startFret + 1;
   const stringNames = ['e', 'B', 'G', 'D', 'A', 'E'];
   
-  const fretboardHeight = 160;
+  const fretboardHeight = 190; // Increased for padding
   const fretboardWidth = width - 40;
-  const stringSpacing = fretboardHeight / 5;
+  const stringSpacing = (fretboardHeight - 30) / 5; // Account for padding
   const fretWidth = fretboardWidth / numFrets;
 
   // String indicators
