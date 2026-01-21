@@ -73,6 +73,20 @@ export const TechniqueFretboard: React.FC<Props> = ({
   const [measuredWidth, setMeasuredWidth] = useState(0);
   const [pulseAnim] = useState(new Animated.Value(1));
   const [showNoteModal, setShowNoteModal] = useState(false);
+  const [showTechniqueModal, setShowTechniqueModal] = useState(false);
+  const [selectedTechnique, setSelectedTechnique] = useState<TechniqueDefinition | null>(null);
+
+  // Handle technique tap
+  const handleTechniqueTap = (technique: string) => {
+    const techniqueId = mapSoloTechniqueToId(technique);
+    if (techniqueId) {
+      const techDef = getTechniqueById(techniqueId);
+      if (techDef) {
+        setSelectedTechnique(techDef);
+        setShowTechniqueModal(true);
+      }
+    }
+  };
 
   // Pulse animation for active note
   useEffect(() => {
