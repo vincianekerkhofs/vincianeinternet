@@ -104,7 +104,7 @@ export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
   }
 
   const [startFret, endFret] = scaleData.fretRange;
-  const numFrets = endFret - startFret + 1; // 4 frets for 5-8
+  const numFrets = endFret - startFret + 2; // Add extra fret for visibility
 
   const paddingTop = 25;
   const paddingBottom = 25;
