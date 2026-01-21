@@ -209,7 +209,7 @@ export const ScaleFretboard: React.FC<Props> = ({
   );
 
   return (
-    <View style={[styles.container, { width }]}>
+    <View style={[styles.container, { width, backgroundColor: 'purple' }]}>
       {/* DEBUG INFO */}
       <Text style={{ color: '#FFF', backgroundColor: '#000', padding: 4 }}>
         Notes: {scale.notes.length} | Width: {width} | FretWidth: {fretWidth.toFixed(0)}
