@@ -46,7 +46,6 @@ export default function PracticeScreen() {
   const [weekData, setWeekData] = useState<any>(null);
   const [stage, setStage] = useState<Stage>('aprender');
   const [isCompleted, setIsCompleted] = useState(false);
-  const [showTab, setShowTab] = useState(false);
   
   // Playback state
   const [isPlaying, setIsPlaying] = useState(false);
