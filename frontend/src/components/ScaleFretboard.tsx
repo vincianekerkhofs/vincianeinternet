@@ -161,8 +161,8 @@ export const ScaleFretboard: React.FC<Props> = ({
                     }}
                   />
                   
-                  {/* Note circle */}
-                  {hasNote && (
+                  {/* Note circle or debug number */}
+                  {hasNote ? (
                     <View 
                       style={{
                         width: 28,
@@ -177,6 +177,8 @@ export const ScaleFretboard: React.FC<Props> = ({
                     >
                       <Text style={{ color: '#FFF', fontSize: 14, fontWeight: 'bold' }}>{finger}</Text>
                     </View>
+                  ) : (
+                    <Text style={{ color: '#444', fontSize: 10 }}>{fretIdx}</Text>
                   )}
                 </View>
               );
