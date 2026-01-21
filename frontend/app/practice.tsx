@@ -39,7 +39,6 @@ export default function PracticeScreen() {
   
   // Fretboard notes
   const [currentFretboardNotes, setCurrentFretboardNotes] = useState<FretboardNote[]>([]);
-  const [previewFretboardNotes, setPreviewFretboardNotes] = useState<FretboardNote[]>([]);
   const [allFretboardNotes, setAllFretboardNotes] = useState<FretboardNote[]>([]);
 
   // Unified playback engine - SINGLE SOURCE OF TRUTH for timing
