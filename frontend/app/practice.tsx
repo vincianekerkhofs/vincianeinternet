@@ -117,7 +117,9 @@ export default function PracticeScreen() {
   useEffect(() => {
     const loadSuggestedExercises = async () => {
       try {
-        const allExercises = await getExercises();
+        const response = await getExercises();
+        // API returns {exercises: [...], total, limit, skip}
+        const allExercises = response?.exercises || response || [];
         if (allExercises && allExercises.length > 0) {
           const suggested = getSuggestedExercises(allExercises, weekNum);
           setSuggestedExercises(suggested);
