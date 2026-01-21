@@ -48,8 +48,8 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
 
   const paddingTop = 35;
   const paddingBottom = 40;
-  const paddingLeft = 40;
-  const paddingRight = 20;
+  const paddingLeft = 55;  // Increased for string indicators
+  const paddingRight = 15;
   
   const fretboardWidth = width - paddingLeft - paddingRight;
   const fretboardHeight = height - paddingTop - paddingBottom;
