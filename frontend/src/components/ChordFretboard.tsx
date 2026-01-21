@@ -227,7 +227,7 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
       const state = getStringState(stringIndex);
       
       // LEFT SIDE INDICATOR - always show for every string
-      const indicatorX = paddingLeft - 22;
+      const indicatorX = paddingLeft - 30;  // Position for indicator circles
       
       // Muted string - RED X indicator
       if (fret === null) {
