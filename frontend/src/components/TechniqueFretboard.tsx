@@ -560,4 +560,107 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: COLORS.textMuted,
   },
+  infoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: COLORS.primary + '20',
+    borderRadius: BORDER_RADIUS.sm,
+  },
+  infoButtonText: {
+    fontSize: 10,
+    color: COLORS.primary,
+    fontWeight: '600',
+  },
+  noteNameBadge: {
+    backgroundColor: COLORS.success + '30',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: BORDER_RADIUS.sm,
+  },
+  noteNameText: {
+    fontSize: 12,
+    color: COLORS.success,
+    fontWeight: '700',
+  },
+});
+
+// Modal styles
+const modalStyles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.lg,
+  },
+  container: {
+    backgroundColor: COLORS.backgroundCard,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.xl,
+    width: '100%',
+    maxWidth: 320,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  title: {
+    fontSize: FONTS.sizes.lg,
+    fontWeight: '800',
+    color: COLORS.text,
+  },
+  closeBtn: {
+    padding: 4,
+  },
+  subtitle: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.textSecondary,
+    marginBottom: SPACING.lg,
+  },
+  table: {
+    marginBottom: SPACING.md,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.surfaceLight,
+  },
+  letter: {
+    flex: 1,
+    fontSize: FONTS.sizes.lg,
+    fontWeight: '700',
+    color: COLORS.primary,
+    textAlign: 'center',
+  },
+  equals: {
+    fontSize: FONTS.sizes.lg,
+    color: COLORS.textMuted,
+    marginHorizontal: SPACING.sm,
+  },
+  solfege: {
+    flex: 1,
+    fontSize: FONTS.sizes.lg,
+    fontWeight: '700',
+    color: COLORS.success,
+    textAlign: 'center',
+  },
+  note: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.textMuted,
+    textAlign: 'center',
+    marginTop: SPACING.sm,
+  },
+  example: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.primary,
+    textAlign: 'center',
+    marginTop: SPACING.xs,
+  },
 });
