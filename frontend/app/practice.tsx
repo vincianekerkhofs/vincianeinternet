@@ -52,6 +52,10 @@ export default function PracticeScreen() {
   const [stage, setStage] = useState<Stage>('aprender');
   const [isCompleted, setIsCompleted] = useState(false);
   const [showTablature, setShowTablature] = useState(false);
+  const [showWeekIntro, setShowWeekIntro] = useState(false);
+  
+  // Get week intro data (for weeks 7+)
+  const weekIntro = getWeekIntro(weekNum);
   
   // Playback state
   const [isPlaying, setIsPlaying] = useState(false);
