@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Text, LayoutChangeEvent } from 'react-native';
-import { COLORS } from '../constants/theme';
-import Svg, { Line, Circle, Rect, G } from 'react-native-svg';
+import { View, StyleSheet, Text, LayoutChangeEvent, TouchableOpacity, Modal } from 'react-native';
+import { COLORS, FONTS, SPACING, BORDER_RADIUS } from '../constants/theme';
+import Svg, { Line, Circle, Rect, G, Text as SvgText } from 'react-native-svg';
+import { getNoteAtFret, letterToSolfege, NOTE_MAPPING_REFERENCE } from '../utils/noteNames';
+import { Ionicons } from '@expo/vector-icons';
 
 interface Props {
   scaleName: string;
   width?: number;
   height?: number;
   isActive?: boolean;
+  showNoteNames?: boolean;
 }
 
 const SCALES: Record<string, { 
