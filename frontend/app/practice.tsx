@@ -73,6 +73,11 @@ export default function PracticeScreen() {
       setAllFretboardNotes(allNotes);
       setCurrentFretboardNotes(currentNotes);
       setPreviewFretboardNotes(previewNotes);
+      
+      // Debug logging
+      if (currentNotes.length > 0) {
+        console.log(`Beat ${currentBeat}: Current notes:`, currentNotes);
+      }
     }
   }, [currentBeat, exerciseNotes]);
 
