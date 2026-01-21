@@ -120,10 +120,8 @@ export default function PracticeScreen() {
         const response = await getExercises();
         // API returns {exercises: [...], total, limit, skip}
         const allExercises = response?.exercises || response || [];
-        console.log('Loaded exercises count:', allExercises.length);
         if (allExercises && allExercises.length > 0) {
           const suggested = getSuggestedExercises(allExercises, weekNum);
-          console.log('Suggested warmup:', suggested.warmUp.length, 'reinforce:', suggested.reinforce.length);
           setSuggestedExercises(suggested);
         }
       } catch (error) {
