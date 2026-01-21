@@ -566,7 +566,7 @@ export default function PracticeScreen() {
                 </View>
               </View>
               <View style={styles.miniControl}>
-                <Text style={styles.miniControlLabel}>Vol: {Math.round(metronomeVolume * 100)}%</Text>
+                <Text style={styles.miniControlLabel}>Volumen metrónomo</Text>
                 <Slider
                   style={{ width: 100 }}
                   minimumValue={0}
