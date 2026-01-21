@@ -106,10 +106,10 @@ export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
   const [startFret, endFret] = scaleData.fretRange;
   const numFrets = endFret - startFret + 2; // Add extra fret for visibility
 
-  const paddingTop = 25;
-  const paddingBottom = 25;
-  const paddingLeft = 15;
-  const paddingRight = 15;
+  const paddingTop = 30;
+  const paddingBottom = 30;
+  const paddingLeft = 25;  // More padding for circles
+  const paddingRight = 25;
   
   const svgHeight = height - 70;
   const fretboardWidth = width - paddingLeft - paddingRight;
