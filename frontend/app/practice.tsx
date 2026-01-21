@@ -17,6 +17,7 @@ import { COLORS, FONTS, SPACING, BORDER_RADIUS } from '../src/constants/theme';
 import { ChordFretboard } from '../src/components/ChordFretboard';
 import { ScaleFretboard } from '../src/components/ScaleFretboard';
 import { StrumVisualizer } from '../src/components/StrumVisualizer';
+import { WeekIntroModal } from '../src/components/WeekIntroModal';
 import { useStore } from '../src/store/useStore';
 import { 
   CURRICULUM, 
@@ -27,6 +28,7 @@ import {
   DayLesson 
 } from '../src/data/curriculum';
 import { getStrumPatternByStyle, STRUM_PATTERNS } from '../src/data/strumPatterns';
+import { getWeekIntro } from '../src/data/pedagogicalContent';
 import { 
   isExerciseComplete, 
   markExerciseComplete, 
