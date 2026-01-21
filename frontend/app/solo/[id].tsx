@@ -201,10 +201,10 @@ export default function SoloDetailScreen() {
           <Text style={styles.objectiveText}>{solo.objective}</Text>
         </View>
 
-        {/* Technique Warning Banner (non-blocking) */}
-        {soloTechniques.length > 0 && (
+        {/* Technique Warning Banner - temporarily disabled for debugging */}
+        {/* {soloTechniques.length > 0 && (
           <TechniqueWarningBanner techniques={soloTechniques} />
-        )}
+        )} */}
 
         {/* Fretboard Visualization */}
         <View style={styles.fretboardContainer}>
