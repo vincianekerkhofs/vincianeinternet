@@ -73,6 +73,7 @@ export default function PracticeScreen() {
   const bpmRef = useRef(bpm);
   const metronomeVolumeRef = useRef(metronomeVolume);
   const currentBeatRef = useRef(1);
+  const currentSubdivisionRef = useRef(0);
   const currentChordIndexRef = useRef(0);
   const barCountRef = useRef(0); // Track which bar we're on
 
