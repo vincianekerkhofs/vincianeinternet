@@ -7,15 +7,19 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons'
 import { router, useLocalSearchParams } from 'expo-router';
+import Slider from '@react-native-community/slider';
 import { COLORS, FONTS, SPACING, BORDER_RADIUS, getDifficultyColor, getDomainColor } from '../src/constants/theme';
 import { getExercise } from '../src/services/api';
-import { Fretboard } from '../src/components/Fretboard';
-import { TabDisplay } from '../src/components/TabDisplay';
+import { Fretboard, FretboardNote } from '../src/components/Fretboard';
+import { TabDisplay, TabNote } from '../src/components/TabDisplay';
 import { useStore } from '../src/store/useStore';
+import { useMetronome } from '../src/hooks/useMetronome';
+import { generateExerciseNotes, tabNotesToFretboard, calculateFretRange } from '../src/utils/exerciseNotes';
 
 const { width } = Dimensions.get('window');
 
@@ -26,25 +30,69 @@ export default function PracticeScreen() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentBeat, setCurrentBeat] = useState(1);
   const [showInfo, setShowInfo] = useState(false);
+  const [metronomeEnabled, setMetronomeEnabled] = useState(true);
+  const [loopEnabled, setLoopEnabled] = useState(true);
   const { bpm, setBpm } = useStore();
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const totalBeats = 8;
+  const playbackRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Exercise notes
+  const [exerciseNotes, setExerciseNotes] = useState<TabNote[]>([]);
+  const [fretRange, setFretRange] = useState({ startFret: 0, numFrets: 5 });
+  
+  // Fretboard notes derived from current beat
+  const [currentFretboardNotes, setCurrentFretboardNotes] = useState<FretboardNote[]>([]);
+  const [previewFretboardNotes, setPreviewFretboardNotes] = useState<FretboardNote[]>([]);
+  const [allFretboardNotes, setAllFretboardNotes] = useState<FretboardNote[]>([]);
 
+  // Metronome
+  const { audioReady, needsUserInteraction, initAudio } = useMetronome({
+    bpm,
+    enabled: isPlaying && metronomeEnabled,
+    volume: 0.6,
+    onBeat: (beat) => {
+      setCurrentBeat(beat);
+    },
+  });
+
+  // Load exercise
   useEffect(() => {
     if (exerciseId) {
       loadExercise();
     }
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
+      stopPlayback();
     };
   }, [exerciseId]);
+
+  // Update fretboard when beat changes
+  useEffect(() => {
+    if (exerciseNotes.length > 0) {
+      const { allNotes, currentNotes, previewNotes } = tabNotesToFretboard(exerciseNotes, currentBeat);
+      setAllFretboardNotes(allNotes);
+      setCurrentFretboardNotes(currentNotes);
+      setPreviewFretboardNotes(previewNotes);
+    }
+  }, [currentBeat, exerciseNotes]);
 
   const loadExercise = async () => {
     try {
       const data = await getExercise(exerciseId as string);
       setExercise(data);
       setBpm(data.bpm_start || 80);
+      
+      // Generate or use exercise notes
+      const notes = generateExerciseNotes(exerciseId as string);
+      setExerciseNotes(notes);
+      
+      // Calculate fret range
+      const range = calculateFretRange(notes);
+      setFretRange(range);
+      
+      // Initialize fretboard display
+      const { allNotes } = tabNotesToFretboard(notes, 1);
+      setAllFretboardNotes(allNotes);
     } catch (error) {
       console.error('Error loading exercise:', error);
     } finally {
@@ -52,31 +100,73 @@ export default function PracticeScreen() {
     }
   };
 
-  const togglePlay = useCallback(() => {
-    if (isPlaying) {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-      setIsPlaying(false);
-    } else {
-      setIsPlaying(true);
-      const beatInterval = (60 / bpm) * 1000;
-      intervalRef.current = setInterval(() => {
-        setCurrentBeat((prev) => (prev % 8) + 1);
-      }, beatInterval);
+  const stopPlayback = () => {
+    if (playbackRef.current) {
+      clearInterval(playbackRef.current);
+      playbackRef.current = null;
     }
-  }, [isPlaying, bpm]);
+    setIsPlaying(false);
+  };
+
+  const togglePlay = useCallback(async () => {
+    if (isPlaying) {
+      stopPlayback();
+      setCurrentBeat(1);
+    } else {
+      // Initialize audio on user interaction
+      if (Platform.OS === 'web') {
+        await initAudio();
+      }
+      
+      setIsPlaying(true);
+      setCurrentBeat(1);
+      
+      // If metronome is disabled, handle beat progression manually
+      if (!metronomeEnabled) {
+        const beatInterval = (60 / bpm) * 1000;
+        playbackRef.current = setInterval(() => {
+          setCurrentBeat((prev) => {
+            const next = prev + 1;
+            if (next > totalBeats) {
+              if (loopEnabled) {
+                return 1;
+              } else {
+                stopPlayback();
+                return 1;
+              }
+            }
+            return next;
+          });
+        }, beatInterval);
+      }
+    }
+  }, [isPlaying, bpm, metronomeEnabled, loopEnabled, initAudio]);
+
+  // Handle loop completion
+  useEffect(() => {
+    if (isPlaying && currentBeat > totalBeats) {
+      if (loopEnabled) {
+        setCurrentBeat(1);
+      } else {
+        stopPlayback();
+      }
+    }
+  }, [currentBeat, isPlaying, loopEnabled]);
 
   const adjustBpm = (delta: number) => {
     const newBpm = Math.max(40, Math.min(200, bpm + delta));
     setBpm(newBpm);
   };
 
+  const handleSliderChange = (value: number) => {
+    setBpm(Math.round(value));
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.loadingText}>Loading exercise...</Text>
       </View>
     );
   }
@@ -97,17 +187,6 @@ export default function PracticeScreen() {
 
   const difficultyColor = getDifficultyColor(exercise.difficulty_tier);
   const domainColor = getDomainColor(exercise.domain);
-
-  // Generate sample active notes for fretboard
-  const activeNotes = exercise.tab_data?.notes?.slice(0, 3).map((note: any, i: number) => ({
-    string: note.string,
-    fret: typeof note.fret === 'number' ? note.fret : 0,
-    finger: i + 1,
-  })) || [
-    { string: 0, fret: 5, finger: 1 },
-    { string: 1, fret: 5, finger: 1 },
-    { string: 2, fret: 5, finger: 1 },
-  ];
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -136,6 +215,14 @@ export default function PracticeScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Audio Warning */}
+      {needsUserInteraction && (
+        <TouchableOpacity style={styles.audioWarning} onPress={initAudio}>
+          <Ionicons name="volume-mute" size={20} color={COLORS.warning} />
+          <Text style={styles.audioWarningText}>Tap to enable audio</Text>
+        </TouchableOpacity>
+      )}
+
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Info Panel */}
         {showInfo && (
@@ -159,29 +246,27 @@ export default function PracticeScreen() {
                 ))}
               </View>
             )}
-            {exercise.mistakes_and_fixes && exercise.mistakes_and_fixes.length > 0 && (
-              <View style={styles.infoSection}>
-                <Text style={styles.infoTitle}>Common Mistakes</Text>
-                {exercise.mistakes_and_fixes.map((fix: string, i: number) => (
-                  <View key={i} style={styles.mistakeItem}>
-                    <Ionicons name="warning" size={14} color={COLORS.warning} />
-                    <Text style={styles.mistakeText}>{fix}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
           </View>
         )}
 
         {/* Fretboard Visualization */}
         <View style={styles.fretboardSection}>
-          <Text style={styles.sectionLabel}>Fretboard</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionLabel}>Fretboard</Text>
+            {isPlaying && (
+              <View style={styles.beatIndicator}>
+                <Text style={styles.beatIndicatorText}>Beat {currentBeat}</Text>
+              </View>
+            )}
+          </View>
           <Fretboard
-            activeNotes={activeNotes}
+            notes={allFretboardNotes}
+            currentNotes={currentFretboardNotes}
+            previewNotes={previewFretboardNotes}
             width={width - SPACING.lg * 2}
             height={180}
-            startFret={3}
-            numFrets={5}
+            startFret={fretRange.startFret}
+            numFrets={fretRange.numFrets}
           />
         </View>
 
@@ -189,37 +274,59 @@ export default function PracticeScreen() {
         <View style={styles.tabSection}>
           <Text style={styles.sectionLabel}>Tablature</Text>
           <TabDisplay
-            notes={exercise.tab_data?.notes || []}
+            notes={exerciseNotes}
             currentBeat={currentBeat}
-            timeSignature={exercise.tab_data?.time_signature || '4/4'}
+            totalBeats={totalBeats}
+            timeSignature="4/4"
+            isPlaying={isPlaying}
           />
         </View>
 
-        {/* BPM Control */}
-        <View style={styles.bpmSection}>
+        {/* Tempo Control Section */}
+        <View style={styles.tempoSection}>
           <Text style={styles.sectionLabel}>Tempo</Text>
-          <View style={styles.bpmControl}>
-            <TouchableOpacity
-              style={styles.bpmButton}
-              onPress={() => adjustBpm(-5)}
-            >
-              <Ionicons name="remove" size={24} color={COLORS.text} />
-            </TouchableOpacity>
-            <View style={styles.bpmDisplay}>
-              <Text style={styles.bpmValue}>{bpm}</Text>
-              <Text style={styles.bpmLabel}>BPM</Text>
-            </View>
-            <TouchableOpacity
-              style={styles.bpmButton}
-              onPress={() => adjustBpm(5)}
-            >
-              <Ionicons name="add" size={24} color={COLORS.text} />
-            </TouchableOpacity>
+          
+          {/* Large BPM Display */}
+          <View style={styles.bpmDisplayLarge}>
+            <Text style={styles.bpmValueLarge}>{bpm}</Text>
+            <Text style={styles.bpmLabelLarge}>BPM</Text>
           </View>
-          <View style={styles.bpmRange}>
-            <Text style={styles.bpmRangeText}>
-              Target: {exercise.bpm_start} - {exercise.bpm_target} BPM
-            </Text>
+
+          {/* Slider */}
+          <View style={styles.sliderContainer}>
+            <Text style={styles.sliderLabel}>40</Text>
+            <Slider
+              style={styles.slider}
+              minimumValue={40}
+              maximumValue={200}
+              value={bpm}
+              onValueChange={handleSliderChange}
+              minimumTrackTintColor={COLORS.primary}
+              maximumTrackTintColor={COLORS.surfaceLight}
+              thumbTintColor={COLORS.primary}
+            />
+            <Text style={styles.sliderLabel}>200</Text>
+          </View>
+
+          {/* Step Buttons */}
+          <View style={styles.bpmButtons}>
+            <TouchableOpacity style={styles.bpmStepButton} onPress={() => adjustBpm(-5)}>
+              <Text style={styles.bpmStepButtonText}>-5</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.bpmStepButton} onPress={() => adjustBpm(-1)}>
+              <Text style={styles.bpmStepButtonText}>-1</Text>
+            </TouchableOpacity>
+            <View style={styles.bpmTargetDisplay}>
+              <Text style={styles.bpmTargetText}>
+                Target: {exercise.bpm_start}-{exercise.bpm_target}
+              </Text>
+            </View>
+            <TouchableOpacity style={styles.bpmStepButton} onPress={() => adjustBpm(1)}>
+              <Text style={styles.bpmStepButtonText}>+1</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.bpmStepButton} onPress={() => adjustBpm(5)}>
+              <Text style={styles.bpmStepButtonText}>+5</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -240,18 +347,29 @@ export default function PracticeScreen() {
           </View>
         )}
 
-        <View style={{ height: 120 }} />
+        <View style={{ height: 140 }} />
       </ScrollView>
 
       {/* Play Controls */}
       <View style={styles.playControls}>
-        <TouchableOpacity style={styles.controlButton}>
-          <Ionicons name="repeat" size={24} color={COLORS.textSecondary} />
-          <Text style={styles.controlLabel}>Loop</Text>
+        {/* Loop Button */}
+        <TouchableOpacity 
+          style={[styles.controlButton, loopEnabled && styles.controlButtonActive]} 
+          onPress={() => setLoopEnabled(!loopEnabled)}
+        >
+          <Ionicons 
+            name="repeat" 
+            size={24} 
+            color={loopEnabled ? COLORS.primary : COLORS.textMuted} 
+          />
+          <Text style={[styles.controlLabel, loopEnabled && styles.controlLabelActive]}>
+            Loop
+          </Text>
         </TouchableOpacity>
 
+        {/* Play Button */}
         <TouchableOpacity
-          style={styles.playButton}
+          style={[styles.playButton, isPlaying && styles.playButtonActive]}
           onPress={togglePlay}
           activeOpacity={0.8}
         >
@@ -262,9 +380,19 @@ export default function PracticeScreen() {
           />
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.controlButton}>
-          <Ionicons name="metronome-outline" size={24} color={COLORS.textSecondary} />
-          <Text style={styles.controlLabel}>Metronome</Text>
+        {/* Metronome Button */}
+        <TouchableOpacity 
+          style={[styles.controlButton, metronomeEnabled && styles.controlButtonActive]} 
+          onPress={() => setMetronomeEnabled(!metronomeEnabled)}
+        >
+          <Ionicons 
+            name={metronomeEnabled ? 'musical-notes' : 'musical-notes-outline'} 
+            size={24} 
+            color={metronomeEnabled ? COLORS.primary : COLORS.textMuted} 
+          />
+          <Text style={[styles.controlLabel, metronomeEnabled && styles.controlLabelActive]}>
+            {metronomeEnabled ? 'Sound On' : 'Sound Off'}
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -281,6 +409,11 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  loadingText: {
+    marginTop: SPACING.md,
+    color: COLORS.textSecondary,
+    fontSize: FONTS.sizes.md,
   },
   errorContainer: {
     flex: 1,
@@ -341,6 +474,18 @@ const styles = StyleSheet.create({
   infoButton: {
     padding: SPACING.sm,
   },
+  audioWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.warning + '20',
+    padding: SPACING.md,
+    gap: SPACING.sm,
+  },
+  audioWarningText: {
+    color: COLORS.warning,
+    fontWeight: '600',
+  },
   scrollView: {
     flex: 1,
   },
@@ -388,19 +533,14 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.sm,
     color: COLORS.textSecondary,
   },
-  mistakeItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: SPACING.sm,
-    marginBottom: SPACING.xs,
-  },
-  mistakeText: {
-    flex: 1,
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.warning,
-  },
   fretboardSection: {
     padding: SPACING.lg,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
   },
   sectionLabel: {
     fontSize: FONTS.sizes.sm,
@@ -408,55 +548,90 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 1,
-    marginBottom: SPACING.md,
+  },
+  beatIndicator: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.round,
+  },
+  beatIndicatorText: {
+    fontSize: FONTS.sizes.sm,
+    fontWeight: '700',
+    color: COLORS.text,
   },
   tabSection: {
     paddingHorizontal: SPACING.lg,
     marginBottom: SPACING.lg,
   },
-  bpmSection: {
+  tempoSection: {
     paddingHorizontal: SPACING.lg,
     marginBottom: SPACING.lg,
+    backgroundColor: COLORS.backgroundCard,
+    marginHorizontal: SPACING.lg,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.xl,
   },
-  bpmControl: {
+  bpmDisplayLarge: {
+    alignItems: 'center',
+    marginVertical: SPACING.md,
+  },
+  bpmValueLarge: {
+    fontSize: 64,
+    fontWeight: '800',
+    color: COLORS.primary,
+    lineHeight: 70,
+  },
+  bpmLabelLarge: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.textMuted,
+    fontWeight: '500',
+  },
+  sliderContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: COLORS.backgroundCard,
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.md,
+    marginVertical: SPACING.md,
   },
-  bpmButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  slider: {
+    flex: 1,
+    height: 40,
+  },
+  sliderLabel: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.textMuted,
+    width: 30,
+    textAlign: 'center',
+  },
+  bpmButtons: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginTop: SPACING.sm,
+  },
+  bpmStepButton: {
+    width: 44,
+    height: 44,
+    borderRadius: BORDER_RADIUS.md,
     backgroundColor: COLORS.surfaceLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  bpmDisplay: {
-    alignItems: 'center',
-    paddingHorizontal: SPACING.xxl,
+  bpmStepButtonText: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: '700',
+    color: COLORS.text,
   },
-  bpmValue: {
-    fontSize: FONTS.sizes.hero,
-    fontWeight: '800',
-    color: COLORS.primary,
+  bpmTargetDisplay: {
+    paddingHorizontal: SPACING.md,
   },
-  bpmLabel: {
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.textMuted,
-  },
-  bpmRange: {
-    alignItems: 'center',
-    marginTop: SPACING.sm,
-  },
-  bpmRangeText: {
+  bpmTargetText: {
     fontSize: FONTS.sizes.sm,
     color: COLORS.textSecondary,
   },
   criteriaSection: {
     paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.lg,
   },
   criteriaGrid: {
     flexDirection: 'row',
@@ -465,6 +640,7 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.lg,
     padding: SPACING.md,
     gap: SPACING.md,
+    marginTop: SPACING.sm,
   },
   criteriaItem: {
     alignItems: 'center',
@@ -497,10 +673,19 @@ const styles = StyleSheet.create({
   controlButton: {
     alignItems: 'center',
     gap: SPACING.xs,
+    padding: SPACING.sm,
+    borderRadius: BORDER_RADIUS.md,
+  },
+  controlButtonActive: {
+    backgroundColor: COLORS.primary + '20',
   },
   controlLabel: {
     fontSize: FONTS.sizes.xs,
     color: COLORS.textMuted,
+    fontWeight: '500',
+  },
+  controlLabelActive: {
+    color: COLORS.primary,
   },
   playButton: {
     width: 72,
@@ -509,5 +694,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  playButtonActive: {
+    backgroundColor: COLORS.error,
   },
 });
