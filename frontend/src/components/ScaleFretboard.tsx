@@ -146,21 +146,15 @@ export const ScaleFretboard: React.FC<Props> = ({
 
   // Render all string rows
   const renderFretboard = () => {
+    const boardWidth = width - 20; // Account for padding
     const rows = [];
     for (let s = 0; s < NUM_STRINGS; s++) {
-      rows.push(renderStringRow(s));
+      rows.push(renderStringRow(s, boardWidth));
     }
     return (
-      <View style={[styles.fretboard, { backgroundColor: THEME.BG }]}>
-        {/* Fret wires (vertical borders between frets) - rendered as separators */}
-        <View style={styles.fretWiresOverlay}>
-          <View style={[styles.fretWire, styles.nutWire]} />
-          {Array.from({ length: NUM_FRETS }).map((_, i) => (
-            <View key={`fw-${i}`} style={styles.fretWire} />
-          ))}
-        </View>
+      <View style={[styles.fretboard, { backgroundColor: THEME.BG, width: boardWidth }]}>
         {/* String rows */}
-        <View style={styles.stringsContainer}>
+        <View style={[styles.stringsContainer, { width: boardWidth }]}>
           {rows}
         </View>
       </View>
