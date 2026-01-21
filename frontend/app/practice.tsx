@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Dimensions,
   Platform,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +16,7 @@ import Slider from '@react-native-community/slider';
 import { COLORS, FONTS, SPACING, BORDER_RADIUS } from '../src/constants/theme';
 import { ChordFretboard } from '../src/components/ChordFretboard';
 import { ScaleFretboard } from '../src/components/ScaleFretboard';
+import { StrumVisualizer } from '../src/components/StrumVisualizer';
 import { useStore } from '../src/store/useStore';
 import { 
   CURRICULUM, 
@@ -24,6 +26,7 @@ import {
   ChordShape,
   DayLesson 
 } from '../src/data/curriculum';
+import { getStrumPatternByStyle, STRUM_PATTERNS } from '../src/data/strumPatterns';
 import { 
   isExerciseComplete, 
   markExerciseComplete, 
