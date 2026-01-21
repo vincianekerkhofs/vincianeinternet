@@ -124,7 +124,6 @@ export const ScaleFretboard: React.FC<Props> = ({
             key={`str-${strIdx}`}
             style={{ 
               flexDirection: 'row', 
-              width: boardWidth, 
               height: cellHeight,
             }}
           >
@@ -141,10 +140,14 @@ export const ScaleFretboard: React.FC<Props> = ({
                 <View 
                   key={`cell-${strIdx}-${fretIdx}`}
                   style={{
-                    width: cellWidth,
+                    flex: 1,
                     height: cellHeight,
                     alignItems: 'center',
                     justifyContent: 'center',
+                    borderRightWidth: fretIdx < NUM_FRETS - 1 ? 2 : 0,
+                    borderRightColor: '#5A5A5A',
+                    borderLeftWidth: fretIdx === 0 ? 4 : 0,
+                    borderLeftColor: '#CCC',
                   }}
                 >
                   {/* String line */}
