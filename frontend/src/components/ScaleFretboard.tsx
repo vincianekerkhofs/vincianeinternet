@@ -116,7 +116,7 @@ export const ScaleFretboard: React.FC<Props> = ({
           {[0, 1, 2, 3].map(f => {
             const note = getNote(0, f);
             return (
-              <View key={f} style={[styles.cell, { width: cellW, height: cellH }]}>
+              <View key={f} style={styles.cell}>
                 <View style={[styles.string, { height: 1.5 }]} />
                 {note && (
                   <View style={[styles.note, { backgroundColor: note.root ? '#FF6B35' : (isActive ? '#00D68F' : '#2A2A2A'), borderColor: note.root ? '#FF6B35' : '#00D68F' }]}>
@@ -133,7 +133,7 @@ export const ScaleFretboard: React.FC<Props> = ({
           {[0, 1, 2, 3].map(f => {
             const note = getNote(1, f);
             return (
-              <View key={f} style={[styles.cell, { width: cellW, height: cellH }]}>
+              <View key={f} style={styles.cell}>
                 <View style={[styles.string, { height: 1.9 }]} />
                 {note && (
                   <View style={[styles.note, { backgroundColor: note.root ? '#FF6B35' : (isActive ? '#00D68F' : '#2A2A2A'), borderColor: note.root ? '#FF6B35' : '#00D68F' }]}>
@@ -150,7 +150,7 @@ export const ScaleFretboard: React.FC<Props> = ({
           {[0, 1, 2, 3].map(f => {
             const note = getNote(2, f);
             return (
-              <View key={f} style={[styles.cell, { width: cellW, height: cellH }]}>
+              <View key={f} style={styles.cell}>
                 <View style={[styles.string, { height: 2.3 }]} />
                 {note && (
                   <View style={[styles.note, { backgroundColor: note.root ? '#FF6B35' : (isActive ? '#00D68F' : '#2A2A2A'), borderColor: note.root ? '#FF6B35' : '#00D68F' }]}>
@@ -167,7 +167,7 @@ export const ScaleFretboard: React.FC<Props> = ({
           {[0, 1, 2, 3].map(f => {
             const note = getNote(3, f);
             return (
-              <View key={f} style={[styles.cell, { width: cellW, height: cellH }]}>
+              <View key={f} style={styles.cell}>
                 <View style={[styles.string, { height: 2.7 }]} />
                 {note && (
                   <View style={[styles.note, { backgroundColor: note.root ? '#FF6B35' : (isActive ? '#00D68F' : '#2A2A2A'), borderColor: note.root ? '#FF6B35' : '#00D68F' }]}>
@@ -184,7 +184,7 @@ export const ScaleFretboard: React.FC<Props> = ({
           {[0, 1, 2, 3].map(f => {
             const note = getNote(4, f);
             return (
-              <View key={f} style={[styles.cell, { width: cellW, height: cellH }]}>
+              <View key={f} style={styles.cell}>
                 <View style={[styles.string, { height: 3.1 }]} />
                 {note && (
                   <View style={[styles.note, { backgroundColor: note.root ? '#FF6B35' : (isActive ? '#00D68F' : '#2A2A2A'), borderColor: note.root ? '#FF6B35' : '#00D68F' }]}>
@@ -201,7 +201,7 @@ export const ScaleFretboard: React.FC<Props> = ({
           {[0, 1, 2, 3].map(f => {
             const note = getNote(5, f);
             return (
-              <View key={f} style={[styles.cell, { width: cellW, height: cellH }]}>
+              <View key={f} style={styles.cell}>
                 <View style={[styles.string, { height: 3.5 }]} />
                 {note && (
                   <View style={[styles.note, { backgroundColor: note.root ? '#FF6B35' : (isActive ? '#00D68F' : '#2A2A2A'), borderColor: note.root ? '#FF6B35' : '#00D68F' }]}>
