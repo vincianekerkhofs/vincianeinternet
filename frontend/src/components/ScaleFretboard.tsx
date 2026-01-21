@@ -9,319 +9,230 @@ interface ScaleFretboardProps {
   isActive?: boolean;
 }
 
-// Scale patterns - grid based [string][fret] = finger number (0 = no note, -1 = root)
-const SCALE_PATTERNS: Record<string, {
+// Scale data using simple grid format
+// Value: 0 = empty, 1-4 = finger, negative = root with that finger
+const SCALES: Record<string, {
   name: string;
   startFret: number;
-  // 6 strings x frets array, value = finger (1-4), negative = root
-  grid: number[][];
+  grid: number[][]; // [string 0-5][fret 0-3]
 }> = {
   'Am_pent_box1': {
     name: 'Am Pentatónica - Box 1',
     startFret: 5,
-    // Frets: 5, 6, 7, 8 (4 frets)
-    // Grid[string][fret] - string 0 = e (high), string 5 = E (low)
     grid: [
-      [-1, 0, 0, 4], // e: 5(root), 8
-      [1, 0, 0, 4],  // B: 5, 8
-      [1, 0, 3, 0],  // G: 5, 7
-      [1, 0, 3, 0],  // D: 5, 7
-      [-1, 0, 3, 0], // A: 5(root), 7
-      [-1, 0, 0, 4], // E: 5(root), 8
+      [-1, 0, 0, 4], // e (high): root@5, note@8
+      [1, 0, 0, 4],  // B: note@5, note@8
+      [1, 0, 3, 0],  // G: note@5, note@7
+      [1, 0, 3, 0],  // D: note@5, note@7
+      [-1, 0, 3, 0], // A: root@5, note@7
+      [-1, 0, 0, 4], // E (low): root@5, note@8
     ],
   },
   'Am_blues': {
     name: 'Am Blues',
     startFret: 5,
     grid: [
-      [-1, 0, 0, 4], // e: 5(root), 8
-      [1, 0, 0, 4],  // B: 5, 8
-      [1, 0, 3, 0],  // G: 5, 7
-      [1, 0, 3, 0],  // D: 5, 7
-      [-1, 2, 3, 0], // A: 5(root), 6(blue), 7
-      [-1, 0, 0, 4], // E: 5(root), 8
+      [-1, 0, 0, 4],
+      [1, 0, 0, 4],
+      [1, 0, 3, 0],
+      [1, 0, 3, 0],
+      [-1, 2, 3, 0], // blue note at fret 6
+      [-1, 0, 0, 4],
     ],
   },
   'C_major_box1': {
-    name: 'Do Mayor - Posición 1',
+    name: 'Do Mayor',
     startFret: 7,
-    // Frets: 7, 8, 9, 10 (4 frets)
     grid: [
-      [1, -2, 0, 4], // e: 7, 8(root), 10
-      [0, -1, 0, 3], // B: 8(root), 10
-      [1, 0, 3, 0],  // G: 7, 9
-      [1, 0, 3, -4], // D: 7, 9, 10(root)
-      [1, 2, 0, 4],  // A: 7, 8, 10
-      [1, -2, 0, 4], // E: 7, 8(root), 10
+      [1, -2, 0, 4],
+      [0, -1, 0, 3],
+      [1, 0, 3, 0],
+      [1, 0, 3, -4],
+      [1, 2, 0, 4],
+      [1, -2, 0, 4],
     ],
   },
 };
 
-const COLORS_SCHEME = {
-  NOTE: '#00D68F',
-  ROOT: '#FF6B35',
-  BLUE: '#9B59B6',
-  STRING: '#B8977E',
-  FRET: '#5A5A5A',
-  BG: '#1E1810',
-};
-
-const stringNames = ['e', 'B', 'G', 'D', 'A', 'E'];
+const STRING_NAMES = ['e', 'B', 'G', 'D', 'A', 'E'];
 
 export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
   scaleName,
   width = 340,
-  height = 280,
   isActive = false,
 }) => {
-  const scaleData = SCALE_PATTERNS[scaleName];
-  
-  if (!scaleData) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>Escala no encontrada: {scaleName}</Text>
-      </View>
-    );
+  const scale = SCALES[scaleName];
+  if (!scale) {
+    return <Text style={s.error}>Escala: {scaleName}</Text>;
   }
 
-  const numFrets = scaleData.grid[0].length;
-  const cellWidth = (width - 60) / numFrets;
-  const cellHeight = 28;
-
-  // Render a single note cell
-  const renderNote = (finger: number, isActive: boolean) => {
-    if (finger === 0) return null;
-    
-    const isRoot = finger < 0;
-    const displayFinger = Math.abs(finger);
-    const bgColor = isRoot ? COLORS_SCHEME.ROOT : COLORS_SCHEME.NOTE;
-    
-    return (
-      <View style={[styles.noteCircle, { backgroundColor: isActive ? bgColor : '#333', borderColor: bgColor }]}>
-        <Text style={styles.fingerText}>{displayFinger}</Text>
-      </View>
-    );
-  };
+  const numFrets = scale.grid[0].length;
 
   return (
-    <View style={styles.container}>
-      {/* Scale name */}
-      <Text style={styles.scaleName}>{scaleData.name}</Text>
+    <View style={s.container}>
+      <Text style={s.title}>{scale.name}</Text>
       
-      {/* Main grid container */}
-      <View style={styles.gridContainer}>
-        {/* String labels column */}
-        <View style={styles.stringLabels}>
-          {stringNames.map((name, i) => {
-            const hasRoot = scaleData.grid[i].some(f => f < 0);
-            return (
-              <View 
-                key={`label-${i}`} 
-                style={[
-                  styles.stringLabel, 
-                  { height: cellHeight },
-                  hasRoot ? styles.stringLabelRoot : styles.stringLabelNormal
-                ]}
-              >
-                <Text style={[styles.stringLabelText, hasRoot && styles.stringLabelTextRoot]}>
-                  {name}
-                </Text>
+      {/* Fretboard with labels */}
+      <View style={s.board}>
+        {/* String rows */}
+        {scale.grid.map((row, si) => {
+          const hasRoot = row.some(v => v < 0);
+          return (
+            <View key={si} style={s.row}>
+              {/* String label */}
+              <View style={[s.label, hasRoot ? s.labelRoot : s.labelNote]}>
+                <Text style={s.labelText}>{STRING_NAMES[si]}</Text>
               </View>
-            );
-          })}
-        </View>
-        
-        {/* Fretboard grid */}
-        <View style={[styles.fretboard, { width: width - 60 }]}>
-          {/* Fret lines */}
-          <View style={styles.fretLines}>
-            {Array.from({ length: numFrets + 1 }).map((_, i) => (
-              <View 
-                key={`fret-${i}`} 
-                style={[
-                  styles.fretLine, 
-                  { left: i * cellWidth - 1 },
-                  i === 0 && styles.nutLine
-                ]} 
-              />
-            ))}
-          </View>
-          
-          {/* String rows with notes */}
-          {scaleData.grid.map((row, stringIdx) => (
-            <View key={`row-${stringIdx}`} style={[styles.stringRow, { height: cellHeight }]}>
-              {/* String line */}
-              <View style={[styles.stringLine, { height: 2 + stringIdx * 0.4 }]} />
               
-              {/* Note cells */}
-              {row.map((finger, fretIdx) => (
-                <View key={`cell-${stringIdx}-${fretIdx}`} style={[styles.noteCell, { width: cellWidth }]}>
-                  {renderNote(finger, isActive)}
-                </View>
-              ))}
+              {/* Fret cells */}
+              <View style={s.frets}>
+                {row.map((val, fi) => (
+                  <View key={fi} style={[s.cell, fi === 0 && s.firstCell]}>
+                    {/* String line */}
+                    <View style={[s.string, { height: 2 + si * 0.5 }]} />
+                    
+                    {/* Note circle */}
+                    {val !== 0 && (
+                      <View style={[
+                        s.note,
+                        val < 0 ? s.noteRoot : s.noteNormal,
+                        isActive && s.noteActive
+                      ]}>
+                        <Text style={s.finger}>{Math.abs(val)}</Text>
+                      </View>
+                    )}
+                  </View>
+                ))}
+              </View>
             </View>
-          ))}
-        </View>
+          );
+        })}
       </View>
       
       {/* Fret numbers */}
-      <View style={[styles.fretNumbers, { width: width - 60, marginLeft: 30 }]}>
+      <View style={s.fretNums}>
+        <View style={{ width: 32 }} />
         {Array.from({ length: numFrets }).map((_, i) => (
-          <Text key={`fnum-${i}`} style={[styles.fretNumber, { width: cellWidth }]}>
-            {scaleData.startFret + i}
-          </Text>
+          <Text key={i} style={s.fretNum}>{scale.startFret + i}</Text>
         ))}
       </View>
       
       {/* Legend */}
-      <View style={styles.legend}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: COLORS_SCHEME.ROOT }]} />
-          <Text style={styles.legendText}>Raíz</Text>
+      <View style={s.legend}>
+        <View style={s.legendItem}>
+          <View style={[s.dot, { backgroundColor: '#FF6B35' }]} />
+          <Text style={s.legendText}>Raíz</Text>
         </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: COLORS_SCHEME.NOTE }]} />
-          <Text style={styles.legendText}>Notas</Text>
+        <View style={s.legendItem}>
+          <View style={[s.dot, { backgroundColor: '#00D68F' }]} />
+          <Text style={s.legendText}>Notas</Text>
         </View>
-        <Text style={styles.legendTip}>Todas las cuerdas suenan</Text>
+        <Text style={s.allStrings}>✓ Todas suenan</Text>
       </View>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
+const s = StyleSheet.create({
+  container: { alignItems: 'center', paddingVertical: 4 },
+  error: { color: '#F00', fontSize: 14 },
+  title: { fontSize: 15, fontWeight: 'bold', color: COLORS.primary, marginBottom: 10 },
+  
+  board: { 
+    backgroundColor: '#1E1810', 
+    borderRadius: 6, 
+    padding: 8,
+    paddingRight: 12,
+  },
+  
+  row: { 
+    flexDirection: 'row', 
     alignItems: 'center',
-    paddingVertical: 8,
+    height: 32,
   },
-  errorText: {
-    color: '#FF4757',
-    fontSize: 14,
-  },
-  scaleName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORS.primary,
-    marginBottom: 12,
-  },
-  gridContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  stringLabels: {
-    width: 30,
-    marginRight: 0,
-  },
-  stringLabel: {
-    width: 26,
-    justifyContent: 'center',
+  
+  label: { 
+    width: 26, 
+    height: 26, 
+    borderRadius: 13, 
+    justifyContent: 'center', 
     alignItems: 'center',
-    borderRadius: 13,
-    marginVertical: 1,
+    marginRight: 6,
   },
-  stringLabelNormal: {
+  labelNote: { backgroundColor: '#00D68F' },
+  labelRoot: { backgroundColor: '#FF6B35' },
+  labelText: { color: '#FFF', fontSize: 11, fontWeight: 'bold' },
+  
+  frets: { 
+    flexDirection: 'row', 
+    flex: 1,
+  },
+  
+  cell: { 
+    flex: 1, 
+    height: 32, 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    borderLeftWidth: 2,
+    borderLeftColor: '#555',
+  },
+  firstCell: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#BBB',
+  },
+  
+  string: { 
+    position: 'absolute', 
+    left: 0, 
+    right: 0, 
+    backgroundColor: '#A08060',
+  },
+  
+  note: { 
+    width: 24, 
+    height: 24, 
+    borderRadius: 12, 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    borderWidth: 2,
+    zIndex: 5,
+  },
+  noteNormal: { 
+    backgroundColor: '#333', 
+    borderColor: '#00D68F',
+  },
+  noteRoot: { 
+    backgroundColor: '#333', 
+    borderColor: '#FF6B35',
+  },
+  noteActive: {
     backgroundColor: '#00D68F',
   },
-  stringLabelRoot: {
-    backgroundColor: '#FF6B35',
+  
+  finger: { color: '#FFF', fontSize: 12, fontWeight: 'bold' },
+  
+  fretNums: { 
+    flexDirection: 'row', 
+    marginTop: 4,
+    width: '100%',
+    paddingHorizontal: 8,
   },
-  stringLabelText: {
-    color: '#FFF',
-    fontSize: 11,
-    fontWeight: 'bold',
-  },
-  stringLabelTextRoot: {
-    color: '#FFF',
-  },
-  fretboard: {
-    backgroundColor: '#1E1810',
-    borderRadius: 4,
-    paddingVertical: 2,
-    position: 'relative',
-  },
-  fretLines: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  fretLine: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    width: 2,
-    backgroundColor: '#5A5A5A',
-  },
-  nutLine: {
-    width: 5,
-    backgroundColor: '#CCC',
-  },
-  stringRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    position: 'relative',
-  },
-  stringLine: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    backgroundColor: '#B8977E',
-  },
-  noteCell: {
-    height: '100%',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  noteCircle: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  fingerText: {
-    color: '#FFF',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  fretNumbers: {
-    flexDirection: 'row',
-    marginTop: 6,
-  },
-  fretNumber: {
-    textAlign: 'center',
-    fontSize: 11,
+  fretNum: { 
+    flex: 1, 
+    textAlign: 'center', 
+    fontSize: 11, 
     color: '#888',
     fontWeight: '600',
   },
-  legend: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
+  
+  legend: { 
+    flexDirection: 'row', 
+    gap: 12, 
     marginTop: 10,
-    flexWrap: 'wrap',
-  },
-  legendItem: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
   },
-  legendDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  legendText: {
-    fontSize: 12,
-    color: '#888',
-  },
-  legendTip: {
-    fontSize: 11,
-    color: '#00D68F',
-    fontWeight: '600',
-  },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  dot: { width: 10, height: 10, borderRadius: 5 },
+  legendText: { fontSize: 11, color: '#888' },
+  allStrings: { fontSize: 11, color: '#00D68F', fontWeight: '600' },
 });
