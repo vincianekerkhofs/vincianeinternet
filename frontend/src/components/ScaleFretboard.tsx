@@ -7,7 +7,7 @@ interface Props {
   isActive?: boolean;
 }
 
-// Scale data
+// Scale data - notes list format
 const SCALES: Record<string, { name: string; start: number; notes: { s: number; f: number; finger: number; root?: boolean }[] }> = {
   'Am_pent_box1': {
     name: 'Am Pentatónica - Box 1',
@@ -48,57 +48,52 @@ const SCALES: Record<string, { name: string; start: number; notes: { s: number; 
 };
 
 const STR_NAMES = ['e', 'B', 'G', 'D', 'A', 'E'];
-const { width: SCREEN_W } = Dimensions.get('window');
+const { width: SW } = Dimensions.get('window');
 
 export const ScaleFretboard: React.FC<Props> = ({ scaleName, isActive = false }) => {
   const scale = SCALES[scaleName];
-  if (!scale) return <Text>Escala no encontrada</Text>;
+  if (!scale) return <Text style={{color:'red'}}>?</Text>;
 
   const NUM_FRETS = 4;
-  const CELL_W = Math.floor((SCREEN_W - 80) / NUM_FRETS);
-  const ROW_H = 36;
+  const CELL_W = Math.floor((SW - 90) / NUM_FRETS);
 
-  // Check if string has root note
   const hasRoot = (si: number) => scale.notes.some(n => n.s === si && n.root);
-  
-  // Get note at position
   const getNote = (si: number, fi: number) => scale.notes.find(n => n.s === si && n.f === fi);
 
+  // String Label Component
+  const StrLabel = ({ si }: { si: number }) => {
+    const root = hasRoot(si);
+    return (
+      <View style={[s.strLbl, root ? s.strLblRoot : s.strLblNote]}>
+        <Text style={s.strLblTxt}>{STR_NAMES[si]}</Text>
+      </View>
+    );
+  };
+
+  // Note Circle Component  
+  const NoteCircle = ({ note }: { note: { finger: number; root?: boolean } }) => (
+    <View style={[s.noteC, note.root ? s.noteCRoot : s.noteCNote, isActive && s.noteCActive]}>
+      <Text style={s.noteCTxt}>{note.finger}</Text>
+    </View>
+  );
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>{scale.name}</Text>
-      <Text style={styles.subtitle}>Trastes {scale.start}-{scale.start + NUM_FRETS - 1}</Text>
+    <View style={s.container}>
+      <Text style={s.title}>{scale.name}</Text>
+      <Text style={s.sub}>Trastes {scale.start}-{scale.start + NUM_FRETS - 1}</Text>
       
       {/* Fretboard */}
-      <View style={styles.fretboard}>
-        {/* String rows */}
-        {STR_NAMES.map((strName, si) => (
-          <View key={si} style={styles.row}>
-            {/* String label */}
-            <Text style={[styles.strLabel, hasRoot(si) ? styles.strLabelRoot : styles.strLabelNormal]}>
-              {strName}
-            </Text>
+      <View style={s.board}>
+        {STR_NAMES.map((_, si) => (
+          <View key={si} style={s.row}>
+            <StrLabel si={si} />
             
-            {/* Fret cells */}
             {[0, 1, 2, 3].map(fi => {
               const note = getNote(si, fi);
               return (
-                <View key={fi} style={[styles.cell, { width: CELL_W }]}>
-                  {/* Fret line */}
-                  <View style={fi === 0 ? styles.nutLine : styles.fretLine} />
-                  
-                  {/* Note circle or string line */}
-                  {note ? (
-                    <Text style={[
-                      styles.noteCircle,
-                      note.root ? styles.noteRoot : styles.noteGreen,
-                      isActive && styles.noteActive
-                    ]}>
-                      {note.finger}
-                    </Text>
-                  ) : (
-                    <View style={[styles.stringLine, { height: 2 + si * 0.5 }]} />
-                  )}
+                <View key={fi} style={[s.cell, { width: CELL_W }]}>
+                  <View style={fi === 0 ? s.nut : s.fret} />
+                  {note ? <NoteCircle note={note} /> : <View style={[s.strLine, { height: 2 + si * 0.5 }]} />}
                 </View>
               );
             })}
@@ -106,76 +101,61 @@ export const ScaleFretboard: React.FC<Props> = ({ scaleName, isActive = false })
         ))}
         
         {/* Fret numbers */}
-        <View style={styles.fretNumRow}>
-          <View style={{ width: 32 }} />
+        <View style={s.fnRow}>
+          <View style={{ width: 34 }} />
           {[0, 1, 2, 3].map(fi => (
-            <Text key={fi} style={[styles.fretNum, { width: CELL_W }]}>
-              {scale.start + fi}
-            </Text>
+            <View key={fi} style={[s.fnCell, { width: CELL_W }]}>
+              <Text style={s.fnTxt}>{scale.start + fi}</Text>
+            </View>
           ))}
         </View>
       </View>
       
       {/* Legend */}
-      <View style={styles.legend}>
-        <Text style={styles.legendRoot}>● Raíz</Text>
-        <Text style={styles.legendNote}>● Notas</Text>
-        <Text style={styles.legendAll}>✓ Todas suenan</Text>
+      <View style={s.leg}>
+        <View style={s.legItem}><View style={[s.legDot, { backgroundColor: '#FF6B35' }]} /><Text style={s.legTxt}>Raíz</Text></View>
+        <View style={s.legItem}><View style={[s.legDot, { backgroundColor: '#00D68F' }]} /><Text style={s.legTxt}>Notas</Text></View>
+        <Text style={[s.legTxt, { color: '#00D68F' }]}>✓ Todas suenan</Text>
       </View>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   container: { alignItems: 'center', padding: 8 },
   title: { fontSize: 15, fontWeight: 'bold', color: COLORS.primary },
-  subtitle: { fontSize: 12, color: '#888', marginBottom: 8 },
+  sub: { fontSize: 12, color: '#888', marginBottom: 8 },
   
-  fretboard: { backgroundColor: '#1E1810', borderRadius: 6, padding: 8 },
+  board: { backgroundColor: '#1E1810', borderRadius: 6, padding: 8 },
   
   row: { flexDirection: 'row', alignItems: 'center', height: 36 },
   
-  strLabel: { 
-    width: 24, 
-    textAlign: 'center',
-    fontSize: 12, 
-    fontWeight: 'bold', 
-    marginRight: 6,
-    paddingVertical: 4,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  strLabelNormal: { backgroundColor: '#00D68F', color: '#FFF' },
-  strLabelRoot: { backgroundColor: '#FF6B35', color: '#FFF' },
+  // String labels as View+Text
+  strLbl: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', marginRight: 6 },
+  strLblNote: { backgroundColor: '#00D68F' },
+  strLblRoot: { backgroundColor: '#FF6B35' },
+  strLblTxt: { color: '#FFF', fontSize: 11, fontWeight: 'bold' },
   
   cell: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', height: 32 },
   
-  nutLine: { width: 4, height: 28, backgroundColor: '#AAA', marginRight: 2 },
-  fretLine: { width: 2, height: 28, backgroundColor: '#555', marginRight: 2 },
+  nut: { width: 4, height: 28, backgroundColor: '#AAA', marginRight: 2 },
+  fret: { width: 2, height: 28, backgroundColor: '#555', marginRight: 2 },
   
-  stringLine: { flex: 1, backgroundColor: '#A08060' },
+  strLine: { flex: 1, backgroundColor: '#A08060' },
   
-  noteCircle: { 
-    width: 26, 
-    height: 26, 
-    lineHeight: 26,
-    textAlign: 'center',
-    fontSize: 13, 
-    fontWeight: 'bold', 
-    color: '#FFF',
-    borderRadius: 13,
-    borderWidth: 2,
-    overflow: 'hidden',
-  },
-  noteGreen: { backgroundColor: '#333', borderColor: '#00D68F' },
-  noteRoot: { backgroundColor: '#333', borderColor: '#FF6B35' },
-  noteActive: { backgroundColor: '#00D68F' },
+  // Note circles as View+Text
+  noteC: { width: 26, height: 26, borderRadius: 13, borderWidth: 2, alignItems: 'center', justifyContent: 'center', backgroundColor: '#222' },
+  noteCNote: { borderColor: '#00D68F' },
+  noteCRoot: { borderColor: '#FF6B35' },
+  noteCActive: { backgroundColor: '#00D68F' },
+  noteCTxt: { color: '#FFF', fontSize: 13, fontWeight: 'bold' },
   
-  fretNumRow: { flexDirection: 'row', marginTop: 4 },
-  fretNum: { textAlign: 'center', fontSize: 10, color: '#888' },
+  fnRow: { flexDirection: 'row', marginTop: 4 },
+  fnCell: { alignItems: 'center' },
+  fnTxt: { fontSize: 10, color: '#888' },
   
-  legend: { flexDirection: 'row', gap: 12, marginTop: 10 },
-  legendRoot: { fontSize: 11, color: '#FF6B35' },
-  legendNote: { fontSize: 11, color: '#00D68F' },
-  legendAll: { fontSize: 11, color: '#00D68F' },
+  leg: { flexDirection: 'row', gap: 12, marginTop: 10, alignItems: 'center' },
+  legItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  legDot: { width: 10, height: 10, borderRadius: 5 },
+  legTxt: { fontSize: 11, color: '#888' },
 });
