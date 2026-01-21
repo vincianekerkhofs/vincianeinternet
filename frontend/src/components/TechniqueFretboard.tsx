@@ -430,6 +430,16 @@ export const TechniqueFretboard: React.FC<Props> = ({
       {/* Note names info modal */}
       <NoteNamesInfoModal />
       
+      {/* Technique micro-tutorial modal */}
+      <TechniqueMicroTutorial
+        technique={selectedTechnique}
+        visible={showTechniqueModal}
+        onClose={() => {
+          setShowTechniqueModal(false);
+          setSelectedTechnique(null);
+        }}
+      />
+      
       {/* String indicators */}
       {renderStringIndicators()}
       
