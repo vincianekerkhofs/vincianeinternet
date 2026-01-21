@@ -1,21 +1,20 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { COLORS, SPACING } from '../constants/theme';
 import Svg, { Line, Circle, Rect, Text as SvgText, G } from 'react-native-svg';
 
 export interface FretboardNote {
-  stringIndex: number;  // 0=high e, 5=low E
-  fret: number | null;  // null for muted
+  stringIndex: number;
+  fret: number | null;
   isMute?: boolean;
   isActive?: boolean;
   isPreview?: boolean;
-  finger?: number;      // 1-4 for left hand fingering
+  finger?: number;
 }
 
 interface FretboardProps {
   notes?: FretboardNote[];
   currentNotes?: FretboardNote[];
-  previewNotes?: FretboardNote[];
   width?: number;
   height?: number;
   startFret?: number;
@@ -26,14 +25,13 @@ interface FretboardProps {
 export const Fretboard: React.FC<FretboardProps> = ({
   notes = [],
   currentNotes = [],
-  previewNotes = [],
   width = 340,
-  height = 180,
+  height = 200,
   startFret = 0,
   numFrets = 5,
   showFingering = true,
 }) => {
-  const padding = 35;
+  const padding = 40;
   const fretWidth = (width - padding * 2) / numFrets;
   const stringSpacing = (height - padding * 2) / 5;
   
@@ -43,7 +41,7 @@ export const Fretboard: React.FC<FretboardProps> = ({
   const renderStrings = () => {
     return stringNames.map((name, i) => {
       const y = padding + i * stringSpacing;
-      const thickness = 1 + (i * 0.3);
+      const thickness = 1 + (i * 0.4);
       const hasCurrentNote = currentNotes.some(n => n.stringIndex === i);
       
       return (
@@ -53,15 +51,15 @@ export const Fretboard: React.FC<FretboardProps> = ({
             y1={y}
             x2={width - padding}
             y2={y}
-            stroke={hasCurrentNote ? COLORS.stringHighlight : COLORS.string}
-            strokeWidth={hasCurrentNote ? thickness + 1 : thickness}
+            stroke={hasCurrentNote ? COLORS.primary : COLORS.string}
+            strokeWidth={hasCurrentNote ? thickness + 1.5 : thickness}
           />
           <SvgText
-            x={padding - 18}
-            y={y + 4}
+            x={padding - 20}
+            y={y + 5}
             fill={hasCurrentNote ? COLORS.primary : COLORS.textSecondary}
-            fontSize={11}
-            fontWeight={hasCurrentNote ? 'bold' : '500'}
+            fontSize={13}
+            fontWeight={hasCurrentNote ? 'bold' : '600'}
           >
             {name}
           </SvgText>
@@ -83,7 +81,7 @@ export const Fretboard: React.FC<FretboardProps> = ({
           x2={x}
           y2={height - padding}
           stroke={isNut ? COLORS.text : COLORS.fret}
-          strokeWidth={isNut ? 4 : 2}
+          strokeWidth={isNut ? 5 : 2}
         />
       );
       
@@ -93,9 +91,10 @@ export const Fretboard: React.FC<FretboardProps> = ({
           <SvgText
             key={`fret-num-${i}`}
             x={x - fretWidth / 2}
-            y={height - 8}
+            y={height - 6}
             fill={COLORS.textMuted}
-            fontSize={10}
+            fontSize={11}
+            fontWeight="600"
             textAnchor="middle"
           >
             {fretNum}
@@ -115,12 +114,12 @@ export const Fretboard: React.FC<FretboardProps> = ({
         const isDouble = fretNum === 12;
         if (isDouble) {
           markers.push(
-            <Circle key={`marker-${i}-1`} cx={x} cy={padding + stringSpacing * 1.5} r={4} fill={COLORS.textMuted} opacity={0.4} />,
-            <Circle key={`marker-${i}-2`} cx={x} cy={padding + stringSpacing * 3.5} r={4} fill={COLORS.textMuted} opacity={0.4} />
+            <Circle key={`marker-${i}-1`} cx={x} cy={padding + stringSpacing * 1.5} r={5} fill={COLORS.textMuted} opacity={0.35} />,
+            <Circle key={`marker-${i}-2`} cx={x} cy={padding + stringSpacing * 3.5} r={5} fill={COLORS.textMuted} opacity={0.35} />
           );
         } else {
           markers.push(
-            <Circle key={`marker-${i}`} cx={x} cy={height / 2} r={4} fill={COLORS.textMuted} opacity={0.4} />
+            <Circle key={`marker-${i}`} cx={x} cy={height / 2} r={5} fill={COLORS.textMuted} opacity={0.35} />
           );
         }
       }
@@ -128,7 +127,8 @@ export const Fretboard: React.FC<FretboardProps> = ({
     return markers;
   };
 
-  const renderNote = (note: FretboardNote, index: number, type: 'current' | 'preview' | 'static') => {
+  // Render note - SIMPLIFIED: Only ORANGE for active notes
+  const renderNote = (note: FretboardNote, index: number, isActive: boolean) => {
     const fret = note.fret ?? 0;
     const fretIndex = fret - startFret;
     
@@ -136,7 +136,7 @@ export const Fretboard: React.FC<FretboardProps> = ({
     
     let x: number;
     if (fret === 0) {
-      x = padding - 14;
+      x = padding - 16;
     } else if (fretIndex <= 0) {
       x = padding + fretWidth * 0.5;
     } else {
@@ -147,19 +147,16 @@ export const Fretboard: React.FC<FretboardProps> = ({
     
     // Handle muted strings
     if (note.isMute || note.fret === null) {
-      const color = type === 'current' ? COLORS.primary : 
-                    type === 'preview' ? COLORS.primaryLight : COLORS.textMuted;
-      const fontSize = type === 'current' ? 20 : 16;
       return (
-        <G key={`note-${type}-${index}`}>
-          {type === 'current' && (
-            <Circle cx={x} cy={y} r={16} fill={COLORS.primary} opacity={0.3} />
+        <G key={`note-${isActive ? 'active' : 'static'}-${index}`}>
+          {isActive && (
+            <Circle cx={x} cy={y} r={20} fill={COLORS.primary} opacity={0.4} />
           )}
           <SvgText
             x={x}
-            y={y + 6}
-            fill={color}
-            fontSize={fontSize}
+            y={y + 7}
+            fill={isActive ? COLORS.primary : COLORS.textMuted}
+            fontSize={isActive ? 24 : 18}
             fontWeight="bold"
             textAnchor="middle"
           >
@@ -169,39 +166,20 @@ export const Fretboard: React.FC<FretboardProps> = ({
       );
     }
     
-    // Determine colors and sizes based on type
-    let fillColor = COLORS.primary;
-    let strokeColor = COLORS.primaryLight;
-    let opacity = 1;
-    let radius = 15;
-    
-    if (type === 'preview') {
-      fillColor = COLORS.secondary;
-      strokeColor = COLORS.secondaryDark;
-      opacity = 0.7;
-      radius = 13;
-    } else if (type === 'static') {
-      fillColor = COLORS.surfaceLight;
-      strokeColor = COLORS.textMuted;
-      opacity = 0.5;
-      radius = 11;
-    } else if (type === 'current') {
-      fillColor = COLORS.primary;
-      strokeColor = '#FFFFFF';
-      radius = 17;
-    }
+    // SIMPLIFIED: Only two states - active (orange) or static (gray)
+    const radius = isActive ? 20 : 13;
+    const fillColor = isActive ? COLORS.primary : COLORS.surfaceLight;
+    const strokeColor = isActive ? '#FFFFFF' : COLORS.textMuted;
+    const opacity = isActive ? 1 : 0.5;
     
     return (
-      <G key={`note-${type}-${index}`}>
-        {/* Glow effects for current notes */}
-        {type === 'current' && (
+      <G key={`note-${isActive ? 'active' : 'static'}-${index}`}>
+        {/* BIG GLOW for active notes - VERY OBVIOUS */}
+        {isActive && (
           <>
-            <Circle cx={x} cy={y} r={radius + 10} fill={COLORS.primary} opacity={0.15} />
-            <Circle cx={x} cy={y} r={radius + 5} fill={COLORS.primary} opacity={0.3} />
+            <Circle cx={x} cy={y} r={radius + 12} fill={COLORS.primary} opacity={0.2} />
+            <Circle cx={x} cy={y} r={radius + 6} fill={COLORS.primary} opacity={0.4} />
           </>
-        )}
-        {type === 'preview' && (
-          <Circle cx={x} cy={y} r={radius + 4} fill={COLORS.secondary} opacity={0.2} />
         )}
         
         {/* Main note circle */}
@@ -211,42 +189,39 @@ export const Fretboard: React.FC<FretboardProps> = ({
           r={radius}
           fill={fillColor}
           stroke={strokeColor}
-          strokeWidth={type === 'current' ? 3 : 2}
+          strokeWidth={isActive ? 3 : 1.5}
           opacity={opacity}
         />
         
-        {/* Fret number (primary) */}
+        {/* Fret number - LARGER for active */}
         <SvgText
           x={x}
-          y={y + (type === 'current' ? 1 : 0)}
-          fill={type === 'static' ? COLORS.textMuted : COLORS.text}
-          fontSize={type === 'current' ? 13 : type === 'preview' ? 11 : 10}
+          y={y + (isActive ? 2 : 1)}
+          fill={isActive ? COLORS.text : COLORS.textMuted}
+          fontSize={isActive ? 16 : 11}
           fontWeight="bold"
           textAnchor="middle"
           alignmentBaseline="middle"
-          opacity={type === 'static' ? 0.7 : 1}
         >
           {fret}
         </SvgText>
         
-        {/* Finger number badge (for current and preview notes) */}
-        {showFingering && note.finger && (type === 'current' || type === 'preview') && (
+        {/* Finger badge - only for active notes, ORANGE background */}
+        {showFingering && note.finger && isActive && (
           <>
-            {/* Finger badge background */}
             <Circle
-              cx={x + radius - 2}
-              cy={y - radius + 2}
-              r={8}
-              fill={type === 'current' ? COLORS.secondary : COLORS.info}
+              cx={x + radius - 3}
+              cy={y - radius + 3}
+              r={10}
+              fill={COLORS.warning}
               stroke={COLORS.background}
-              strokeWidth={1.5}
+              strokeWidth={2}
             />
-            {/* Finger number */}
             <SvgText
-              x={x + radius - 2}
-              y={y - radius + 2}
-              fill={COLORS.text}
-              fontSize={9}
+              x={x + radius - 3}
+              y={y - radius + 3}
+              fill={COLORS.background}
+              fontSize={11}
               fontWeight="bold"
               textAnchor="middle"
               alignmentBaseline="middle"
@@ -254,20 +229,6 @@ export const Fretboard: React.FC<FretboardProps> = ({
               {note.finger}
             </SvgText>
           </>
-        )}
-        
-        {/* Static notes show finger number below */}
-        {showFingering && note.finger && type === 'static' && (
-          <SvgText
-            x={x}
-            y={y + radius + 10}
-            fill={COLORS.textMuted}
-            fontSize={8}
-            textAnchor="middle"
-            opacity={0.7}
-          >
-            {note.finger}
-          </SvgText>
         )}
       </G>
     );
@@ -288,25 +249,19 @@ export const Fretboard: React.FC<FretboardProps> = ({
         {renderFrets()}
         {renderStrings()}
         
-        {/* Static notes */}
-        {notes.map((note, i) => renderNote(note, i, 'static'))}
+        {/* Static notes (dimmed) */}
+        {notes.map((note, i) => renderNote(note, i, false))}
         
-        {/* Preview notes */}
-        {previewNotes.map((note, i) => renderNote(note, i, 'preview'))}
-        
-        {/* Current notes */}
-        {currentNotes.map((note, i) => renderNote(note, i, 'current'))}
+        {/* Active notes (ORANGE - play NOW) */}
+        {currentNotes.map((note, i) => renderNote(note, i, true))}
       </Svg>
       
       {/* Fingering legend */}
       {showFingering && (
         <View style={styles.legend}>
-          <View style={styles.legendItem}>
-            <View style={[styles.legendBadge, { backgroundColor: COLORS.secondary }]}>
-              <SvgText style={styles.legendBadgeText}>1</SvgText>
-            </View>
-            <SvgText style={styles.legendLabel}>= Finger number</SvgText>
-          </View>
+          <Text style={styles.legendText}>
+            Finger: 1=index  2=middle  3=ring  4=pinky
+          </Text>
         </View>
       )}
     </View>
@@ -322,30 +277,12 @@ const styles = StyleSheet.create({
     padding: SPACING.sm,
   },
   legend: {
-    flexDirection: 'row',
-    justifyContent: 'center',
     marginTop: SPACING.xs,
     paddingTop: SPACING.xs,
   },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  legendBadge: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 4,
-  },
-  legendBadgeText: {
-    color: COLORS.text,
-    fontSize: 10,
-    fontWeight: 'bold',
-  },
-  legendLabel: {
+  legendText: {
     color: COLORS.textMuted,
-    fontSize: 10,
+    fontSize: 11,
+    textAlign: 'center',
   },
 });

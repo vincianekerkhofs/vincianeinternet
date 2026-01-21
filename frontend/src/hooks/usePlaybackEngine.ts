@@ -12,10 +12,7 @@ interface PlaybackEngineOptions {
 }
 
 /**
- * Unified playback engine that handles:
- * - Beat progression (single source of truth)
- * - Metronome audio (Web Audio API)
- * - Synced callbacks for UI updates
+ * Unified playback engine with REAL-TIME BPM changes
  */
 export const usePlaybackEngine = (options: PlaybackEngineOptions) => {
   const {
@@ -28,28 +25,38 @@ export const usePlaybackEngine = (options: PlaybackEngineOptions) => {
     onLoopComplete,
   } = options;
 
-  // State
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentBeat, setCurrentBeat] = useState(1);
   const [audioReady, setAudioReady] = useState(false);
   const [needsUserInteraction, setNeedsUserInteraction] = useState(false);
 
-  // Refs for audio
   const audioContextRef = useRef<AudioContext | null>(null);
-  
-  // Refs for timing - single source of truth
-  const playbackStartTimeRef = useRef<number>(0);
   const schedulerIdRef = useRef<number | null>(null);
-  const lastScheduledBeatRef = useRef<number>(0);
   const isPlayingRef = useRef<boolean>(false);
   const soundEnabledRef = useRef<boolean>(soundEnabled);
+  const bpmRef = useRef<number>(bpm);
   
-  // Keep soundEnabled ref in sync
+  // Beat tracking - use beat index and calculate time dynamically
+  const currentBeatIndexRef = useRef<number>(0);
+  const lastBeatTimeRef = useRef<number>(0);
+  const lastScheduledBeatRef = useRef<number>(-1);
+  
+  // Keep refs in sync with props
   useEffect(() => {
     soundEnabledRef.current = soundEnabled;
   }, [soundEnabled]);
+  
+  // REAL-TIME BPM UPDATE - recalculate timing immediately
+  useEffect(() => {
+    bpmRef.current = bpm;
+    // When BPM changes during playback, adjust lastBeatTime to maintain position
+    if (isPlayingRef.current && audioContextRef.current) {
+      const now = audioContextRef.current.currentTime;
+      lastBeatTimeRef.current = now;
+      // Keep the current beat index, just update when next beat should happen
+    }
+  }, [bpm]);
 
-  // Initialize AudioContext
   const initAudio = useCallback(async () => {
     if (Platform.OS !== 'web') {
       setAudioReady(true);
@@ -79,7 +86,6 @@ export const usePlaybackEngine = (options: PlaybackEngineOptions) => {
     return false;
   }, []);
 
-  // Play a click sound at specific time
   const playClick = useCallback((time: number, isAccent: boolean = false) => {
     if (!audioContextRef.current || !soundEnabledRef.current) return;
 
@@ -110,94 +116,84 @@ export const usePlaybackEngine = (options: PlaybackEngineOptions) => {
     }
   }, [volume]);
 
-  // Main scheduler - runs continuously while playing
   const runScheduler = useCallback(() => {
     if (!isPlayingRef.current) return;
     
     const ctx = audioContextRef.current;
     const now = ctx ? ctx.currentTime : (Date.now() / 1000);
-    const secondsPerBeat = 60.0 / bpm;
-    const scheduleAheadTime = 0.15; // Schedule 150ms ahead
-    const lookaheadMs = 25; // Check every 25ms
     
-    // Calculate current beat based on elapsed time
-    const elapsedTime = now - playbackStartTimeRef.current;
-    const currentBeatFloat = (elapsedTime / secondsPerBeat) + 1;
-    const currentBeatInt = Math.floor(currentBeatFloat);
+    // Use CURRENT bpm from ref for real-time updates
+    const currentBpm = bpmRef.current;
+    const secondsPerBeat = 60.0 / currentBpm;
+    const scheduleAheadTime = 0.15;
+    const lookaheadMs = 25;
     
-    // Handle loop or stop
-    if (currentBeatInt > totalBeats) {
-      if (loop) {
-        // Reset start time for new loop
-        playbackStartTimeRef.current = now;
-        lastScheduledBeatRef.current = 0;
-        onLoopComplete?.();
-      } else {
-        stop();
-        return;
+    // Calculate time since last beat
+    const timeSinceLastBeat = now - lastBeatTimeRef.current;
+    
+    // Check if it's time for next beat
+    if (timeSinceLastBeat >= secondsPerBeat) {
+      currentBeatIndexRef.current++;
+      lastBeatTimeRef.current = now;
+      
+      // Handle loop
+      if (currentBeatIndexRef.current > totalBeats) {
+        if (loop) {
+          currentBeatIndexRef.current = 1;
+          lastScheduledBeatRef.current = 0;
+          onLoopComplete?.();
+        } else {
+          stop();
+          return;
+        }
       }
+      
+      // Update UI
+      const displayBeat = currentBeatIndexRef.current;
+      setCurrentBeat(displayBeat);
+      onBeatChange?.(displayBeat);
     }
-    
-    // Update current beat for UI (clamped to valid range)
-    const displayBeat = Math.max(1, Math.min(totalBeats, currentBeatInt));
-    setCurrentBeat(displayBeat);
-    onBeatChange?.(displayBeat);
     
     // Schedule upcoming metronome clicks
     if (ctx) {
-      const lookAheadBeats = Math.ceil((elapsedTime + scheduleAheadTime) / secondsPerBeat);
+      const nextBeatTime = lastBeatTimeRef.current + secondsPerBeat;
       
-      for (let beat = lastScheduledBeatRef.current + 1; beat <= lookAheadBeats && beat <= totalBeats; beat++) {
-        const beatTime = playbackStartTimeRef.current + ((beat - 1) * secondsPerBeat);
-        
-        if (beatTime >= now && beatTime < now + scheduleAheadTime) {
-          const isAccent = (beat - 1) % 4 === 0;
-          playClick(beatTime, isAccent);
-          lastScheduledBeatRef.current = beat;
-        }
-      }
-      
-      // Handle loop scheduling
-      if (loop && lookAheadBeats > totalBeats) {
-        // Schedule beats for next loop iteration
-        const nextLoopStartTime = playbackStartTimeRef.current + (totalBeats * secondsPerBeat);
-        const beatsIntoNextLoop = Math.ceil((now + scheduleAheadTime - nextLoopStartTime) / secondsPerBeat);
-        
-        for (let beat = 1; beat <= beatsIntoNextLoop; beat++) {
-          const beatTime = nextLoopStartTime + ((beat - 1) * secondsPerBeat);
-          if (beatTime >= now && beatTime < now + scheduleAheadTime) {
-            const isAccent = (beat - 1) % 4 === 0;
-            playClick(beatTime, isAccent);
-          }
-        }
+      if (nextBeatTime < now + scheduleAheadTime && 
+          currentBeatIndexRef.current !== lastScheduledBeatRef.current) {
+        const beatToSchedule = currentBeatIndexRef.current;
+        const isAccent = (beatToSchedule - 1) % 4 === 0;
+        playClick(nextBeatTime, isAccent);
+        lastScheduledBeatRef.current = beatToSchedule;
       }
     }
     
-    // Continue scheduling
     schedulerIdRef.current = window.setTimeout(runScheduler, lookaheadMs);
-  }, [bpm, totalBeats, loop, playClick, onBeatChange, onLoopComplete]);
+  }, [totalBeats, loop, playClick, onBeatChange, onLoopComplete]);
 
-  // Start playback
   const start = useCallback(async () => {
-    // Initialize audio on first interaction
     await initAudio();
     
     const ctx = audioContextRef.current;
     const now = ctx ? ctx.currentTime : (Date.now() / 1000);
     
-    // Set start time
-    playbackStartTimeRef.current = now;
+    currentBeatIndexRef.current = 1;
+    lastBeatTimeRef.current = now;
     lastScheduledBeatRef.current = 0;
     isPlayingRef.current = true;
     
     setIsPlaying(true);
     setCurrentBeat(1);
+    onBeatChange?.(1);
     
-    // Start scheduler
+    // Play first click immediately
+    if (ctx && soundEnabledRef.current) {
+      playClick(now + 0.05, true);
+      lastScheduledBeatRef.current = 1;
+    }
+    
     runScheduler();
-  }, [initAudio, runScheduler]);
+  }, [initAudio, runScheduler, playClick, onBeatChange]);
 
-  // Stop playback
   const stop = useCallback(() => {
     isPlayingRef.current = false;
     setIsPlaying(false);
@@ -207,10 +203,10 @@ export const usePlaybackEngine = (options: PlaybackEngineOptions) => {
       schedulerIdRef.current = null;
     }
     
+    currentBeatIndexRef.current = 0;
     setCurrentBeat(1);
   }, []);
 
-  // Toggle play/pause
   const toggle = useCallback(() => {
     if (isPlayingRef.current) {
       stop();
@@ -219,7 +215,6 @@ export const usePlaybackEngine = (options: PlaybackEngineOptions) => {
     }
   }, [start, stop]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       isPlayingRef.current = false;
@@ -232,14 +227,6 @@ export const usePlaybackEngine = (options: PlaybackEngineOptions) => {
       }
     };
   }, []);
-
-  // Restart scheduler when BPM changes during playback
-  useEffect(() => {
-    if (isPlayingRef.current && schedulerIdRef.current !== null) {
-      // The scheduler will pick up the new BPM automatically
-      // since it reads from the options on each run
-    }
-  }, [bpm]);
 
   return {
     isPlaying,

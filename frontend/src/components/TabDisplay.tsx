@@ -3,14 +3,14 @@ import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { COLORS, FONTS, SPACING, BORDER_RADIUS } from '../constants/theme';
 
 export interface TabNote {
-  stringIndex: number;  // 0=high e, 5=low E
-  fret: number | null;  // null for muted (X)
-  startBeat: number;    // 1-based beat position
-  duration?: number;    // in beats
+  stringIndex: number;
+  fret: number | null;
+  startBeat: number;
+  duration?: number;
   direction?: 'up' | 'down';
-  technique?: string;   // H, P, S, B, etc.
+  technique?: string;
   isMute?: boolean;
-  finger?: number;      // 1-4 for left hand fingering
+  finger?: number;
 }
 
 interface TabDisplayProps {
@@ -56,14 +56,14 @@ export const TabDisplay: React.FC<TabDisplayProps> = ({
       const isCurrentBeat = Math.floor(currentBeat) === beat && isPlaying;
       const isPastBeat = currentBeat > beat && isPlaying;
       
-      let displayValue = '-';
+      let displayValue = '—';
       let fingerValue: number | undefined;
       let hasNote = false;
       
       if (note) {
         hasNote = true;
         if (note.isMute || note.fret === null) {
-          displayValue = 'x';
+          displayValue = 'X';
         } else {
           displayValue = String(note.fret);
           fingerValue = note.finger;
@@ -89,13 +89,12 @@ export const TabDisplay: React.FC<TabDisplayProps> = ({
             ]}>
               {displayValue}
             </Text>
-            {/* Finger number display */}
             {showFingering && fingerValue && (
               <Text style={[
                 styles.fingerNumber,
                 isCurrentBeat && styles.fingerNumberActive,
               ]}>
-                ({fingerValue})
+                {fingerValue}
               </Text>
             )}
           </View>
@@ -144,7 +143,7 @@ export const TabDisplay: React.FC<TabDisplayProps> = ({
     }
     
     return (
-      <View style={styles.stringRow}>
+      <View style={styles.directionRow}>
         <Text style={styles.stringName}></Text>
         <View style={styles.stringLine}>
           <Text style={styles.tabSeparator}> </Text>
@@ -174,7 +173,7 @@ export const TabDisplay: React.FC<TabDisplayProps> = ({
     }
     
     return (
-      <View style={styles.stringRow}>
+      <View style={styles.beatRow}>
         <Text style={styles.stringName}></Text>
         <View style={styles.stringLine}>
           <Text style={styles.tabSeparator}> </Text>
@@ -200,13 +199,6 @@ export const TabDisplay: React.FC<TabDisplayProps> = ({
           <View style={[styles.playbackDot, { left: `${((currentBeat - 1) / totalBeats) * 100}%` }]} />
         </View>
       )}
-      
-      {/* Fingering legend */}
-      {showFingering && (
-        <View style={styles.fingeringLegend}>
-          <Text style={styles.legendText}>Fingers: 1=index 2=middle 3=ring 4=pinky</Text>
-        </View>
-      )}
     </View>
   );
 };
@@ -220,32 +212,43 @@ const styles = StyleSheet.create({
   tabContainer: {
     minWidth: '100%',
   },
+  beatRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 24,
+    marginBottom: 2,
+  },
+  directionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 32,
+    marginBottom: 4,
+  },
   stringRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 28,
+    height: 34,
   },
   stringName: {
-    width: 20,
-    fontSize: FONTS.sizes.sm,
-    fontWeight: '600',
+    width: 22,
+    fontSize: 14,
+    fontWeight: '700',
     color: COLORS.textSecondary,
     textAlign: 'center',
   },
   stringNameActive: {
     color: COLORS.primary,
-    fontWeight: '700',
   },
   stringLine: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   tabPosition: {
-    width: 44,
-    height: 26,
+    width: 52,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 4,
+    borderRadius: 6,
   },
   tabPositionActive: {
     backgroundColor: COLORS.primary,
@@ -258,8 +261,8 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
   },
   tabNote: {
-    fontSize: FONTS.sizes.md,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: '800',
   },
   tabNoteWithValue: {
     color: COLORS.primary,
@@ -273,30 +276,32 @@ const styles = StyleSheet.create({
   tabLine: {
     color: COLORS.textMuted,
     fontWeight: '400',
+    fontSize: 14,
   },
   fingerNumber: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.secondary,
-    fontWeight: '600',
-    marginLeft: 1,
+    fontSize: 13,
+    color: COLORS.warning,
+    fontWeight: '700',
+    marginLeft: 2,
   },
   fingerNumberActive: {
     color: COLORS.text,
   },
   tabSeparator: {
-    fontSize: FONTS.sizes.md,
+    fontSize: 16,
     color: COLORS.textMuted,
     marginHorizontal: 4,
+    fontWeight: '500',
   },
   techniqueMarker: {
     position: 'absolute',
-    top: -6,
-    fontSize: 9,
-    color: COLORS.warning,
+    top: -4,
+    fontSize: 10,
+    color: COLORS.info,
     fontWeight: '700',
   },
   pickingDirection: {
-    fontSize: FONTS.sizes.md,
+    fontSize: 24,
     color: COLORS.textMuted,
     fontWeight: '700',
   },
@@ -304,38 +309,28 @@ const styles = StyleSheet.create({
     color: COLORS.secondary,
   },
   beatNumber: {
-    fontSize: FONTS.sizes.xs,
+    fontSize: 13,
     color: COLORS.textMuted,
+    fontWeight: '600',
   },
   beatNumberActive: {
     color: COLORS.primary,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   playbackIndicator: {
-    height: 3,
+    height: 4,
     backgroundColor: COLORS.surfaceLight,
     borderRadius: 2,
-    marginTop: SPACING.sm,
+    marginTop: SPACING.md,
     position: 'relative',
   },
   playbackDot: {
     position: 'absolute',
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
     backgroundColor: COLORS.primary,
-    top: -4,
-    marginLeft: -6,
-  },
-  fingeringLegend: {
-    marginTop: SPACING.sm,
-    paddingTop: SPACING.sm,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.surfaceLight,
-  },
-  legendText: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.textMuted,
-    textAlign: 'center',
+    top: -5,
+    marginLeft: -7,
   },
 });
