@@ -1,189 +1,153 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
-  RefreshControl,
-  ImageBackground,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { COLORS, FONTS, SPACING, BORDER_RADIUS } from '../../src/constants/theme';
-import { getTodayWorkout, getProgress } from '../../src/services/api';
-import { RoutineBlockCard } from '../../src/components/RoutineBlock';
-import { useStore } from '../../src/store/useStore';
+import { CURRICULUM, isWeekLocked } from '../../src/data/curriculum';
+import { getCompletedExercises, getCompletionStats } from '../../src/utils/completionStorage';
 
-export default function TodayScreen() {
-  const [workout, setWorkout] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const { progress, setProgress } = useStore();
-
-  const loadData = async () => {
-    try {
-      // Load progress first
-      const progressData = await getProgress();
-      setProgress(progressData);
-      
-      // Then load today's workout
-      const todayData = await getTodayWorkout(
-        progressData.current_week || 1,
-        progressData.current_day || 1
-      );
-      setWorkout(todayData);
-    } catch (error) {
-      console.error('Error loading today workout:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+export default function HomeScreen() {
+  const [completedLessons, setCompletedLessons] = useState<string[]>([]);
+  const [stats, setStats] = useState({ totalCompleted: 0, percentComplete: 0 });
 
   useEffect(() => {
     loadData();
   }, []);
 
-  const onRefresh = () => {
-    setRefreshing(true);
-    loadData();
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [])
+  );
+
+  const loadData = async () => {
+    const completed = await getCompletedExercises();
+    const s = await getCompletionStats();
+    setCompletedLessons(completed);
+    setStats(s);
   };
 
-  const handleBlockPress = (block: any, index: number) => {
-    if (block.exercises && block.exercises.length > 0) {
-      router.push({
-        pathname: '/practice',
-        params: { exerciseId: block.exercises[0].id },
-      });
+  // Find next incomplete lesson
+  const findNextLesson = (): { week: number; day: number } => {
+    for (const weekData of CURRICULUM) {
+      if (isWeekLocked(weekData.week)) continue;
+      
+      for (const dayData of weekData.days) {
+        const lessonId = `week${weekData.week}-day${dayData.day}`;
+        if (!completedLessons.includes(lessonId)) {
+          return { week: weekData.week, day: dayData.day };
+        }
+      }
     }
+    return { week: 1, day: 1 };
   };
 
-  if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={styles.loadingText}>Loading your workout...</Text>
-      </View>
-    );
-  }
+  const nextLesson = findNextLesson();
+  const currentWeekData = CURRICULUM.find(w => w.week === nextLesson.week);
+  const currentDayData = currentWeekData?.days.find(d => d.day === nextLesson.day);
 
-  const totalMinutes = workout?.total_duration_minutes || 30;
+  const handleContinue = () => {
+    router.push({
+      pathname: '/practice',
+      params: { week: String(nextLesson.week), day: String(nextLesson.day) }
+    });
+  };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />
-        }
-      >
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <View>
-              <Text style={styles.greeting}>Today's Workout</Text>
-              <Text style={styles.subtitle}>
-                Week {progress.current_week} • Day {progress.current_day}
-              </Text>
-            </View>
-            <View style={styles.streakBadge}>
-              <Ionicons name="flame" size={18} color={COLORS.warning} />
-              <Text style={styles.streakText}>{progress.streak_days} day streak</Text>
+          <Text style={styles.greeting}>Guitar Gym</Text>
+          <Text style={styles.subtitle}>Tu progreso</Text>
+        </View>
+
+        {/* Progress Card */}
+        <View style={styles.progressCard}>
+          <View style={styles.progressCircle}>
+            <Text style={styles.progressPercent}>{stats.percentComplete}%</Text>
+          </View>
+          <View style={styles.progressInfo}>
+            <Text style={styles.progressTitle}>Semanas 1–24</Text>
+            <Text style={styles.progressSubtitle}>
+              {stats.totalCompleted} de 168 días completados
+            </Text>
+            <View style={styles.progressBar}>
+              <View style={[styles.progressFill, { width: `${stats.percentComplete}%` }]} />
             </View>
           </View>
         </View>
 
-        {/* Phase Card */}
-        <View style={styles.phaseCard}>
-          <View style={styles.phaseHeader}>
-            <Text style={styles.phaseName}>{workout?.phase?.name || 'Foundations'}</Text>
-            <Text style={styles.weekTitle}>{workout?.week_title}</Text>
-          </View>
-          <View style={styles.phaseStats}>
-            <View style={styles.statItem}>
-              <Ionicons name="time-outline" size={20} color={COLORS.primary} />
-              <Text style={styles.statValue}>{totalMinutes}</Text>
-              <Text style={styles.statLabel}>minutes</Text>
+        {/* Today's Lesson - Main CTA */}
+        <View style={styles.todaySection}>
+          <Text style={styles.sectionTitle}>HOY</Text>
+          
+          <TouchableOpacity style={styles.todayCard} onPress={handleContinue}>
+            <View style={styles.todayHeader}>
+              <View style={styles.todayBadge}>
+                <Text style={styles.todayBadgeText}>CONTINUAR</Text>
+              </View>
             </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Ionicons name="list-outline" size={20} color={COLORS.secondary} />
-              <Text style={styles.statValue}>{workout?.day?.routine_blocks?.length || 4}</Text>
-              <Text style={styles.statLabel}>blocks</Text>
+            
+            <Text style={styles.todayWeek}>Semana {nextLesson.week} · Día {nextLesson.day}</Text>
+            <Text style={styles.todayTitle}>{currentDayData?.title}</Text>
+            <Text style={styles.todayObjective}>{currentDayData?.objective}</Text>
+            
+            {currentWeekData && (
+              <View style={styles.todayMeta}>
+                <Ionicons name="musical-notes" size={14} color={COLORS.primary} />
+                <Text style={styles.todayMetaText}>{currentWeekData.theme}</Text>
+              </View>
+            )}
+            
+            <View style={styles.todayButton}>
+              <Ionicons name="play" size={20} color={COLORS.text} />
+              <Text style={styles.todayButtonText}>Empezar</Text>
             </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Ionicons name="barbell-outline" size={20} color={COLORS.info} />
-              <Text style={styles.statValue}>
-                {workout?.day?.routine_blocks?.reduce(
-                  (acc: number, b: any) => acc + (b.exercises?.length || 0),
-                  0
-                ) || 0}
-              </Text>
-              <Text style={styles.statLabel}>exercises</Text>
-            </View>
-          </View>
+          </TouchableOpacity>
         </View>
 
-        {/* Start Button */}
-        <TouchableOpacity
-          style={styles.startButton}
-          onPress={() => {
-            const firstBlock = workout?.day?.routine_blocks?.[0];
-            if (firstBlock?.exercises?.[0]) {
-              router.push({
-                pathname: '/practice',
-                params: { exerciseId: firstBlock.exercises[0].id },
-              });
-            }
-          }}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="play" size={24} color={COLORS.text} />
-          <Text style={styles.startButtonText}>Start Workout</Text>
-        </TouchableOpacity>
-
-        {/* Explore Mode Button */}
-        <TouchableOpacity
-          style={styles.exploreButton}
-          onPress={() => router.push('/explore')}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="musical-notes" size={22} color={COLORS.secondary} />
-          <View style={styles.exploreTextContainer}>
-            <Text style={styles.exploreButtonTitle}>Explore Mode</Text>
-            <Text style={styles.exploreButtonSubtitle}>Improvise freely over backing tracks</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
-        </TouchableOpacity>
-
-        {/* Routine Blocks */}
-        <View style={styles.blocksSection}>
-          <Text style={styles.sectionTitle}>Today's Routine</Text>
-          {workout?.day?.routine_blocks?.map((block: any, index: number) => (
-            <RoutineBlockCard
-              key={block.id}
-              block={block}
-              index={index}
-              onPress={() => handleBlockPress(block, index)}
-              isActive={index === 0}
-            />
-          ))}
+        {/* Quick Links */}
+        <View style={styles.quickLinks}>
+          <TouchableOpacity 
+            style={styles.quickLink}
+            onPress={() => router.push('/(tabs)/program')}
+          >
+            <View style={[styles.quickLinkIcon, { backgroundColor: COLORS.primary + '20' }]}>
+              <Ionicons name="calendar" size={24} color={COLORS.primary} />
+            </View>
+            <Text style={styles.quickLinkTitle}>Programa</Text>
+            <Text style={styles.quickLinkSubtitle}>24 semanas</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.quickLink}
+            onPress={() => router.push('/(tabs)/exercises')}
+          >
+            <View style={[styles.quickLinkIcon, { backgroundColor: COLORS.secondary + '20' }]}>
+              <Ionicons name="library" size={24} color={COLORS.secondary} />
+            </View>
+            <Text style={styles.quickLinkTitle}>Biblioteca</Text>
+            <Text style={styles.quickLinkSubtitle}>Ejercicios</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Focus Summary */}
-        {workout?.day?.focus_summary && (
-          <View style={styles.focusCard}>
-            <Ionicons name="bulb-outline" size={20} color={COLORS.warning} />
-            <Text style={styles.focusText}>{workout.day.focus_summary}</Text>
-          </View>
-        )}
+        {/* Tip of the Day */}
+        <View style={styles.tipCard}>
+          <Ionicons name="bulb-outline" size={20} color={COLORS.warning} />
+          <Text style={styles.tipText}>
+            Practica 15 minutos al día. La consistencia supera a la intensidad.
+          </Text>
+        </View>
 
-        <View style={{ height: 40 }} />
+        <View style={{ height: 100 }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -194,28 +158,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background,
   },
-  loadingContainer: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadingText: {
-    marginTop: SPACING.md,
-    color: COLORS.textSecondary,
-    fontSize: FONTS.sizes.md,
-  },
   scrollView: {
     flex: 1,
   },
   header: {
-    padding: SPACING.lg,
-    paddingBottom: 0,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.md,
   },
   greeting: {
     fontSize: FONTS.sizes.hero,
@@ -225,132 +174,177 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: FONTS.sizes.md,
     color: COLORS.textSecondary,
-    marginTop: SPACING.xs,
-  },
-  streakBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.warning + '20',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.round,
-    gap: SPACING.xs,
-  },
-  streakText: {
-    fontSize: FONTS.sizes.sm,
-    fontWeight: '600',
-    color: COLORS.warning,
-  },
-  phaseCard: {
-    margin: SPACING.lg,
-    backgroundColor: COLORS.backgroundCard,
-    borderRadius: BORDER_RADIUS.xl,
-    padding: SPACING.xl,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceLight,
-  },
-  phaseHeader: {
-    marginBottom: SPACING.lg,
-  },
-  phaseName: {
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.primary,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-  },
-  weekTitle: {
-    fontSize: FONTS.sizes.xl,
-    fontWeight: '700',
-    color: COLORS.text,
-    marginTop: SPACING.xs,
-  },
-  phaseStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-  },
-  statItem: {
-    alignItems: 'center',
-  },
-  statValue: {
-    fontSize: FONTS.sizes.xxl,
-    fontWeight: '800',
-    color: COLORS.text,
-    marginTop: SPACING.xs,
-  },
-  statLabel: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.textMuted,
     marginTop: 2,
   },
-  statDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: COLORS.surfaceLight,
-  },
-  startButton: {
+  progressCard: {
+    flexDirection: 'row',
     marginHorizontal: SPACING.lg,
-    backgroundColor: COLORS.primary,
-    borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: COLORS.backgroundCard,
+    borderRadius: BORDER_RADIUS.xl,
     padding: SPACING.lg,
+    alignItems: 'center',
+    gap: SPACING.lg,
+  },
+  progressCircle: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    borderWidth: 4,
+    borderColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  progressPercent: {
+    fontSize: FONTS.sizes.xl,
+    fontWeight: '800',
+    color: COLORS.primary,
+  },
+  progressInfo: {
+    flex: 1,
+  },
+  progressTitle: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  progressSubtitle: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.textSecondary,
+    marginTop: 2,
+  },
+  progressBar: {
+    height: 6,
+    backgroundColor: COLORS.surfaceLight,
+    borderRadius: 3,
+    marginTop: SPACING.sm,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: COLORS.primary,
+    borderRadius: 3,
+  },
+  todaySection: {
+    marginTop: SPACING.xl,
+    paddingHorizontal: SPACING.lg,
+  },
+  sectionTitle: {
+    fontSize: FONTS.sizes.xs,
+    fontWeight: '800',
+    color: COLORS.textMuted,
+    letterSpacing: 1,
+    marginBottom: SPACING.sm,
+  },
+  todayCard: {
+    backgroundColor: COLORS.primary,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.lg,
+  },
+  todayHeader: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginBottom: SPACING.sm,
+  },
+  todayBadge: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: BORDER_RADIUS.sm,
+  },
+  todayBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: COLORS.text,
+    letterSpacing: 0.5,
+  },
+  todayWeek: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.text,
+    opacity: 0.8,
+  },
+  todayTitle: {
+    fontSize: FONTS.sizes.xl,
+    fontWeight: '800',
+    color: COLORS.text,
+    marginTop: 2,
+  },
+  todayObjective: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.text,
+    opacity: 0.9,
+    marginTop: SPACING.xs,
+  },
+  todayMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    marginTop: SPACING.md,
+  },
+  todayMetaText: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.text,
+    opacity: 0.8,
+  },
+  todayButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: 'rgba(0,0,0,0.2)',
+    borderRadius: BORDER_RADIUS.lg,
+    paddingVertical: SPACING.md,
+    marginTop: SPACING.lg,
     gap: SPACING.sm,
   },
-  startButtonText: {
-    fontSize: FONTS.sizes.lg,
+  todayButtonText: {
+    fontSize: FONTS.sizes.md,
     fontWeight: '700',
     color: COLORS.text,
   },
-  exploreButton: {
-    marginHorizontal: SPACING.lg,
-    marginTop: SPACING.md,
-    backgroundColor: COLORS.backgroundCard,
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.md,
+  quickLinks: {
     flexDirection: 'row',
-    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+    marginTop: SPACING.xl,
     gap: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.secondary + '40',
   },
-  exploreTextContainer: {
+  quickLink: {
     flex: 1,
+    backgroundColor: COLORS.backgroundCard,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.lg,
+    alignItems: 'center',
   },
-  exploreButtonTitle: {
+  quickLinkIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.sm,
+  },
+  quickLinkTitle: {
     fontSize: FONTS.sizes.md,
     fontWeight: '700',
-    color: COLORS.secondary,
+    color: COLORS.text,
   },
-  exploreButtonSubtitle: {
+  quickLinkSubtitle: {
     fontSize: FONTS.sizes.xs,
-    color: COLORS.textMuted,
+    color: COLORS.textSecondary,
     marginTop: 2,
   },
-  blocksSection: {
-    padding: SPACING.lg,
-  },
-  sectionTitle: {
-    fontSize: FONTS.sizes.lg,
-    fontWeight: '700',
-    color: COLORS.text,
-    marginBottom: SPACING.md,
-  },
-  focusCard: {
-    marginHorizontal: SPACING.lg,
-    backgroundColor: COLORS.warning + '15',
-    borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.lg,
+  tipCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.md,
+    marginHorizontal: SPACING.lg,
+    marginTop: SPACING.xl,
+    backgroundColor: COLORS.warning + '15',
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.md,
+    gap: SPACING.sm,
   },
-  focusText: {
+  tipText: {
     flex: 1,
-    fontSize: FONTS.sizes.md,
+    fontSize: FONTS.sizes.sm,
     color: COLORS.warning,
-    fontWeight: '500',
+    fontStyle: 'italic',
   },
 });
