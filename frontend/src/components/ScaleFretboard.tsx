@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { COLORS } from '../constants/theme';
-import Svg, { Line, Circle, Rect, G } from 'react-native-svg';
 
 interface Props {
   scaleName: string;
@@ -10,17 +9,27 @@ interface Props {
   isActive?: boolean;
 }
 
-// Scale data
-const SCALES: Record<string, { name: string; start: number; notes: { s: number; f: number; finger: number; root?: boolean }[] }> = {
+// Scale data: s = string (0=high e, 5=low E), f = fret offset from start, finger = 1-4
+const SCALES: Record<string, { 
+  name: string; 
+  start: number; 
+  notes: { s: number; f: number; finger: number; root?: boolean }[] 
+}> = {
   'Am_pent_box1': {
     name: 'Am Pentatónica',
     start: 5,
     notes: [
+      // String 0 (high e): frets 5, 8
       { s: 0, f: 0, finger: 1, root: true }, { s: 0, f: 3, finger: 4 },
+      // String 1 (B): frets 5, 8
       { s: 1, f: 0, finger: 1 }, { s: 1, f: 3, finger: 4 },
+      // String 2 (G): frets 5, 7
       { s: 2, f: 0, finger: 1 }, { s: 2, f: 2, finger: 3 },
+      // String 3 (D): frets 5, 7
       { s: 3, f: 0, finger: 1 }, { s: 3, f: 2, finger: 3 },
+      // String 4 (A): frets 5, 7 - root on 5
       { s: 4, f: 0, finger: 1, root: true }, { s: 4, f: 2, finger: 3 },
+      // String 5 (E): frets 5, 8 - root on 5
       { s: 5, f: 0, finger: 1, root: true }, { s: 5, f: 3, finger: 4 },
     ],
   },
@@ -32,6 +41,7 @@ const SCALES: Record<string, { name: string; start: number; notes: { s: number; 
       { s: 1, f: 0, finger: 1 }, { s: 1, f: 3, finger: 4 },
       { s: 2, f: 0, finger: 1 }, { s: 2, f: 2, finger: 3 },
       { s: 3, f: 0, finger: 1 }, { s: 3, f: 2, finger: 3 },
+      // Blue note added on string 4, fret 6 (f=1)
       { s: 4, f: 0, finger: 1, root: true }, { s: 4, f: 1, finger: 2 }, { s: 4, f: 2, finger: 3 },
       { s: 5, f: 0, finger: 1, root: true }, { s: 5, f: 3, finger: 4 },
     ],
@@ -40,6 +50,7 @@ const SCALES: Record<string, { name: string; start: number; notes: { s: number; 
     name: 'Do Mayor',
     start: 7,
     notes: [
+      // C major scale box starting at fret 7
       { s: 0, f: 0, finger: 1 }, { s: 0, f: 1, finger: 2, root: true }, { s: 0, f: 3, finger: 4 },
       { s: 1, f: 1, finger: 1, root: true }, { s: 1, f: 3, finger: 3 },
       { s: 2, f: 0, finger: 1 }, { s: 2, f: 2, finger: 3 },
@@ -50,195 +61,322 @@ const SCALES: Record<string, { name: string; start: number; notes: { s: number; 
   },
 };
 
-const STR_NAMES = ['e', 'B', 'G', 'D', 'A', 'E'];
-const { width: SW } = Dimensions.get('window');
+const STRING_NAMES = ['e', 'B', 'G', 'D', 'A', 'E'];
+const NUM_FRETS = 4;
+const NUM_STRINGS = 6;
 
 const COLORS_SCHEME = {
   NOTE: '#00D68F',
   ROOT: '#FF6B35',
+  FRETBOARD: '#1E1810',
+  FRET_LINE: '#555',
+  NUT: '#CCC',
+  STRING: '#B8977E',
 };
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export const ScaleFretboard: React.FC<Props> = ({
   scaleName,
-  width = SW - 32,
-  height = 220,
+  width = SCREEN_WIDTH - 32,
+  height = 280,
   isActive = false,
 }) => {
   const scale = SCALES[scaleName];
-  if (!scale) return <Text style={{color:'red'}}>?</Text>;
+  
+  if (!scale) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>Escala no encontrada: {scaleName}</Text>
+      </View>
+    );
+  }
 
-  const NUM_FRETS = 4;
-  const svgHeight = height - 60;
-  const paddingTop = 15;
-  const paddingBottom = 20;
-  const paddingLeft = 15;
-  const paddingRight = 15;
-  const fretboardWidth = width - paddingLeft - paddingRight;
-  const fretboardHeight = svgHeight - paddingTop - paddingBottom;
-  const fretWidth = fretboardWidth / NUM_FRETS;
-  const stringSpacing = fretboardHeight / 5;
+  // Build a lookup map: key = "string-fret" -> note data
+  const noteMap = new Map<string, { finger: number; root?: boolean }>();
+  scale.notes.forEach(note => {
+    noteMap.set(`${note.s}-${note.f}`, { finger: note.finger, root: note.root });
+  });
 
-  const hasRoot = (si: number) => scale.notes.some(n => n.s === si && n.root);
+  // Check if string has root note (for top indicators)
+  const hasRoot = (stringIndex: number) => 
+    scale.notes.some(n => n.s === stringIndex && n.root);
 
-  // Top indicators (same structure as ChordFretboard)
+  // Calculate dimensions
+  const fretboardHeight = height - 100; // Leave space for indicators and legend
+  const cellHeight = fretboardHeight / NUM_STRINGS;
+  const cellWidth = (width - 40) / NUM_FRETS; // 40px for string names on left
+
+  // Render top indicators showing string names with root highlighting
   const renderTopIndicators = () => (
     <View style={styles.indicatorRow}>
-      {STR_NAMES.map((name, i) => (
-        <View key={i} style={hasRoot(i) ? styles.indRoot : styles.indNote}>
-          <Text style={styles.indText}>{name}</Text>
-        </View>
-      ))}
+      <View style={{ width: 40 }} />
+      {STRING_NAMES.map((name, i) => {
+        const isRoot = hasRoot(i);
+        return (
+          <View 
+            key={i} 
+            style={[
+              styles.indicator,
+              { backgroundColor: isRoot ? COLORS_SCHEME.ROOT : COLORS_SCHEME.NOTE }
+            ]}
+          >
+            <Text style={styles.indicatorText}>{name}</Text>
+          </View>
+        );
+      })}
     </View>
   );
 
-  // SVG strings
-  const renderStrings = () => 
-    STR_NAMES.map((_, i) => {
-      const y = paddingTop + i * stringSpacing;
-      const thickness = 1.5 + i * 0.5;
-      return (
-        <G key={`s-${i}`}>
-          {isActive && (
-            <Line x1={paddingLeft} y1={y} x2={width - paddingRight} y2={y}
-              stroke={COLORS_SCHEME.NOTE} strokeWidth={thickness + 5} opacity={0.3} />
-          )}
-          <Line x1={paddingLeft} y1={y} x2={width - paddingRight} y2={y}
-            stroke={isActive ? COLORS_SCHEME.NOTE : '#B8977E'} strokeWidth={thickness} />
-        </G>
-      );
-    });
-
-  // SVG frets
-  const renderFrets = () => {
-    const frets = [];
-    for (let i = 0; i <= NUM_FRETS; i++) {
-      const x = paddingLeft + i * fretWidth;
-      frets.push(
-        <Line key={`f-${i}`} x1={x} y1={paddingTop} x2={x} y2={paddingTop + fretboardHeight}
-          stroke={i === 0 ? '#CCC' : '#555'} strokeWidth={i === 0 ? 5 : 2} />
-      );
-    }
-    return frets;
-  };
-
-  // SVG notes (all scale notes)
-  const renderNotes = () =>
-    scale.notes.map((note, idx) => {
-      const x = paddingLeft + (note.f + 0.5) * fretWidth;
-      const y = paddingTop + note.s * stringSpacing;
-      const color = note.root ? COLORS_SCHEME.ROOT : COLORS_SCHEME.NOTE;
-      return (
-        <G key={`n-${idx}`}>
-          {isActive && <Circle cx={x} cy={y} r={16} fill={color} opacity={0.3} />}
-          <Circle cx={x} cy={y} r={12} fill={isActive ? color : '#222'} stroke={color} strokeWidth={2} />
-        </G>
-      );
-    });
-
-  // Finger overlays (React Native Views)
-  const renderFingerOverlays = () =>
-    scale.notes.map((note, idx) => {
-      const xPct = ((paddingLeft + (note.f + 0.5) * fretWidth) / width) * 100;
-      const yPct = ((paddingTop + note.s * stringSpacing) / svgHeight) * 100;
-      return (
-        <View key={`fo-${idx}`} style={[styles.fingerOverlay, {
-          left: `${xPct}%`, top: `${yPct}%`,
-          transform: [{ translateX: -6 }, { translateY: -8 }]
-        }]}>
-          <Text style={styles.fingerText}>{note.finger}</Text>
+  // Render the fretboard grid
+  const renderFretboard = () => {
+    const rows = [];
+    
+    for (let fret = 0; fret < NUM_FRETS; fret++) {
+      const isNut = fret === 0;
+      const cells = [];
+      
+      for (let string = 0; string < NUM_STRINGS; string++) {
+        const noteKey = `${string}-${fret}`;
+        const noteData = noteMap.get(noteKey);
+        const hasNote = !!noteData;
+        const isRoot = noteData?.root;
+        const finger = noteData?.finger;
+        
+        // String thickness increases from high to low
+        const stringThickness = 1.5 + string * 0.5;
+        
+        cells.push(
+          <View key={`${fret}-${string}`} style={[styles.cell, { width: cellWidth, height: cellHeight }]}>
+            {/* Horizontal string line */}
+            <View 
+              style={[
+                styles.stringLine,
+                { 
+                  height: stringThickness,
+                  backgroundColor: isActive && hasNote ? COLORS_SCHEME.NOTE : COLORS_SCHEME.STRING,
+                }
+              ]} 
+            />
+            
+            {/* Note circle */}
+            {hasNote && (
+              <View 
+                style={[
+                  styles.noteCircle,
+                  {
+                    backgroundColor: isRoot ? COLORS_SCHEME.ROOT : (isActive ? COLORS_SCHEME.NOTE : '#333'),
+                    borderColor: isRoot ? COLORS_SCHEME.ROOT : COLORS_SCHEME.NOTE,
+                  }
+                ]}
+              >
+                <Text style={styles.fingerText}>{finger}</Text>
+              </View>
+            )}
+          </View>
+        );
+      }
+      
+      rows.push(
+        <View key={`fret-${fret}`} style={styles.fretRow}>
+          {/* Fret number label */}
+          <View style={styles.fretLabel}>
+            <Text style={styles.fretLabelText}>{scale.start + fret}</Text>
+          </View>
+          
+          {/* Fret wire (vertical line at start of fret) */}
+          <View 
+            style={[
+              styles.fretWire,
+              { 
+                width: isNut ? 5 : 2,
+                backgroundColor: isNut ? COLORS_SCHEME.NUT : COLORS_SCHEME.FRET_LINE,
+              }
+            ]} 
+          />
+          
+          {/* String cells for this fret */}
+          <View style={styles.cellsContainer}>
+            {cells}
+          </View>
         </View>
       );
-    });
+    }
+    
+    // Add final fret wire at the end
+    rows.push(
+      <View key="fret-end" style={styles.fretRow}>
+        <View style={styles.fretLabel}>
+          <Text style={styles.fretLabelText}>{scale.start + NUM_FRETS}</Text>
+        </View>
+        <View style={[styles.fretWire, { width: 2, backgroundColor: COLORS_SCHEME.FRET_LINE }]} />
+      </View>
+    );
+    
+    return (
+      <View style={[styles.fretboard, { backgroundColor: COLORS_SCHEME.FRETBOARD }]}>
+        {rows}
+      </View>
+    );
+  };
 
-  // Fret numbers
-  const renderFretNumbers = () => (
-    <View style={styles.fretNumRow}>
-      {Array.from({ length: NUM_FRETS }).map((_, i) => (
-        <Text key={i} style={[styles.fretNum, { width: fretWidth }]}>{scale.start + i}</Text>
-      ))}
+  // Render position text
+  const renderPositionText = () => (
+    <Text style={styles.positionText}>
+      Posición: Trastes {scale.start}–{scale.start + NUM_FRETS - 1}
+    </Text>
+  );
+
+  // Render legend
+  const renderLegend = () => (
+    <View style={styles.legend}>
+      <View style={styles.legendItem}>
+        <View style={[styles.legendDot, { backgroundColor: COLORS_SCHEME.ROOT }]} />
+        <Text style={styles.legendText}>Raíz (tónica)</Text>
+      </View>
+      <View style={styles.legendItem}>
+        <View style={[styles.legendDot, { backgroundColor: COLORS_SCHEME.NOTE }]} />
+        <Text style={styles.legendText}>Notas de escala</Text>
+      </View>
+      <Text style={styles.legendFingerText}>Números = Dedos (1-4)</Text>
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      {/* Top indicators */}
+    <View style={[styles.container, { width }]}>
       {renderTopIndicators()}
-      
-      {/* SVG Fretboard */}
-      <View style={styles.svgContainer}>
-        <Svg width={width} height={svgHeight}>
-          <Rect x={paddingLeft} y={paddingTop} width={fretboardWidth} height={fretboardHeight}
-            fill="#1E1810" rx={4} />
-          {renderFrets()}
-          {renderStrings()}
-          {renderNotes()}
-        </Svg>
-        {renderFingerOverlays()}
-      </View>
-      
-      {/* Fret numbers */}
-      {renderFretNumbers()}
-      
-      <Text style={styles.posText}>Trastes {scale.start}-{scale.start + NUM_FRETS - 1}</Text>
-      
-      {/* Legend */}
-      <View style={styles.legend}>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: COLORS_SCHEME.ROOT }]} />
-          <Text style={styles.legendText}>Raíz</Text>
-        </View>
-        <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: COLORS_SCHEME.NOTE }]} />
-          <Text style={styles.legendText}>Notas</Text>
-        </View>
-        <Text style={[styles.legendText, { color: COLORS_SCHEME.NOTE }]}>✓ Todas suenan</Text>
-      </View>
+      {renderFretboard()}
+      {renderPositionText()}
+      {renderLegend()}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { alignItems: 'center' },
+  container: {
+    alignItems: 'center',
+  },
+  errorContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#FF4757',
+    fontSize: 14,
+  },
   
-  // Indicator row (same as ChordFretboard)
+  // Top indicators
   indicatorRow: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
     marginBottom: 8,
-    paddingHorizontal: 10,
+    paddingHorizontal: 4,
   },
-  indNote: {
-    width: 28, height: 28, borderRadius: 14,
-    backgroundColor: '#00D68F',
-    alignItems: 'center', justifyContent: 'center',
+  indicator: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 2,
   },
-  indRoot: {
-    width: 28, height: 28, borderRadius: 14,
-    backgroundColor: '#FF6B35',
-    alignItems: 'center', justifyContent: 'center',
+  indicatorText: {
+    color: '#FFF',
+    fontSize: 11,
+    fontWeight: 'bold',
   },
-  indText: { color: '#FFF', fontSize: 11, fontWeight: 'bold' },
   
-  svgContainer: { position: 'relative' },
-  
-  fingerOverlay: {
-    position: 'absolute', width: 12, height: 16,
-    alignItems: 'center', justifyContent: 'center',
+  // Fretboard
+  fretboard: {
+    borderRadius: 8,
+    overflow: 'hidden',
+    paddingVertical: 4,
   },
-  fingerText: { color: '#FFF', fontSize: 11, fontWeight: 'bold' },
-  
-  fretNumRow: {
+  fretRow: {
     flexDirection: 'row',
-    paddingLeft: 15,
-    marginTop: -5,
+    alignItems: 'center',
   },
-  fretNum: { textAlign: 'center', fontSize: 11, color: '#888', fontWeight: '600' },
+  fretLabel: {
+    width: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fretLabelText: {
+    color: '#888',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  fretWire: {
+    height: '100%',
+  },
+  cellsContainer: {
+    flexDirection: 'row',
+    flex: 1,
+  },
   
-  posText: { fontSize: 11, color: COLORS.primary, fontWeight: 'bold', marginTop: 4 },
+  // Cell (one fret position on one string)
+  cell: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  stringLine: {
+    position: 'absolute',
+    width: '100%',
+    top: '50%',
+    marginTop: -1,
+  },
+  noteCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  fingerText: {
+    color: '#FFF',
+    fontSize: 13,
+    fontWeight: 'bold',
+  },
   
-  legend: { flexDirection: 'row', gap: 14, marginTop: 8, alignItems: 'center' },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  legendDot: { width: 10, height: 10, borderRadius: 5 },
-  legendText: { fontSize: 11, color: '#888' },
+  // Position text
+  positionText: {
+    marginTop: 8,
+    fontSize: 12,
+    color: COLORS.primary,
+    fontWeight: '600',
+  },
+  
+  // Legend
+  legend: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 12,
+    marginTop: 10,
+    paddingHorizontal: 8,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  legendDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  legendText: {
+    fontSize: 11,
+    color: '#888',
+  },
+  legendFingerText: {
+    fontSize: 11,
+    color: COLORS.primary,
+    fontWeight: '500',
+  },
 });
