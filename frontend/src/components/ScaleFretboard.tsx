@@ -134,7 +134,7 @@ const st = StyleSheet.create({
   
   row: { flexDirection: 'row', alignItems: 'center', height: 36 },
   
-  label: { width: 28, height: 28, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginRight: 2 },
+  label: { width: 28, height: 28, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginRight: 2, backgroundColor: 'blue' },
   labelG: { backgroundColor: '#00D68F' },
   labelR: { backgroundColor: '#FF6B35' },
   labelTxt: { color: '#FFF', fontSize: 11, fontWeight: 'bold' },
