@@ -24,6 +24,28 @@ export default function SoloDetailScreen() {
   
   const playbackRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Extract unique techniques from solo - MUST be before any conditional returns
+  const soloTechniques = useMemo(() => {
+    if (!solo) return [];
+    const techniques = new Set<string>();
+    solo.notes.flat().forEach(note => {
+      if (note.technique) {
+        techniques.add(note.technique);
+      }
+    });
+    return Array.from(techniques);
+  }, [solo]);
+
+  // Calculate fret range from notes - MUST be before any conditional returns
+  const fretRange = useMemo(() => {
+    if (!solo) return { minFret: 0, maxFret: 5, numFrets: 5 };
+    const allFrets = solo.notes.flat().map(n => n.fret);
+    const minFret = Math.max(0, Math.min(...allFrets) - 1);
+    const maxFret = Math.max(...allFrets) + 1;
+    const numFrets = Math.max(5, maxFret - minFret + 1);
+    return { minFret, maxFret, numFrets };
+  }, [solo]);
+
   useEffect(() => {
     if (id) {
       const foundSolo = getSoloById(id);
