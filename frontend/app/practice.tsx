@@ -57,7 +57,11 @@ export default function PracticeScreen() {
   const [showTablature, setShowTablature] = useState(false);
   const [showWeekIntro, setShowWeekIntro] = useState(false);
   
-  // Get week intro data (for weeks 7+)
+  // Suggested exercises from library
+  const [suggestedExercises, setSuggestedExercises] = useState<{warmUp: any[], reinforce: any[]}>({warmUp: [], reinforce: []});
+  const [showExercises, setShowExercises] = useState(false);
+  
+  // Get week intro data (for weeks 6+)
   const weekIntro = getWeekIntro(weekNum);
   
   // Playback state
