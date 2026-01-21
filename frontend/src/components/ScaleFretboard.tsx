@@ -458,9 +458,30 @@ const styles = StyleSheet.create({
   positionText: { fontSize: 11, color: COLORS.primary, fontWeight: 'bold', marginTop: 4 },
   
   // Legend
-  legend: { flexDirection: 'row', justifyContent: 'center', gap: 20, marginTop: 8 },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  legendDot: { width: 12, height: 12, borderRadius: 6 },
-  legendText: { fontSize: 11, color: '#888' },
-  fingerHint: { fontSize: 11, color: COLORS.primary, fontWeight: '500' },
+  legend: { 
+    flexDirection: 'row', 
+    gap: 12, 
+    marginTop: 8, 
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  legendDot: { width: 10, height: 10, borderRadius: 5 },
+  legendText: { fontSize: 10, color: COLORS.textMuted },
+  fingerHint: { fontSize: 10, color: COLORS.textMuted, marginLeft: 8 },
+  infoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: COLORS.primary + '20',
+    borderRadius: BORDER_RADIUS.sm,
+  },
+  infoButtonText: {
+    fontSize: 10,
+    color: COLORS.primary,
+    fontWeight: '600',
+  },
 });
