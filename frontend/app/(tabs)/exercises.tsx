@@ -98,8 +98,16 @@ export default function ExercisesScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Exercise Library</Text>
-        <Text style={styles.subtitle}>{exercises.length} exercises available</Text>
+        <View style={styles.headerTop}>
+          <Text style={styles.title}>Exercise Library</Text>
+          <View style={styles.progressBadge}>
+            <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
+            <Text style={styles.progressBadgeText}>{completionStats.percentComplete}%</Text>
+          </View>
+        </View>
+        <Text style={styles.subtitle}>
+          {completionStats.totalCompleted} of {exercises.length} exercises completed
+        </Text>
       </View>
 
       {/* Search */}
