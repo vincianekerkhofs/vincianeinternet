@@ -179,9 +179,11 @@ export const ScaleFretboard: React.FC<Props> = ({
   scaleName,
   height = 260,
   isActive = false,
+  showNoteNames = true,
 }) => {
   // Use onLayout to get REAL measured width
   const [measuredWidth, setMeasuredWidth] = useState(0);
+  const [showNoteModal, setShowNoteModal] = useState(false);
   
   const scale = SCALES[scaleName];
   
@@ -218,14 +220,22 @@ export const ScaleFretboard: React.FC<Props> = ({
   const stringHasRoot = (strIdx: number) => 
     scale.notes.some(n => n.s === strIdx && n.root);
 
-  // TOP ROW: String indicators
+  // Get note name at position
+  const getNoteNameAtPosition = (stringNum: number, fret: number): string => {
+    const actualFret = scale.start + fret;
+    const note = getNoteAtFret(stringNum + 1, actualFret);
+    const solfege = letterToSolfege(note);
+    return `${note}/${solfege}`;
+  };
+
+  // TOP ROW: String indicators with dual naming
   const renderTopIndicators = () => (
     <View style={styles.indicatorRow}>
-      {STRING_NAMES.map((name, i) => {
+      {STRING_NAMES_DUAL.map((name, i) => {
         const isRoot = stringHasRoot(i);
         return (
           <View key={i} style={[styles.indicator, { backgroundColor: isRoot ? THEME.ROOT : THEME.NOTE }]}>
-            <Text style={styles.indicatorText}>{name}</Text>
+            <Text style={styles.indicatorText}>{name.split('/')[0]}</Text>
           </View>
         );
       })}
