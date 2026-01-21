@@ -117,19 +117,23 @@ export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
     );
   }
 
+  // Calculate fret range from actual notes
+  const minFret = Math.min(...scaleData.notes.map(n => n.fret));
+  const maxFret = Math.max(...scaleData.notes.map(n => n.fret));
+  const numFrets = maxFret - minFret + 2; // Add buffer
+  const startFret = minFret;
+
   const paddingTop = 20;
   const paddingBottom = 30;
   const paddingLeft = 10;
   const paddingRight = 10;
   
   const fretboardWidth = width - paddingLeft - paddingRight;
-  const fretboardHeight = height - paddingTop - paddingBottom - 30; // Extra for legend
-  const numFrets = 5;
+  const fretboardHeight = height - paddingTop - paddingBottom - 30;
   const fretWidth = fretboardWidth / numFrets;
   const stringSpacing = fretboardHeight / 5;
   
   const stringNames = ['e', 'B', 'G', 'D', 'A', 'E'];
-  const startFret = scaleData.startFret;
 
   // All strings sound in scales
   const renderStrings = () =>
