@@ -145,7 +145,6 @@ const styles = StyleSheet.create({
   board: { 
     backgroundColor: '#1E1810', 
     borderRadius: 6,
-    overflow: 'hidden',
   },
   
   stringRow: { 
