@@ -80,10 +80,9 @@ export default function PracticeScreen() {
   // Update fretboard when not playing (for initial display)
   useEffect(() => {
     if (exerciseNotes.length > 0 && !isPlaying) {
-      const { allNotes, currentNotes, previewNotes } = tabNotesToFretboard(exerciseNotes, 1);
+      const { allNotes, currentNotes } = tabNotesToFretboard(exerciseNotes, 1);
       setAllFretboardNotes(allNotes);
       setCurrentFretboardNotes([]);
-      setPreviewFretboardNotes(previewNotes);
     }
   }, [exerciseNotes, isPlaying]);
 
