@@ -143,6 +143,7 @@ export default function PracticeScreen() {
     if (!audioContextRef.current) return;
     
     const ctx = audioContextRef.current;
+    const vol = metronomeVolumeRef.current;
     
     try {
       // Main click oscillator
@@ -157,7 +158,7 @@ export default function PracticeScreen() {
       osc.type = 'sine';
       
       // Sharp attack, quick decay for crisp click
-      const clickVol = metronomeVolume * (isAccent ? 0.6 : 0.4);
+      const clickVol = vol * (isAccent ? 0.6 : 0.4);
       gainNode.gain.setValueAtTime(0, time);
       gainNode.gain.linearRampToValueAtTime(clickVol, time + 0.001);
       gainNode.gain.exponentialRampToValueAtTime(0.001, time + 0.08);
@@ -178,9 +179,9 @@ export default function PracticeScreen() {
       osc2.start(time);
       osc2.stop(time + 0.06);
     } catch (e) {}
-  }, [metronomeVolume]);
+  }, []);
 
-  // Metronome scheduler
+  // Metronome scheduler - uses refs to avoid stale closures
   const runScheduler = useCallback(() => {
     if (!isPlayingRef.current) return;
     
@@ -188,7 +189,8 @@ export default function PracticeScreen() {
     if (!ctx) return;
     
     const now = ctx.currentTime;
-    const secondsPerBeat = 60.0 / bpm;
+    const currentBpm = bpmRef.current;
+    const secondsPerBeat = 60.0 / currentBpm;
     const scheduleAhead = 0.1;
     const lookahead = 25;
     
@@ -200,29 +202,31 @@ export default function PracticeScreen() {
       
       if (nextBeatTime < now + scheduleAhead) {
         // Update beat counter
-        setCurrentBeat(prev => {
-          const newBeat = prev >= 4 ? 1 : prev + 1;
-          
-          // On beat 1, advance chord (for APLICAR stage)
-          if (newBeat === 1 && stage === 'aplicar') {
-            setCurrentChordIndex(prevChord => {
-              return (prevChord + 1) % Math.max(progressionChords.length, 1);
-            });
+        const prevBeat = currentBeatRef.current;
+        const newBeat = prevBeat >= 4 ? 1 : prevBeat + 1;
+        currentBeatRef.current = newBeat;
+        setCurrentBeat(newBeat);
+        
+        // On beat 1 (after completing a bar), advance chord in APLICAR mode
+        if (newBeat === 1 && prevBeat === 4 && stageRef.current === 'aplicar') {
+          const chords = progressionChordsRef.current;
+          if (chords.length > 0) {
+            barCountRef.current += 1;
+            const newChordIndex = barCountRef.current % chords.length;
+            currentChordIndexRef.current = newChordIndex;
+            setCurrentChordIndex(newChordIndex);
           }
-          
-          return newBeat;
-        });
+        }
         
         // Play click - accent on beat 1
-        const beat = currentBeat >= 4 ? 1 : currentBeat + 1;
-        playClick(nextBeatTime, beat === 1);
+        playClick(nextBeatTime, newBeat === 1);
         
         lastBeatTimeRef.current = nextBeatTime;
       }
     }
     
     schedulerIdRef.current = window.setTimeout(runScheduler, lookahead);
-  }, [bpm, playClick, stage, progressionChords.length, currentBeat]);
+  }, [playClick]);
 
   // Start playback
   const startPlayback = async () => {
