@@ -214,8 +214,8 @@ export default function SoloDetailScreen() {
             currentBar={currentBar}
             currentNoteIndex={currentNoteIndex}
             isPlaying={isPlaying}
-            startFret={minFret}
-            numFrets={numFrets}
+            startFret={fretRange.minFret}
+            numFrets={fretRange.numFrets}
             height={300}
             showAllNotes={true}
           />
