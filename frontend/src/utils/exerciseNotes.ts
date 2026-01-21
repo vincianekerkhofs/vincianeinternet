@@ -162,13 +162,18 @@ export const calculateFretRange = (notes: TabNote[]): { startFret: number; numFr
   const minFret = Math.min(...frets);
   const maxFret = Math.max(...frets);
   
-  // Ensure at least 5 frets visible and include open strings if needed
+  // Start 1 fret before minimum to give visual space
   let startFret = Math.max(0, minFret - 1);
-  let numFrets = Math.max(5, maxFret - startFret + 2);
   
-  // Cap at reasonable range
-  if (numFrets > 7) {
-    numFrets = 7;
+  // Calculate range needed
+  let numFrets = maxFret - startFret + 2;
+  
+  // Ensure at least 5 frets visible
+  numFrets = Math.max(5, numFrets);
+  
+  // Cap at 8 frets for readability
+  if (numFrets > 8) {
+    numFrets = 8;
   }
   
   return { startFret, numFrets };
