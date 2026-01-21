@@ -152,13 +152,11 @@ export const ScaleFretboard: React.FC<Props> = ({
       const fill = isRoot ? THEME.ROOT : (isActive ? THEME.NOTE : '#2A2A2A');
       const stroke = isRoot ? THEME.ROOT : THEME.NOTE;
       
+      // Debug: different colors for different fret offsets
+      const debugColor = fretOffset === 0 ? '#FF0000' : fretOffset === 2 ? '#00FF00' : '#0000FF';
+      
       return (
-        <G key={`note-${idx}`}>
-          {/* Glow effect when active */}
-          {isActive && <Circle cx={x} cy={y} r={18} fill={fill} opacity={0.25} />}
-          {/* Main circle */}
-          <Circle cx={x} cy={y} r={14} fill={fill} stroke={stroke} strokeWidth={2} />
-        </G>
+        <Circle key={`note-${idx}`} cx={x} cy={y} r={14} fill={debugColor} />
       );
     });
 
