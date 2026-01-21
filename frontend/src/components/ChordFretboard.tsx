@@ -352,6 +352,15 @@ export const ChordFretboard: React.FC<ChordFretboardProps> = ({
   return (
     <View style={styles.container}>
       <Svg width={width} height={height}>
+        {/* Indicator background area */}
+        <Rect
+          x={0}
+          y={paddingTop - 5}
+          width={paddingLeft - 5}
+          height={fretboardHeight + 10}
+          fill="transparent"
+        />
+        
         {/* Fretboard background */}
         <Rect
           x={paddingLeft}
