@@ -380,25 +380,33 @@ export const TechniqueFretboard: React.FC<Props> = ({
     </View>
   );
 
-  // Technique legend with info button
+  // Technique legend with interactive icons
   const renderLegend = () => (
     <View style={styles.legend}>
       <View style={styles.legendItem}>
         <View style={[styles.legendDot, { backgroundColor: THEME.ROOT }]} />
         <Text style={styles.legendText}>Raíz</Text>
       </View>
-      <View style={styles.legendItem}>
-        <View style={[styles.legendDot, { backgroundColor: THEME.BEND }]} />
+      <TouchableOpacity style={styles.legendItem} onPress={() => handleTechniqueTap('bend')}>
+        {getSoloTechniqueIcon('bend', { size: 18, color: THEME.BEND })}
         <Text style={styles.legendText}>Bend</Text>
-      </View>
-      <View style={styles.legendItem}>
-        <View style={[styles.legendDot, { backgroundColor: THEME.SLIDE }]} />
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.legendItem} onPress={() => handleTechniqueTap('slide')}>
+        {getSoloTechniqueIcon('slide', { size: 18, color: THEME.SLIDE })}
         <Text style={styles.legendText}>Slide</Text>
-      </View>
-      <View style={styles.legendItem}>
-        <View style={[styles.legendDot, { backgroundColor: THEME.VIBRATO }]} />
-        <Text style={styles.legendText}>Vibrato</Text>
-      </View>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.legendItem} onPress={() => handleTechniqueTap('hammer')}>
+        {getSoloTechniqueIcon('hammer', { size: 18, color: THEME.HAMMER })}
+        <Text style={styles.legendText}>H-on</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.legendItem} onPress={() => handleTechniqueTap('pull')}>
+        {getSoloTechniqueIcon('pull', { size: 18, color: THEME.PULL })}
+        <Text style={styles.legendText}>P-off</Text>
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.legendItem} onPress={() => handleTechniqueTap('vibrato')}>
+        {getSoloTechniqueIcon('vibrato', { size: 18, color: THEME.VIBRATO })}
+        <Text style={styles.legendText}>Vibr.</Text>
+      </TouchableOpacity>
       <TouchableOpacity 
         style={styles.infoButton} 
         onPress={() => setShowNoteModal(true)}
