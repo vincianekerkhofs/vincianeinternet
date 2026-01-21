@@ -147,13 +147,17 @@ export const Fretboard: React.FC<FretboardProps> = ({
     if (note.isMute || note.fret === null) {
       const color = type === 'current' ? COLORS.primary : 
                     type === 'preview' ? COLORS.primaryLight : COLORS.textMuted;
+      const fontSize = type === 'current' ? 20 : 16;
       return (
         <React.Fragment key={`note-${type}-${index}`}>
+          {type === 'current' && (
+            <Circle cx={x} cy={y} r={16} fill={COLORS.primary} opacity={0.3} />
+          )}
           <SvgText
             x={x}
-            y={y + 5}
+            y={y + 6}
             fill={color}
-            fontSize={16}
+            fontSize={fontSize}
             fontWeight="bold"
             textAnchor="middle"
           >
@@ -170,28 +174,34 @@ export const Fretboard: React.FC<FretboardProps> = ({
     let radius = 14;
     
     if (type === 'preview') {
-      fillColor = COLORS.primary + '60';
-      strokeColor = COLORS.primaryLight + '60';
-      opacity = 0.6;
+      fillColor = COLORS.secondary;
+      strokeColor = COLORS.secondaryDark;
+      opacity = 0.7;
       radius = 12;
     } else if (type === 'static') {
       fillColor = COLORS.surfaceLight;
       strokeColor = COLORS.textMuted;
-      opacity = 0.5;
+      opacity = 0.4;
       radius = 10;
+    } else if (type === 'current') {
+      // Make current notes very prominent
+      fillColor = COLORS.primary;
+      strokeColor = '#FFFFFF';
+      radius = 16;
     }
     
     return (
       <React.Fragment key={`note-${type}-${index}`}>
-        {/* Glow effect for current notes */}
+        {/* Large glow effect for current notes */}
         {type === 'current' && (
-          <Circle
-            cx={x}
-            cy={y}
-            r={radius + 4}
-            fill={COLORS.primary}
-            opacity={0.3}
-          />
+          <>
+            <Circle cx={x} cy={y} r={radius + 8} fill={COLORS.primary} opacity={0.2} />
+            <Circle cx={x} cy={y} r={radius + 4} fill={COLORS.primary} opacity={0.4} />
+          </>
+        )}
+        {/* Preview glow */}
+        {type === 'preview' && (
+          <Circle cx={x} cy={y} r={radius + 3} fill={COLORS.secondary} opacity={0.2} />
         )}
         <Circle
           cx={x}
@@ -199,7 +209,7 @@ export const Fretboard: React.FC<FretboardProps> = ({
           r={radius}
           fill={fillColor}
           stroke={strokeColor}
-          strokeWidth={2}
+          strokeWidth={type === 'current' ? 3 : 2}
           opacity={opacity}
         />
         {/* Fret number or finger */}
@@ -207,10 +217,10 @@ export const Fretboard: React.FC<FretboardProps> = ({
           x={x}
           y={y + 5}
           fill={type === 'static' ? COLORS.textMuted : COLORS.text}
-          fontSize={type === 'current' ? 12 : 10}
+          fontSize={type === 'current' ? 13 : 10}
           fontWeight="bold"
           textAnchor="middle"
-          opacity={opacity}
+          opacity={type === 'static' ? 0.6 : 1}
         >
           {note.finger || fret}
         </SvgText>
