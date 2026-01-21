@@ -95,7 +95,7 @@ const S = StyleSheet.create({
   
   row: { flexDirection: 'row', alignItems: 'center', height: 36 },
   
-  lbl: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center', marginRight: 4 },
+  lbl: { width: 26, height: 26, borderRadius: 0, alignItems: 'center', justifyContent: 'center', marginRight: 4, backgroundColor: 'red' },
   lblG: { backgroundColor: '#00D68F' },
   lblR: { backgroundColor: '#FF6B35' },
   lblT: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
