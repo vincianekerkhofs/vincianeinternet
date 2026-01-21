@@ -210,6 +210,8 @@ export const ScaleFretboard: React.FC<Props> = ({
           {renderFrets()}
           {renderStrings()}
           {renderNotes()}
+          {/* DEBUG: Simple test circle at fixed position */}
+          <Circle cx={100} cy={50} r={20} fill="#FF0000" />
         </Svg>
         {renderFingerOverlays()}
       </View>
