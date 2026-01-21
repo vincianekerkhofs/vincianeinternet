@@ -226,7 +226,6 @@ export default function PracticeScreen() {
           <Fretboard
             notes={allFretboardNotes}
             currentNotes={currentFretboardNotes}
-            previewNotes={previewFretboardNotes}
             width={width - SPACING.lg * 2}
             height={200}
             startFret={fretRange.startFret}
