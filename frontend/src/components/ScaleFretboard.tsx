@@ -274,7 +274,7 @@ export const ScaleFretboard: React.FC<Props> = ({
     return lines;
   };
 
-  // SVG: Note circles
+  // SVG: Note circles with note names
   const renderNotes = () => {
     const dots = [];
     for (let i = 0; i < scale.notes.length; i++) {
@@ -288,10 +288,27 @@ export const ScaleFretboard: React.FC<Props> = ({
       const fill = isRoot ? THEME.ROOT : (isActive ? THEME.NOTE : '#2A2A2A');
       const stroke = isRoot ? THEME.ROOT : THEME.NOTE;
       
+      // Get note name if showNoteNames
+      const actualFret = scale.start + fretOffset;
+      const noteName = getNoteAtFret(strIdx + 1, actualFret);
+      const solfegeName = letterToSolfege(noteName);
+      
       dots.push(
         <G key={`d-${i}`}>
           {isActive && <Circle cx={x} cy={y} r={18} fill={fill} opacity={0.25} />}
           <Circle cx={x} cy={y} r={14} fill={fill} stroke={stroke} strokeWidth={2} />
+          {showNoteNames && (
+            <SvgText
+              x={x}
+              y={y + 4}
+              fill="#FFF"
+              fontSize="10"
+              fontWeight="bold"
+              textAnchor="middle"
+            >
+              {noteName}
+            </SvgText>
+          )}
         </G>
       );
     }
