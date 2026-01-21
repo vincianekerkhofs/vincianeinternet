@@ -7,18 +7,25 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import { COLORS, FONTS, SPACING, BORDER_RADIUS, getDifficultyColor, getDomainColor } from '../src/constants/theme';
-import { getExercise } from '../src/services/api';
+import { getExercise, getExercises } from '../src/services/api';
 import { Fretboard, FretboardNote } from '../src/components/Fretboard';
 import { TabDisplay, TabNote } from '../src/components/TabDisplay';
 import { useStore } from '../src/store/useStore';
 import { usePlaybackEngine } from '../src/hooks/usePlaybackEngine';
 import { generateExerciseNotes, tabNotesToFretboard, calculateFretRange } from '../src/utils/exerciseNotes';
+import { 
+  isExerciseComplete, 
+  markExerciseComplete, 
+  markExerciseIncomplete,
+  getCompletedExercises 
+} from '../src/utils/completionStorage';
 
 const { width } = Dimensions.get('window');
 const TOTAL_BEATS = 8;
@@ -31,7 +38,12 @@ export default function PracticeScreen() {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [loopEnabled, setLoopEnabled] = useState(true);
   const [showFingering, setShowFingering] = useState(true);
+  const [isCompleted, setIsCompleted] = useState(false);
   const { bpm, setBpm } = useStore();
+  
+  // Navigation state
+  const [allExerciseIds, setAllExerciseIds] = useState<string[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(-1);
   
   // Exercise notes state
   const [exerciseNotes, setExerciseNotes] = useState<TabNote[]>([]);
@@ -41,7 +53,7 @@ export default function PracticeScreen() {
   const [currentFretboardNotes, setCurrentFretboardNotes] = useState<FretboardNote[]>([]);
   const [allFretboardNotes, setAllFretboardNotes] = useState<FretboardNote[]>([]);
 
-  // Unified playback engine - SINGLE SOURCE OF TRUTH for timing
+  // Unified playback engine
   const {
     isPlaying,
     currentBeat,
@@ -58,7 +70,6 @@ export default function PracticeScreen() {
     soundEnabled,
     volume: 0.6,
     onBeatChange: (beat) => {
-      // Update fretboard visualization when beat changes
       if (exerciseNotes.length > 0) {
         const { allNotes, currentNotes } = tabNotesToFretboard(exerciseNotes, beat);
         setAllFretboardNotes(allNotes);
@@ -67,20 +78,22 @@ export default function PracticeScreen() {
     },
   });
 
-  // Load exercise on mount
+  // Load exercise and navigation data
   useEffect(() => {
     if (exerciseId) {
       loadExercise();
+      loadAllExercises();
+      checkCompletionStatus();
     }
     return () => {
       stop();
     };
   }, [exerciseId]);
 
-  // Update fretboard when not playing (for initial display)
+  // Update fretboard when not playing
   useEffect(() => {
     if (exerciseNotes.length > 0 && !isPlaying) {
-      const { allNotes, currentNotes } = tabNotesToFretboard(exerciseNotes, 1);
+      const { allNotes } = tabNotesToFretboard(exerciseNotes, 1);
       setAllFretboardNotes(allNotes);
       setCurrentFretboardNotes([]);
     }
@@ -92,21 +105,67 @@ export default function PracticeScreen() {
       setExercise(data);
       setBpm(data.bpm_start || 80);
       
-      // Generate exercise notes with fingering
       const notes = generateExerciseNotes(exerciseId as string);
       setExerciseNotes(notes);
       
-      // Calculate fret range
       const range = calculateFretRange(notes);
       setFretRange(range);
       
-      // Initialize fretboard display
       const { allNotes } = tabNotesToFretboard(notes, 1);
       setAllFretboardNotes(allNotes);
     } catch (error) {
       console.error('Error loading exercise:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadAllExercises = async () => {
+    try {
+      const data = await getExercises({ limit: 100 });
+      const ids = data.exercises.map((ex: any) => ex.id);
+      setAllExerciseIds(ids);
+      const index = ids.indexOf(exerciseId);
+      setCurrentIndex(index);
+    } catch (error) {
+      console.error('Error loading exercises list:', error);
+    }
+  };
+
+  const checkCompletionStatus = async () => {
+    const completed = await isExerciseComplete(exerciseId as string);
+    setIsCompleted(completed);
+  };
+
+  const handleMarkComplete = async () => {
+    if (isCompleted) {
+      await markExerciseIncomplete(exerciseId as string);
+      setIsCompleted(false);
+    } else {
+      await markExerciseComplete(exerciseId as string);
+      setIsCompleted(true);
+    }
+  };
+
+  const navigateToPrevious = () => {
+    if (currentIndex > 0) {
+      stop();
+      const prevId = allExerciseIds[currentIndex - 1];
+      router.replace({
+        pathname: '/practice',
+        params: { exerciseId: prevId },
+      });
+    }
+  };
+
+  const navigateToNext = () => {
+    if (currentIndex < allExerciseIds.length - 1) {
+      stop();
+      const nextId = allExerciseIds[currentIndex + 1];
+      router.replace({
+        pathname: '/practice',
+        params: { exerciseId: nextId },
+      });
     }
   };
 
@@ -119,11 +178,8 @@ export default function PracticeScreen() {
     setBpm(Math.round(value));
   };
 
-  // Toggle sound WITHOUT affecting playback position
   const handleSoundToggle = useCallback(() => {
     setSoundEnabled(prev => !prev);
-    // Note: The playback engine reads soundEnabled via ref, 
-    // so toggling doesn't reset timing
   }, []);
 
   if (loading) {
@@ -151,6 +207,8 @@ export default function PracticeScreen() {
 
   const difficultyColor = getDifficultyColor(exercise.difficulty_tier);
   const domainColor = getDomainColor(exercise.domain);
+  const hasPrevious = currentIndex > 0;
+  const hasNext = currentIndex < allExerciseIds.length - 1;
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -164,18 +222,48 @@ export default function PracticeScreen() {
           <View style={styles.headerBadges}>
             <View style={[styles.badge, { backgroundColor: domainColor + '30' }]}>
               <Text style={[styles.badgeText, { color: domainColor }]}>
-                {exercise.domain.split(' ')[0]}
+                {exercise.domain?.split(' ')[0] || 'Exercise'}
               </Text>
             </View>
-            <View style={[styles.badge, { borderColor: difficultyColor, borderWidth: 1, backgroundColor: 'transparent' }]}>
+            <View style={[styles.badge, { borderColor: difficultyColor, borderWidth: 1 }]}>
               <Text style={[styles.badgeText, { color: difficultyColor }]}>
                 {exercise.difficulty_tier}
               </Text>
             </View>
+            {isCompleted && (
+              <View style={[styles.badge, { backgroundColor: COLORS.success + '30' }]}>
+                <Ionicons name="checkmark-circle" size={14} color={COLORS.success} />
+              </View>
+            )}
           </View>
         </View>
         <TouchableOpacity onPress={() => setShowInfo(!showInfo)} style={styles.infoButton}>
           <Ionicons name={showInfo ? 'information-circle' : 'information-circle-outline'} size={28} color={COLORS.text} />
+        </TouchableOpacity>
+      </View>
+
+      {/* Navigation bar */}
+      <View style={styles.navBar}>
+        <TouchableOpacity 
+          style={[styles.navButton, !hasPrevious && styles.navButtonDisabled]} 
+          onPress={navigateToPrevious}
+          disabled={!hasPrevious}
+        >
+          <Ionicons name="chevron-back" size={20} color={hasPrevious ? COLORS.text : COLORS.textMuted} />
+          <Text style={[styles.navButtonText, !hasPrevious && styles.navButtonTextDisabled]}>Previous</Text>
+        </TouchableOpacity>
+        
+        <Text style={styles.navProgress}>
+          {currentIndex + 1} / {allExerciseIds.length}
+        </Text>
+        
+        <TouchableOpacity 
+          style={[styles.navButton, !hasNext && styles.navButtonDisabled]} 
+          onPress={navigateToNext}
+          disabled={!hasNext}
+        >
+          <Text style={[styles.navButtonText, !hasNext && styles.navButtonTextDisabled]}>Next</Text>
+          <Ionicons name="chevron-forward" size={20} color={hasNext ? COLORS.text : COLORS.textMuted} />
         </TouchableOpacity>
       </View>
 
@@ -213,7 +301,28 @@ export default function PracticeScreen() {
           </View>
         )}
 
-        {/* Fretboard Visualization */}
+        {/* Overview Card */}
+        <View style={styles.overviewCard}>
+          <View style={styles.overviewItem}>
+            <Ionicons name="speedometer-outline" size={18} color={COLORS.primary} />
+            <Text style={styles.overviewLabel}>Tempo</Text>
+            <Text style={styles.overviewValue}>{exercise.bpm_start}-{exercise.bpm_target} BPM</Text>
+          </View>
+          <View style={styles.overviewDivider} />
+          <View style={styles.overviewItem}>
+            <Ionicons name="time-outline" size={18} color={COLORS.primary} />
+            <Text style={styles.overviewLabel}>Duration</Text>
+            <Text style={styles.overviewValue}>{Math.ceil(exercise.duration_seconds / 60)} min</Text>
+          </View>
+          <View style={styles.overviewDivider} />
+          <View style={styles.overviewItem}>
+            <Ionicons name="fitness-outline" size={18} color={COLORS.primary} />
+            <Text style={styles.overviewLabel}>Focus</Text>
+            <Text style={styles.overviewValue} numberOfLines={1}>{exercise.subdomain || 'General'}</Text>
+          </View>
+        </View>
+
+        {/* Fretboard */}
         <View style={styles.fretboardSection}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionLabel}>Fretboard</Text>
@@ -227,14 +336,14 @@ export default function PracticeScreen() {
             notes={allFretboardNotes}
             currentNotes={currentFretboardNotes}
             width={width - SPACING.lg * 2}
-            height={200}
+            height={220}
             startFret={fretRange.startFret}
             numFrets={fretRange.numFrets}
             showFingering={showFingering}
           />
         </View>
 
-        {/* Tab Display */}
+        {/* Tablature */}
         <View style={styles.tabSection}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionLabel}>Tablature</Text>
@@ -242,8 +351,13 @@ export default function PracticeScreen() {
               style={styles.fingeringToggle}
               onPress={() => setShowFingering(!showFingering)}
             >
+              <Ionicons 
+                name={showFingering ? 'hand-left' : 'hand-left-outline'} 
+                size={16} 
+                color={showFingering ? COLORS.secondary : COLORS.textMuted} 
+              />
               <Text style={[styles.fingeringToggleText, showFingering && styles.fingeringToggleActive]}>
-                {showFingering ? 'Fingering ON' : 'Fingering OFF'}
+                {showFingering ? 'Fingering' : 'No Fingering'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -257,17 +371,13 @@ export default function PracticeScreen() {
           />
         </View>
 
-        {/* Tempo Control Section */}
+        {/* Tempo Control */}
         <View style={styles.tempoSection}>
           <Text style={styles.sectionLabel}>Tempo</Text>
-          
-          {/* Large BPM Display */}
           <View style={styles.bpmDisplayLarge}>
             <Text style={styles.bpmValueLarge}>{bpm}</Text>
             <Text style={styles.bpmLabelLarge}>BPM</Text>
           </View>
-
-          {/* Slider */}
           <View style={styles.sliderContainer}>
             <Text style={styles.sliderLabel}>40</Text>
             <Slider
@@ -282,8 +392,6 @@ export default function PracticeScreen() {
             />
             <Text style={styles.sliderLabel}>200</Text>
           </View>
-
-          {/* Step Buttons */}
           <View style={styles.bpmButtons}>
             <TouchableOpacity style={styles.bpmStepButton} onPress={() => adjustBpm(-5)}>
               <Text style={styles.bpmStepButtonText}>-5</Text>
@@ -305,66 +413,47 @@ export default function PracticeScreen() {
           </View>
         </View>
 
-        {/* Success Criteria */}
-        {exercise.success_criteria && Object.keys(exercise.success_criteria).length > 0 && (
-          <View style={styles.criteriaSection}>
-            <Text style={styles.sectionLabel}>Success Criteria</Text>
-            <View style={styles.criteriaGrid}>
-              {Object.entries(exercise.success_criteria).map(([key, value]: [string, any]) => (
-                <View key={key} style={styles.criteriaItem}>
-                  <Text style={styles.criteriaValue}>{value}%</Text>
-                  <Text style={styles.criteriaLabel}>
-                    {key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        )}
+        {/* Mark Complete Button */}
+        <TouchableOpacity 
+          style={[styles.completeButton, isCompleted && styles.completeButtonDone]}
+          onPress={handleMarkComplete}
+        >
+          <Ionicons 
+            name={isCompleted ? 'checkmark-circle' : 'checkmark-circle-outline'} 
+            size={24} 
+            color={isCompleted ? COLORS.text : COLORS.success} 
+          />
+          <Text style={[styles.completeButtonText, isCompleted && styles.completeButtonTextDone]}>
+            {isCompleted ? 'Completed!' : 'Mark as Done'}
+          </Text>
+        </TouchableOpacity>
 
         <View style={{ height: 150 }} />
       </ScrollView>
 
       {/* Play Controls */}
       <View style={styles.playControls}>
-        {/* Loop Button */}
         <TouchableOpacity 
           style={[styles.controlButton, loopEnabled && styles.controlButtonActive]} 
           onPress={() => setLoopEnabled(!loopEnabled)}
         >
-          <Ionicons 
-            name="repeat" 
-            size={24} 
-            color={loopEnabled ? COLORS.primary : COLORS.textMuted} 
-          />
-          <Text style={[styles.controlLabel, loopEnabled && styles.controlLabelActive]}>
-            Loop
-          </Text>
+          <Ionicons name="repeat" size={24} color={loopEnabled ? COLORS.primary : COLORS.textMuted} />
+          <Text style={[styles.controlLabel, loopEnabled && styles.controlLabelActive]}>Loop</Text>
         </TouchableOpacity>
 
-        {/* Play Button */}
         <TouchableOpacity
           style={[styles.playButton, isPlaying && styles.playButtonActive]}
           onPress={toggle}
           activeOpacity={0.8}
         >
-          <Ionicons
-            name={isPlaying ? 'pause' : 'play'}
-            size={36}
-            color={COLORS.text}
-          />
+          <Ionicons name={isPlaying ? 'pause' : 'play'} size={36} color={COLORS.text} />
         </TouchableOpacity>
 
-        {/* Sound Button - toggles WITHOUT resetting playback */}
         <TouchableOpacity 
           style={[styles.controlButton, soundEnabled && styles.controlButtonActive]} 
           onPress={handleSoundToggle}
         >
-          <Ionicons 
-            name={soundEnabled ? 'volume-high' : 'volume-mute'} 
-            size={24} 
-            color={soundEnabled ? COLORS.primary : COLORS.textMuted} 
-          />
+          <Ionicons name={soundEnabled ? 'volume-high' : 'volume-mute'} size={24} color={soundEnabled ? COLORS.primary : COLORS.textMuted} />
           <Text style={[styles.controlLabel, soundEnabled && styles.controlLabelActive]}>
             {soundEnabled ? 'Sound' : 'Muted'}
           </Text>
@@ -441,6 +530,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.sm,
     paddingVertical: 2,
     borderRadius: BORDER_RADIUS.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   badgeText: {
     fontSize: FONTS.sizes.xs,
@@ -448,6 +539,38 @@ const styles = StyleSheet.create({
   },
   infoButton: {
     padding: SPACING.sm,
+  },
+  navBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    backgroundColor: COLORS.backgroundCard,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.surfaceLight,
+  },
+  navButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.sm,
+    gap: SPACING.xs,
+  },
+  navButtonDisabled: {
+    opacity: 0.4,
+  },
+  navButtonText: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.text,
+    fontWeight: '600',
+  },
+  navButtonTextDisabled: {
+    color: COLORS.textMuted,
+  },
+  navProgress: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.textSecondary,
+    fontWeight: '600',
   },
   audioWarning: {
     flexDirection: 'row',
@@ -508,6 +631,35 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.sm,
     color: COLORS.textSecondary,
   },
+  overviewCard: {
+    flexDirection: 'row',
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
+    backgroundColor: COLORS.backgroundCard,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.md,
+  },
+  overviewItem: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 2,
+  },
+  overviewLabel: {
+    fontSize: 10,
+    color: COLORS.textMuted,
+    textTransform: 'uppercase',
+  },
+  overviewValue: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.text,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  overviewDivider: {
+    width: 1,
+    backgroundColor: COLORS.surfaceLight,
+    marginVertical: SPACING.xs,
+  },
   fretboardSection: {
     padding: SPACING.lg,
   },
@@ -540,6 +692,9 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   fingeringToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
   },
@@ -552,10 +707,9 @@ const styles = StyleSheet.create({
     color: COLORS.secondary,
   },
   tempoSection: {
-    paddingHorizontal: SPACING.lg,
+    marginHorizontal: SPACING.lg,
     marginBottom: SPACING.lg,
     backgroundColor: COLORS.backgroundCard,
-    marginHorizontal: SPACING.lg,
     borderRadius: BORDER_RADIUS.xl,
     padding: SPACING.xl,
   },
@@ -616,32 +770,30 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.sm,
     color: COLORS.textSecondary,
   },
-  criteriaSection: {
-    paddingHorizontal: SPACING.lg,
-    marginBottom: SPACING.lg,
-  },
-  criteriaGrid: {
+  completeButton: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: SPACING.lg,
+    marginBottom: SPACING.lg,
+    padding: SPACING.lg,
     backgroundColor: COLORS.backgroundCard,
     borderRadius: BORDER_RADIUS.lg,
-    padding: SPACING.md,
-    gap: SPACING.md,
-    marginTop: SPACING.sm,
+    borderWidth: 2,
+    borderColor: COLORS.success,
+    gap: SPACING.sm,
   },
-  criteriaItem: {
-    alignItems: 'center',
-    minWidth: '30%',
+  completeButtonDone: {
+    backgroundColor: COLORS.success,
+    borderColor: COLORS.success,
   },
-  criteriaValue: {
-    fontSize: FONTS.sizes.xl,
+  completeButtonText: {
+    fontSize: FONTS.sizes.lg,
     fontWeight: '700',
     color: COLORS.success,
   },
-  criteriaLabel: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.textMuted,
-    textAlign: 'center',
+  completeButtonTextDone: {
+    color: COLORS.text,
   },
   playControls: {
     position: 'absolute',
