@@ -101,9 +101,8 @@ export default function PracticeScreen() {
       setFretRange(range);
       
       // Initialize fretboard display
-      const { allNotes, previewNotes } = tabNotesToFretboard(notes, 1);
+      const { allNotes } = tabNotesToFretboard(notes, 1);
       setAllFretboardNotes(allNotes);
-      setPreviewFretboardNotes(previewNotes);
     } catch (error) {
       console.error('Error loading exercise:', error);
     } finally {
