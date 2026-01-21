@@ -98,6 +98,18 @@ export default function SoloDetailScreen() {
     setCurrentNoteIndex(0);
   };
 
+  // Extract unique techniques from solo (must be before early return)
+  const soloTechniques = useMemo(() => {
+    if (!solo) return [];
+    const techniques = new Set<string>();
+    solo.notes.flat().forEach(note => {
+      if (note.technique) {
+        techniques.add(note.technique);
+      }
+    });
+    return Array.from(techniques);
+  }, [solo]);
+
   if (!solo) {
     return (
       <SafeAreaView style={styles.container}>
@@ -107,17 +119,6 @@ export default function SoloDetailScreen() {
       </SafeAreaView>
     );
   }
-
-  // Extract unique techniques from solo
-  const soloTechniques = useMemo(() => {
-    const techniques = new Set<string>();
-    solo.notes.flat().forEach(note => {
-      if (note.technique) {
-        techniques.add(note.technique);
-      }
-    });
-    return Array.from(techniques);
-  }, [solo]);
 
   // Create didactic intro from solo data
   const soloIntro = {
