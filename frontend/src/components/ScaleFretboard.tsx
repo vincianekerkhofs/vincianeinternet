@@ -124,7 +124,7 @@ export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
               position: 'absolute',
               left: 0,
               right: 0,
-              top: 15 + i * STRING_GAP,
+              top: TOP_PADDING + i * STRING_GAP,
               height: 2 + i * 0.4,
               backgroundColor: COLORS_SCHEME.STRING,
             }}
@@ -137,8 +137,8 @@ export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
             key={`fret-${i}`}
             style={{
               position: 'absolute',
-              top: 10,
-              bottom: 10,
+              top: TOP_PADDING - 5,
+              bottom: TOP_PADDING - 5,
               left: i * FRET_WIDTH,
               width: i === 0 ? 4 : 2,
               backgroundColor: i === 0 ? '#CCC' : '#555',
@@ -150,7 +150,7 @@ export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
         {scaleData.notes.map((note, idx) => {
           const fretPos = note.fret - startFret;
           const left = (fretPos + 0.5) * FRET_WIDTH - 11;
-          const top = 15 + note.string * STRING_GAP - 11;
+          const top = TOP_PADDING + note.string * STRING_GAP - 11;
           const bgColor = note.isRoot ? COLORS_SCHEME.ROOT : COLORS_SCHEME.NOTE;
           
           return (
