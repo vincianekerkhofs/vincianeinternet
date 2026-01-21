@@ -82,6 +82,12 @@ export default function PracticeScreen() {
 
   const progressionChords = lesson ? parseProgression(lesson.apply.progression) : [];
 
+  // Keep refs in sync with state
+  useEffect(() => { stageRef.current = stage; }, [stage]);
+  useEffect(() => { progressionChordsRef.current = progressionChords; }, [progressionChords]);
+  useEffect(() => { bpmRef.current = bpm; }, [bpm]);
+  useEffect(() => { metronomeVolumeRef.current = metronomeVolume; }, [metronomeVolume]);
+
   useEffect(() => {
     loadLesson();
     checkCompletion();
