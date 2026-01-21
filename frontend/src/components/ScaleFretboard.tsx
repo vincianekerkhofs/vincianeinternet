@@ -171,11 +171,15 @@ export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
   // Render ALL scale notes
   const renderScaleNotes = () => {
     return scaleData.notes.map((note, idx) => {
-      // Position: fret 5 goes between fret line 0 and 1
+      // Position: notes go BETWEEN fret lines
+      // Fret 5 goes in space 0 (between fret line 0 and 1)
       const fretPos = note.fret - startFret;
       const x = paddingLeft + (fretPos + 0.5) * fretWidth;
       const y = paddingTop + note.string * stringSpacing;
       const color = note.isRoot ? COLORS_SCHEME.ROOT : COLORS_SCHEME.NOTE;
+      
+      // Debug: log positions
+      console.log(`Note ${idx}: fret=${note.fret}, string=${note.string}, fretPos=${fretPos}, x=${x}`);
       
       return (
         <G key={`n-${idx}`}>
