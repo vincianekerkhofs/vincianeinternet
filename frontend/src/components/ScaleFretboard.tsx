@@ -162,24 +162,30 @@ export const ScaleFretboard: React.FC<Props> = ({
   };
 
   // Top indicators
-  const renderTopIndicators = () => (
-    <View style={styles.indicatorRow}>
-      {STRING_NAMES.map((name, idx) => {
-        const isRoot = stringHasRoot(idx);
-        return (
-          <View 
-            key={`ind-${idx}`}
-            style={[
-              styles.indicator,
-              { backgroundColor: isRoot ? THEME.ROOT : THEME.NOTE }
-            ]}
-          >
-            <Text style={styles.indicatorText}>{name}</Text>
-          </View>
-        );
-      })}
-    </View>
-  );
+  const renderTopIndicators = () => {
+    const indicatorWidth = (width - 40) / NUM_STRINGS;
+    return (
+      <View style={styles.indicatorRow}>
+        {STRING_NAMES.map((name, idx) => {
+          const isRoot = stringHasRoot(idx);
+          return (
+            <View 
+              key={`ind-${idx}`}
+              style={[
+                styles.indicator,
+                { 
+                  width: Math.min(indicatorWidth - 4, 28),
+                  backgroundColor: isRoot ? THEME.ROOT : THEME.NOTE 
+                }
+              ]}
+            >
+              <Text style={styles.indicatorText}>{name}</Text>
+            </View>
+          );
+        })}
+      </View>
+    );
+  };
 
   // Fret numbers
   const renderFretNumbers = () => (
