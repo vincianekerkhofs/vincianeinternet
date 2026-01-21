@@ -113,6 +113,22 @@ export default function PracticeScreen() {
     }
   }, [weekNum, dayNum, weekIntro]);
 
+  // Load suggested exercises from library
+  useEffect(() => {
+    const loadSuggestedExercises = async () => {
+      try {
+        const allExercises = await getExercises();
+        if (allExercises && allExercises.length > 0) {
+          const suggested = getSuggestedExercises(allExercises, weekNum);
+          setSuggestedExercises(suggested);
+        }
+      } catch (error) {
+        console.log('Could not load suggested exercises:', error);
+      }
+    };
+    loadSuggestedExercises();
+  }, [weekNum]);
+
   useEffect(() => {
     loadLesson();
     checkCompletion();
