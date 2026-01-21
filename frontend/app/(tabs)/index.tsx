@@ -129,13 +129,38 @@ export default function HomeScreen() {
           
           <TouchableOpacity 
             style={styles.quickLink}
-            onPress={() => router.push('/(tabs)/exercises')}
+            onPress={() => router.push('/solos')}
           >
             <View style={[styles.quickLinkIcon, { backgroundColor: COLORS.secondary + '20' }]}>
-              <Ionicons name="library" size={24} color={COLORS.secondary} />
+              <Ionicons name="rocket" size={24} color={COLORS.secondary} />
+            </View>
+            <Text style={styles.quickLinkTitle}>Solos</Text>
+            <Text style={styles.quickLinkSubtitle}>Composición</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Additional Quick Links */}
+        <View style={styles.quickLinks}>
+          <TouchableOpacity 
+            style={styles.quickLink}
+            onPress={() => router.push('/(tabs)/exercises')}
+          >
+            <View style={[styles.quickLinkIcon, { backgroundColor: COLORS.warning + '20' }]}>
+              <Ionicons name="library" size={24} color={COLORS.warning} />
             </View>
             <Text style={styles.quickLinkTitle}>Biblioteca</Text>
             <Text style={styles.quickLinkSubtitle}>Ejercicios</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.quickLink}
+            onPress={() => router.push('/tuner')}
+          >
+            <View style={[styles.quickLinkIcon, { backgroundColor: COLORS.success + '20' }]}>
+              <Ionicons name="radio" size={24} color={COLORS.success} />
+            </View>
+            <Text style={styles.quickLinkTitle}>Afinador</Text>
+            <Text style={styles.quickLinkSubtitle}>Afina tu guitarra</Text>
           </TouchableOpacity>
         </View>
 
