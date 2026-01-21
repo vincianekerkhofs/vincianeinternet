@@ -60,6 +60,15 @@ export default function PracticeScreen() {
   const isPlayingRef = useRef(false);
   const lastBeatTimeRef = useRef(0);
   
+  // Refs for scheduler to avoid stale closures
+  const stageRef = useRef<Stage>(stage);
+  const progressionChordsRef = useRef<string[]>([]);
+  const bpmRef = useRef(bpm);
+  const metronomeVolumeRef = useRef(metronomeVolume);
+  const currentBeatRef = useRef(1);
+  const currentChordIndexRef = useRef(0);
+  const barCountRef = useRef(0); // Track which bar we're on
+  
   const { bpm, setBpm } = useStore();
   const lessonId = `week${weekNum}-day${dayNum}`;
 
