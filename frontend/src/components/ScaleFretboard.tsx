@@ -206,8 +206,8 @@ export const ScaleFretboard: React.FC<ScaleFretboardProps> = ({
   // Finger number overlays
   const renderFingerOverlays = () => {
     return scaleData.notes.map((note, idx) => {
-      const fretIndex = note.fret - startFret;
-      if (fretIndex < 0 || fretIndex > numFrets) return null;
+      const fretIndex = note.fret - startFret + 1;
+      if (fretIndex < 1 || fretIndex > numFrets) return null;
       
       const xPct = ((paddingLeft + (fretIndex - 0.5) * fretWidth) / width) * 100;
       const yPct = ((paddingTop + note.string * stringSpacing) / (height - 30)) * 100;
