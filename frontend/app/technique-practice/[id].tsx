@@ -772,7 +772,7 @@ export default function TechniquePracticeScreenV2() {
                 techniqueColor={technique.color}
                 mode={practiceMode}
                 showTechniqueGlyphs={true}
-                showGhostHand={practiceMode === 'guided'}
+                showFingerGuides={practiceMode === 'guided'}
                 debugMode={showDebug}
               />
             ) : (
