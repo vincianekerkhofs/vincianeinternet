@@ -1567,6 +1567,45 @@ const styles = StyleSheet.create({
   skipButton: {
     backgroundColor: COLORS.backgroundCard,
   },
+  // Quick actions row
+  quickActionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: SPACING.md,
+    marginTop: SPACING.md,
+  },
+  markCompleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.success + '20',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    gap: SPACING.xs,
+    borderWidth: 1,
+    borderColor: COLORS.success + '40',
+  },
+  markCompleteText: {
+    fontSize: FONTS.sizes.sm,
+    fontWeight: '600',
+    color: COLORS.success,
+  },
+  nextExerciseButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary + '20',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    gap: SPACING.xs,
+    borderWidth: 1,
+    borderColor: COLORS.primary + '40',
+  },
+  nextExerciseText: {
+    fontSize: FONTS.sizes.sm,
+    fontWeight: '600',
+    color: COLORS.primary,
+  },
   // Modals
   modalOverlay: {
     ...StyleSheet.absoluteFillObject,
