@@ -4,6 +4,9 @@
  * 
  * Features:
  * A) Ghost Hand - Semi-transparent hand overlay showing movement
+ *    - Toggle ON/OFF with persistence
+ *    - High visibility with stroke + shadow
+ *    - Clear finger identification
  * B) Symbol Legend - Dictionary of all technique symbols and colors
  * 
  * IMPORTANT: All positioning uses SVG coordinates from fretboardBBox
@@ -23,6 +26,7 @@ import {
   ScrollView,
   Switch,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { 
   Rect, 
   Line, 
@@ -35,12 +39,47 @@ import Svg, {
   Stop,
   Ellipse,
   Polygon,
+  Filter,
+  FeDropShadow,
+  FeGaussianBlur,
+  FeMerge,
+  FeMergeNode,
 } from 'react-native-svg';
 import { COLORS, FONTS, SPACING, BORDER_RADIUS } from '../constants/theme';
 import { FretboardNote, FretboardPath, TechniqueGlyph, TechniqueSymbol, TECHNIQUE_SYMBOLS } from '../data/techniqueExercises';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// =============================================
+// CONSTANTS
+// =============================================
+
+const GHOST_HAND_STORAGE_KEY = '@guitar_guide_ghost_hand_enabled';
+
+// Ghost Hand Visual Config - OPTIMIZED FOR VISIBILITY
+const GHOST_HAND_CONFIG = {
+  // Opacidad principal: 55-65% como requiere el PRD
+  baseOpacity: 0.60,
+  activeOpacity: 0.65,
+  movingOpacity: 0.55,
+  
+  // Colores con buen contraste
+  handColor: '#E8F4FD', // Azul muy claro / blanco cálido
+  strokeColor: '#FFFFFF', // Contorno blanco
+  shadowColor: '#000000', // Sombra negra
+  fingerHighlightColor: '#4ECDC4', // Teal para dedo activo
+  
+  // Stroke para separación del fondo
+  strokeWidth: 2,
+  strokeOpacity: 0.85,
+  
+  // Shadow/glow
+  shadowBlur: 3,
+  shadowOpacity: 0.4,
+  glowRadius: 6,
+  glowOpacity: 0.25,
+};
 
 // =============================================
 // TYPES
