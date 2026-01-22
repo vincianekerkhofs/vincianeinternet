@@ -27,6 +27,9 @@ export const getExercise = async (id: string) => {
   return response.data;
 };
 
+// Alias for getExercise for backwards compatibility
+export const getExerciseById = getExercise;
+
 export const getDomains = async () => {
   const response = await api.get('/exercises/domains');
   return response.data;
