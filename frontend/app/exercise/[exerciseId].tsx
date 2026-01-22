@@ -75,9 +75,13 @@ export default function ExerciseDetailScreen() {
       return;
     }
 
+    // Debug log in development
+    console.log(`[ExerciseDetail] Loading exercise with ID: "${exerciseId}"`);
+
     try {
       setLoading(true);
       const data = await getExerciseById(exerciseId);
+      console.log(`[ExerciseDetail] Received data:`, data?.title, data?.id);
       if (data) {
         setExercise(data);
         setBpm(data.bpm_start || 80);
@@ -85,11 +89,11 @@ export default function ExerciseDetailScreen() {
         const completed = await isExerciseComplete(exerciseId);
         setIsCompleted(completed);
       } else {
-        setError('Exercise not found');
+        setError(`Exercise not found: ${exerciseId}`);
       }
     } catch (err) {
       console.error('Error loading exercise:', err);
-      setError('Failed to load exercise');
+      setError(`Failed to load exercise: ${exerciseId}`);
     } finally {
       setLoading(false);
     }
