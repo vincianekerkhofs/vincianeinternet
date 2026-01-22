@@ -266,18 +266,29 @@ const TECHNIQUE_GLYPHS: Record<TechniqueGlyph, string> = {
 // Techniques that trigger ghost hand
 const GHOST_HAND_TECHNIQUES: TechniqueGlyph[] = ['h', 'p', '/', '\\', 'b', 'r', '~', 'PM'];
 
+// Finger names for display
+const FINGER_NAMES: Record<number, string> = {
+  1: 'Índice',
+  2: 'Medio', 
+  3: 'Anular',
+  4: 'Meñique',
+};
+
 // =============================================
-// GHOST HAND SVG COMPONENT
+// GHOST HAND SVG COMPONENT - ENHANCED VERSION
+// High visibility with stroke, shadow, and clear finger identification
 // =============================================
 
 interface GhostHandProps {
   poseA: GhostHandPose | null;
   poseB: GhostHandPose;
   fretboardBBox: FretboardBBox;
-  color: string;
+  techniqueColor: string;
   showArrow: boolean;
   animationPhase: 'start' | 'moving' | 'end' | 'hidden';
   finger?: number;
+  targetString?: number;
+  targetFret?: number;
   debugMode?: boolean;
 }
 
@@ -285,128 +296,276 @@ const GhostHandSVG: React.FC<GhostHandProps> = ({
   poseA,
   poseB,
   fretboardBBox,
-  color,
+  techniqueColor,
   showArrow,
   animationPhase,
   finger,
+  targetString,
+  targetFret,
   debugMode = false,
 }) => {
   if (animationPhase === 'hidden') return null;
   
-  // Calculate hand size relative to fretboard (not screen pixels!)
-  const handScale = fretboardBBox.height / 145; // Relative to bbox height
-  const palmWidth = 18 * handScale;
-  const palmHeight = 22 * handScale;
-  const fingerWidth = 4 * handScale;
-  const fingerHeight = 14 * handScale;
-  const fingerGap = 1.5 * handScale;
+  // ===== SIZING (relative to fretboard, not pixels) =====
+  const handScale = fretboardBBox.height / 120; // Larger scale for better visibility
+  const palmWidth = 24 * handScale;
+  const palmHeight = 28 * handScale;
+  const fingerWidth = 6 * handScale;
+  const fingerHeight = 20 * handScale;
+  const fingerGap = 2 * handScale;
+  const thumbWidth = 7 * handScale;
+  const thumbHeight = 16 * handScale;
   
-  // Offset from note position (relative to fretboard, not px)
-  const handOffsetY = -palmHeight * 0.3;
+  // Offset from note position
+  const handOffsetY = -palmHeight * 0.4;
   const handOffsetX = -palmWidth * 0.5;
   
-  // Current position based on animation phase
+  // ===== VISUAL CONFIG (PRD requirements) =====
+  const config = GHOST_HAND_CONFIG;
+  const handColor = config.handColor;
+  const strokeColor = config.strokeColor;
+  const strokeWidth = config.strokeWidth * handScale;
+  const strokeOpacity = config.strokeOpacity;
+  
+  // ===== POSITION CALCULATION =====
   let currentX = poseB.x;
   let currentY = poseB.y;
-  let opacity = 0.45; // Increased base opacity for better visibility
+  let opacity = config.baseOpacity;
   
   if (animationPhase === 'start' && poseA) {
     currentX = poseA.x;
     currentY = poseA.y;
-    opacity = 0.5;
+    opacity = config.activeOpacity;
   } else if (animationPhase === 'moving' && poseA) {
-    // Interpolate between A and B (50% for now - could be animated)
     currentX = (poseA.x + poseB.x) / 2;
     currentY = (poseA.y + poseB.y) / 2;
-    opacity = 0.45;
+    opacity = config.movingOpacity;
   } else if (animationPhase === 'end') {
-    opacity = 0.4;
+    opacity = config.baseOpacity;
   }
   
-  // Validate positions are within fretboard
-  const isWithinBBox = (x: number, y: number) => {
-    return x >= fretboardBBox.x && 
-           x <= fretboardBBox.x + fretboardBBox.width &&
-           y >= fretboardBBox.y && 
-           y <= fretboardBBox.y + fretboardBBox.height;
-  };
-  
-  // Render simple hand (palm + 4 fingers)
-  const renderSimpleHand = (x: number, y: number, handOpacity: number) => {
+  // ===== RENDER ENHANCED HAND =====
+  const renderEnhancedHand = (x: number, y: number, handOpacity: number, isActive: boolean = true) => {
     const palmX = x + handOffsetX;
     const palmY = y + handOffsetY;
-    const fingersStartY = palmY - fingerHeight;
+    const fingersStartY = palmY - fingerHeight + 4 * handScale;
     
-    // Validate position
-    if (!isWithinBBox(x, y)) {
-      if (debugMode) {
-        console.warn('[GhostHand] Position outside fretboard bbox:', { x, y, fretboardBBox });
-      }
-    }
+    // Which finger is active (1-4, or 0 for none)
+    const activeFinger = finger || 0;
     
     return (
       <G opacity={handOpacity}>
-        {/* Outer glow for visibility */}
+        {/* ===== LAYER 1: OUTER GLOW/SHADOW ===== */}
         <Ellipse
           cx={palmX + palmWidth / 2}
           cy={palmY + palmHeight / 2}
-          rx={palmWidth / 2 + 4 * handScale}
-          ry={palmHeight / 2 + 4 * handScale}
-          fill={color}
-          opacity={0.15}
+          rx={palmWidth / 2 + config.glowRadius * handScale}
+          ry={palmHeight / 2 + config.glowRadius * handScale}
+          fill={config.shadowColor}
+          opacity={config.glowOpacity}
         />
         
-        {/* Palm - Ellipse */}
+        {/* ===== LAYER 2: PALM SHADOW (offset) ===== */}
+        <Ellipse
+          cx={palmX + palmWidth / 2 + 2 * handScale}
+          cy={palmY + palmHeight / 2 + 2 * handScale}
+          rx={palmWidth / 2}
+          ry={palmHeight / 2}
+          fill={config.shadowColor}
+          opacity={config.shadowOpacity}
+        />
+        
+        {/* ===== LAYER 3: PALM BASE ===== */}
         <Ellipse
           cx={palmX + palmWidth / 2}
           cy={palmY + palmHeight / 2}
           rx={palmWidth / 2}
           ry={palmHeight / 2}
-          fill={color}
-          opacity={0.5}
-          stroke={color}
-          strokeWidth={1.5 * handScale}
+          fill={handColor}
+          opacity={0.85}
+          stroke={strokeColor}
+          strokeWidth={strokeWidth}
+          strokeOpacity={strokeOpacity}
         />
         
-        {/* Fingers - 4 rectangles */}
-        {[0, 1, 2, 3].map((i) => {
-          const fingerX = palmX + (fingerWidth + fingerGap) * i + fingerGap;
+        {/* ===== LAYER 4: THUMB (on left side) ===== */}
+        <G>
+          {/* Thumb shadow */}
+          <Ellipse
+            cx={palmX - thumbWidth * 0.3 + 1 * handScale}
+            cy={palmY + palmHeight * 0.4 + 1 * handScale}
+            rx={thumbWidth / 2}
+            ry={thumbHeight / 2}
+            fill={config.shadowColor}
+            opacity={0.25}
+          />
+          {/* Thumb */}
+          <Ellipse
+            cx={palmX - thumbWidth * 0.3}
+            cy={palmY + palmHeight * 0.4}
+            rx={thumbWidth / 2}
+            ry={thumbHeight / 2}
+            fill={handColor}
+            opacity={0.8}
+            stroke={strokeColor}
+            strokeWidth={strokeWidth * 0.8}
+            strokeOpacity={strokeOpacity}
+          />
+          {/* Thumb indicator "P" for pulgar */}
+          <SvgText
+            x={palmX - thumbWidth * 0.3}
+            y={palmY + palmHeight * 0.4 + 3 * handScale}
+            textAnchor="middle"
+            fill={techniqueColor}
+            fontSize={7 * handScale}
+            fontWeight="bold"
+            opacity={0.7}
+          >
+            P
+          </SvgText>
+        </G>
+        
+        {/* ===== LAYER 5: FINGERS (1-4) ===== */}
+        {[1, 2, 3, 4].map((fingerNum) => {
+          const i = fingerNum - 1;
+          const fingerX = palmX + (fingerWidth + fingerGap) * i + fingerGap * 2;
+          const isThisFingerActive = activeFinger === fingerNum;
+          
+          // Active finger is highlighted and slightly longer
+          const thisFingerHeight = isThisFingerActive ? fingerHeight * 1.15 : fingerHeight;
+          const thisFingerY = isThisFingerActive ? fingersStartY - 3 * handScale : fingersStartY;
+          const fingerFill = isThisFingerActive ? config.fingerHighlightColor : handColor;
+          const fingerOpacity = isThisFingerActive ? 0.95 : 0.75;
+          
           return (
-            <Rect
-              key={`finger-${i}`}
-              x={fingerX}
-              y={fingersStartY}
-              width={fingerWidth}
-              height={fingerHeight}
-              rx={fingerWidth / 2}
-              ry={fingerWidth / 2}
-              fill={color}
-              opacity={0.45}
-              stroke={color}
-              strokeWidth={0.75 * handScale}
-            />
+            <G key={`finger-${fingerNum}`}>
+              {/* Finger shadow */}
+              <Rect
+                x={fingerX + 1 * handScale}
+                y={thisFingerY + 1 * handScale}
+                width={fingerWidth}
+                height={thisFingerHeight}
+                rx={fingerWidth / 2}
+                ry={fingerWidth / 2}
+                fill={config.shadowColor}
+                opacity={0.2}
+              />
+              
+              {/* Finger base */}
+              <Rect
+                x={fingerX}
+                y={thisFingerY}
+                width={fingerWidth}
+                height={thisFingerHeight}
+                rx={fingerWidth / 2}
+                ry={fingerWidth / 2}
+                fill={fingerFill}
+                opacity={fingerOpacity}
+                stroke={isThisFingerActive ? strokeColor : strokeColor}
+                strokeWidth={isThisFingerActive ? strokeWidth * 1.2 : strokeWidth * 0.7}
+                strokeOpacity={strokeOpacity}
+              />
+              
+              {/* Finger number on each finger */}
+              <Circle
+                cx={fingerX + fingerWidth / 2}
+                cy={thisFingerY + thisFingerHeight - 5 * handScale}
+                r={4 * handScale}
+                fill={isThisFingerActive ? techniqueColor : 'rgba(0,0,0,0.4)'}
+                opacity={isThisFingerActive ? 1 : 0.6}
+              />
+              <SvgText
+                x={fingerX + fingerWidth / 2}
+                y={thisFingerY + thisFingerHeight - 2.5 * handScale}
+                textAnchor="middle"
+                fill="#FFFFFF"
+                fontSize={6 * handScale}
+                fontWeight="bold"
+              >
+                {fingerNum}
+              </SvgText>
+            </G>
           );
         })}
         
-        {/* Finger number indicator if specified */}
-        {finger && (
+        {/* ===== LAYER 6: ACTIVE FINGER CALLOUT (prominent) ===== */}
+        {activeFinger > 0 && isActive && (
           <G>
+            {/* Big badge above active finger */}
             <Circle
-              cx={palmX + palmWidth / 2}
-              cy={fingersStartY - 6 * handScale}
-              r={9 * handScale}
-              fill={color}
-              opacity={0.8}
+              cx={palmX + (fingerWidth + fingerGap) * (activeFinger - 1) + fingerGap * 2 + fingerWidth / 2}
+              cy={fingersStartY - 14 * handScale}
+              r={12 * handScale}
+              fill={techniqueColor}
+              stroke={strokeColor}
+              strokeWidth={strokeWidth}
+              opacity={0.95}
+            />
+            <SvgText
+              x={palmX + (fingerWidth + fingerGap) * (activeFinger - 1) + fingerGap * 2 + fingerWidth / 2}
+              y={fingersStartY - 10 * handScale}
+              textAnchor="middle"
+              fill="#FFFFFF"
+              fontSize={12 * handScale}
+              fontWeight="bold"
+            >
+              {activeFinger}
+            </SvgText>
+            
+            {/* Finger name label */}
+            <Rect
+              x={palmX + palmWidth / 2 - 20 * handScale}
+              y={fingersStartY - 28 * handScale}
+              width={40 * handScale}
+              height={10 * handScale}
+              rx={3 * handScale}
+              fill="rgba(0,0,0,0.7)"
             />
             <SvgText
               x={palmX + palmWidth / 2}
-              y={fingersStartY - 3 * handScale}
+              y={fingersStartY - 20.5 * handScale}
               textAnchor="middle"
               fill="#FFFFFF"
-              fontSize={10 * handScale}
-              fontWeight="bold"
+              fontSize={7 * handScale}
+              fontWeight="600"
             >
-              {finger}
+              {FINGER_NAMES[activeFinger] || `Dedo ${activeFinger}`}
+            </SvgText>
+          </G>
+        )}
+        
+        {/* ===== LAYER 7: POSITION INFO (fret/string) ===== */}
+        {isActive && targetFret !== undefined && targetString !== undefined && (
+          <G>
+            <Rect
+              x={palmX + palmWidth + 4 * handScale}
+              y={palmY + palmHeight * 0.2}
+              width={28 * handScale}
+              height={22 * handScale}
+              rx={4 * handScale}
+              fill="rgba(0,0,0,0.75)"
+              stroke={techniqueColor}
+              strokeWidth={1 * handScale}
+            />
+            <SvgText
+              x={palmX + palmWidth + 18 * handScale}
+              y={palmY + palmHeight * 0.2 + 9 * handScale}
+              textAnchor="middle"
+              fill="#FFFFFF"
+              fontSize={7 * handScale}
+              fontWeight="600"
+            >
+              T{targetFret}
+            </SvgText>
+            <SvgText
+              x={palmX + palmWidth + 18 * handScale}
+              y={palmY + palmHeight * 0.2 + 18 * handScale}
+              textAnchor="middle"
+              fill={techniqueColor}
+              fontSize={6 * handScale}
+              fontWeight="600"
+            >
+              C{targetString}
             </SvgText>
           </G>
         )}
@@ -414,20 +573,16 @@ const GhostHandSVG: React.FC<GhostHandProps> = ({
     );
   };
   
-  // Render movement arrow from A to B
+  // ===== RENDER MOVEMENT ARROW =====
   const renderArrow = () => {
     if (!showArrow || !poseA) return null;
     
-    const arrowHeadSize = 6 * handScale;
+    const arrowHeadSize = 8 * handScale;
     const angle = Math.atan2(poseB.y - poseA.y, poseB.x - poseA.x);
-    
-    // Arrow line
     const midX = (poseA.x + poseB.x) / 2;
-    const midY = (poseA.y + poseB.y) / 2 - 15 * handScale;
-    
-    // Calculate arrow head points
+    const midY = (poseA.y + poseB.y) / 2 - 20 * handScale;
     const arrowTipX = poseB.x;
-    const arrowTipY = poseB.y - 10 * handScale;
+    const arrowTipY = poseB.y - 15 * handScale;
     const arrowBackX = arrowTipX - arrowHeadSize * Math.cos(angle);
     const arrowBackY = arrowTipY - arrowHeadSize * Math.sin(angle);
     const arrowLeft = {
@@ -438,26 +593,34 @@ const GhostHandSVG: React.FC<GhostHandProps> = ({
       x: arrowBackX - arrowHeadSize * 0.5 * Math.cos(angle - Math.PI / 2),
       y: arrowBackY - arrowHeadSize * 0.5 * Math.sin(angle - Math.PI / 2),
     };
-    
-    // Determine if slide (dashed line)
     const isSlide = poseB.technique === '/' || poseB.technique === '\\';
     
     return (
-      <G opacity={0.4}>
-        {/* Movement path */}
+      <G opacity={0.6}>
+        {/* Arrow shadow */}
         <Path
-          d={`M ${poseA.x} ${poseA.y - 10 * handScale} Q ${midX} ${midY} ${arrowTipX} ${arrowTipY}`}
+          d={`M ${poseA.x + 1} ${poseA.y - 14 * handScale} Q ${midX + 1} ${midY + 1} ${arrowTipX + 1} ${arrowTipY + 1}`}
           fill="none"
-          stroke={color}
-          strokeWidth={2 * handScale}
-          strokeDasharray={isSlide ? `${4 * handScale} ${3 * handScale}` : '0'}
+          stroke={config.shadowColor}
+          strokeWidth={3 * handScale}
+          strokeLinecap="round"
+          opacity={0.3}
+        />
+        {/* Arrow line */}
+        <Path
+          d={`M ${poseA.x} ${poseA.y - 15 * handScale} Q ${midX} ${midY} ${arrowTipX} ${arrowTipY}`}
+          fill="none"
+          stroke={techniqueColor}
+          strokeWidth={2.5 * handScale}
+          strokeDasharray={isSlide ? `${5 * handScale} ${3 * handScale}` : '0'}
           strokeLinecap="round"
         />
-        
         {/* Arrow head */}
         <Polygon
           points={`${arrowTipX},${arrowTipY} ${arrowLeft.x},${arrowLeft.y} ${arrowRight.x},${arrowRight.y}`}
-          fill={color}
+          fill={techniqueColor}
+          stroke={strokeColor}
+          strokeWidth={1 * handScale}
         />
       </G>
     );
@@ -465,7 +628,7 @@ const GhostHandSVG: React.FC<GhostHandProps> = ({
   
   return (
     <G id="ghost-hand-layer">
-      {/* Debug: Show fretboard bbox */}
+      {/* Debug bbox */}
       {debugMode && (
         <Rect
           x={fretboardBBox.x}
@@ -474,21 +637,21 @@ const GhostHandSVG: React.FC<GhostHandProps> = ({
           height={fretboardBBox.height}
           fill="none"
           stroke="#FF0000"
-          strokeWidth={1}
-          strokeDasharray="4 2"
+          strokeWidth={2}
+          strokeDasharray="6 3"
         />
       )}
       
-      {/* Arrow/trail from A to B */}
+      {/* Movement arrow */}
       {renderArrow()}
       
-      {/* Ghost hand at current position */}
-      {renderSimpleHand(currentX, currentY, opacity)}
-      
-      {/* If showing start, also show ghost at pose A */}
+      {/* Ghost hand at previous position (faded) */}
       {animationPhase === 'moving' && poseA && (
-        renderSimpleHand(poseA.x, poseA.y, 0.1)
+        renderEnhancedHand(poseA.x, poseA.y, 0.25, false)
       )}
+      
+      {/* Main ghost hand at current position */}
+      {renderEnhancedHand(currentX, currentY, opacity, true)}
     </G>
   );
 };
