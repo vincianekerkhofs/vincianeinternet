@@ -58,24 +58,28 @@ const FINGER_COLORS: Record<number, string> = {
   4: '#E74C3C', // Rojo - Meñique
 };
 
-// Finger Guide Visual Config
+// Finger Guide Visual Config - PREMIUM DESIGN
 const FINGER_GUIDE_CONFIG = {
   // Opacidad: 70-90%
-  baseOpacity: 0.85,
-  fadeOpacity: 0.5,
+  baseOpacity: 0.92,
+  fadeOpacity: 0.55,
   
-  // Tamaño relativo al fretboard
-  sizeMultiplier: 1.4, // Ligeramente mayor que la cuerda
+  // Tamaño - MAYOR para claridad
+  sizeMultiplier: 1.6,
   
   // Stroke para contraste
-  strokeWidth: 1.5,
+  strokeWidth: 2.5,
   strokeColor: '#FFFFFF',
-  strokeOpacity: 0.9,
+  strokeOpacity: 0.95,
   
-  // Sombra sutil
-  shadowOffsetX: 1,
-  shadowOffsetY: 1,
-  shadowOpacity: 0.3,
+  // Sombra para profundidad
+  shadowOffsetX: 1.5,
+  shadowOffsetY: 1.5,
+  shadowOpacity: 0.35,
+  
+  // Badge de técnica
+  badgeRadius: 8,
+  badgeOffset: 0.75,
 };
 
 // =============================================
