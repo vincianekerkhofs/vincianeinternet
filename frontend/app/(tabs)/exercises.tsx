@@ -16,6 +16,7 @@ import { COLORS, FONTS, SPACING, BORDER_RADIUS, getDifficultyColor, getDomainCol
 import { getExercises, getDomains, getDifficulties } from '../../src/services/api';
 import { ExerciseCard } from '../../src/components/ExerciseCard';
 import { getCompletedExercises, getCompletionStats } from '../../src/utils/completionStorage';
+import { filterPlayableExercises, auditExercises } from '../../src/utils/exerciseValidator';
 
 export default function ExercisesScreen() {
   const [exercises, setExercises] = useState<any[]>([]);
