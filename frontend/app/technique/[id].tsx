@@ -21,6 +21,7 @@ import { COLORS, FONTS, SPACING, BORDER_RADIUS } from '../../src/constants/theme
 import { getTechniqueById, TechniqueDefinition } from '../../src/data/techniques';
 import { getTechniqueIcon } from '../../src/components/TechniqueIcons';
 import { getTechniqueMasteryById, addPracticeTime, TechniqueMastery } from '../../src/utils/techniqueStorage';
+import { isTechniqueComplete, getMasterySongByTechnique } from '../../src/data/techniqueMasterySongs';
 
 const { width } = Dimensions.get('window');
 
