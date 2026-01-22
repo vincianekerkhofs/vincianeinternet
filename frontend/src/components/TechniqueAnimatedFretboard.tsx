@@ -207,7 +207,11 @@ export const TechniqueAnimatedFretboard: React.FC<TechniqueAnimatedFretboardProp
   const trailOpacity = useRef(new Animated.Value(0.5)).current;
   
   // Fretboard dimensions - optimized for visibility of all strings
-  const fretboardWidth = SCREEN_WIDTH - SPACING.lg * 2;
+  // Force max width for mobile to avoid web viewport issues
+  const rawScreenWidth = SCREEN_WIDTH;
+  const maxMobileWidth = 400; // Max reasonable mobile width
+  const effectiveScreenWidth = Math.min(rawScreenWidth, maxMobileWidth);
+  const fretboardWidth = effectiveScreenWidth - SPACING.lg * 2;
   const fretboardHeight = 200; // Increased height for better visibility
   const topPadding = 25; // Space above first string
   const bottomPadding = 30; // Space below for fret numbers
