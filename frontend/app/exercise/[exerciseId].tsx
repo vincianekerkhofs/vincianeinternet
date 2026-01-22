@@ -526,25 +526,98 @@ export default function ExerciseDetailScreen() {
           </Text>
         </View>
 
-        <View style={{ height: 40 }} />
+        <View style={{ height: 120 }} />
       </ScrollView>
 
-      {/* Bottom CTA */}
+      {/* Bottom CTA - Fixed at bottom */}
       <View style={styles.bottomCta}>
-        <TouchableOpacity 
-          style={[styles.completeCtaButton, isCompleted && styles.completeCtaButtonDone]}
-          onPress={handleToggleComplete}
-        >
-          <Ionicons 
-            name={isCompleted ? "checkmark-circle" : "checkmark-circle-outline"} 
-            size={24} 
-            color={COLORS.text} 
-          />
-          <Text style={styles.completeCtaText}>
-            {isCompleted ? 'Completado ✓' : 'Marcar como completado'}
+        {/* Progress indicator */}
+        {allExercises.length > 0 && (
+          <Text style={styles.progressText}>
+            Ejercicio {currentIndex + 1} de {allExercises.length}
           </Text>
-        </TouchableOpacity>
+        )}
+        
+        <View style={styles.ctaButtonsRow}>
+          {/* Mark complete button */}
+          <TouchableOpacity 
+            style={[styles.completeCtaButton, isCompleted && styles.completeCtaButtonDone]}
+            onPress={handleToggleComplete}
+          >
+            <Ionicons 
+              name={isCompleted ? "checkmark-circle" : "checkmark-circle-outline"} 
+              size={20} 
+              color={isCompleted ? COLORS.text : COLORS.success} 
+            />
+            <Text style={[styles.completeCtaText, isCompleted && styles.completeCtaTextDone]}>
+              {isCompleted ? 'Completado' : 'Completar'}
+            </Text>
+          </TouchableOpacity>
+          
+          {/* Complete & Next button */}
+          <TouchableOpacity 
+            style={styles.nextCtaButton}
+            onPress={handleCompleteAndNext}
+          >
+            <Text style={styles.nextCtaText}>Completar y Siguiente</Text>
+            <Ionicons name="arrow-forward" size={20} color={COLORS.text} />
+          </TouchableOpacity>
+        </View>
+        
+        {/* Skip button */}
+        {getNextExercise() && (
+          <TouchableOpacity 
+            style={styles.skipButton}
+            onPress={handleSkipToNext}
+          >
+            <Text style={styles.skipButtonText}>Saltar al siguiente →</Text>
+          </TouchableOpacity>
+        )}
       </View>
+
+      {/* Section Completed Modal */}
+      <Modal
+        visible={showCompletionModal}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setShowCompletionModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.completionModal}>
+            <Ionicons name="trophy" size={64} color={COLORS.warning} />
+            <Text style={styles.completionTitle}>¡Sección Completada!</Text>
+            <Text style={styles.completionSubtitle}>
+              Has terminado todos los ejercicios de esta sección.
+            </Text>
+            
+            <TouchableOpacity 
+              style={styles.modalButton}
+              onPress={() => router.push('/exercises')}
+            >
+              <Ionicons name="library" size={20} color={COLORS.text} />
+              <Text style={styles.modalButtonText}>Volver a la Biblioteca</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={styles.modalSecondaryButton}
+              onPress={() => {
+                setShowCompletionModal(false);
+                // Go back to first exercise of section
+                if (allExercises.length > 0 && exercise) {
+                  const sameCategory = allExercises.filter(
+                    e => e.domain === exercise.domain && e.difficulty_tier === exercise.difficulty_tier
+                  );
+                  if (sameCategory.length > 0) {
+                    router.push(`/exercise/${sameCategory[0].id}`);
+                  }
+                }
+              }}
+            >
+              <Text style={styles.modalSecondaryText}>Repetir Sección</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
