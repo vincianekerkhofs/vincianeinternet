@@ -530,18 +530,38 @@ export const TechniqueAnimatedFretboard: React.FC<TechniqueAnimatedFretboardProp
   
   // Render note markers
   const renderNotes = () => {
-    if (__DEV__ && uniqueNotes.length > 0) {
-      console.log('[TechniqueAnimatedFretboard] renderNotes:', {
-        uniqueNotesCount: uniqueNotes.length,
-        firstNoteX: getFretX(uniqueNotes[0].position.fret).toFixed(1),
-        firstNoteY: getStringY(uniqueNotes[0].position.string).toFixed(1),
-      });
+    // CRITICAL DEBUG: Log all values used in calculation
+    const debugInfo = {
+      startFret,
+      endFret,
+      numFrets,
+      fretWidth: fretWidth.toFixed(2),
+      fretboardWidth,
+      nutWidth,
+      uniqueNotesCount: uniqueNotes.length,
+    };
+    console.log('[TechniqueAnimatedFretboard] DEBUG renderNotes values:', debugInfo);
+    
+    if (uniqueNotes.length === 0) {
+      console.log('[TechniqueAnimatedFretboard] No notes to render!');
+      return null;
     }
     
     return uniqueNotes.map((note, index) => {
-      const x = getFretX(note.position.fret);
+      const fret = note.position.fret;
+      const relativeFret = fret - startFret;
+      const x = nutWidth + (relativeFret * fretWidth) + (fretWidth / 2);
       const y = getStringY(note.position.string);
       const state = noteStates[index] as 'active' | 'upcoming' | 'completed' | 'reference';
+      
+      console.log(`[TechniqueAnimatedFretboard] Note ${index}:`, {
+        fret,
+        relativeFret,
+        x: x.toFixed(2),
+        y: y.toFixed(2),
+        state,
+        inViewport: x >= 0 && x <= fretboardWidth,
+      });
       
       return (
         <NoteMarker
