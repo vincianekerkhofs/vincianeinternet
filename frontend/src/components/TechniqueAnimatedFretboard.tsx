@@ -501,10 +501,20 @@ export const TechniqueAnimatedFretboard: React.FC<TechniqueAnimatedFretboardProp
   
   // Render note markers
   const renderNotes = () => {
+    console.log('[TechniqueAnimatedFretboard] Rendering notes:', {
+      uniqueNotesCount: uniqueNotes.length,
+      noteStatesCount: noteStates.length,
+      startFret,
+      endFret,
+      fretWidth,
+    });
+    
     return uniqueNotes.map((note, index) => {
       const x = getFretX(note.position.fret);
       const y = getStringY(note.position.string);
       const state = noteStates[index] as 'active' | 'upcoming' | 'completed' | 'reference';
+      
+      console.log(`[TechniqueAnimatedFretboard] Note ${index}: fret=${note.position.fret}, string=${note.position.string}, x=${x}, y=${y}, state=${state}`);
       
       return (
         <NoteMarker
