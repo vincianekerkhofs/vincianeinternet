@@ -487,7 +487,7 @@ export const TechniqueAnimatedFretboard: React.FC<TechniqueAnimatedFretboardProp
   
   // Render note markers
   const renderNotes = () => {
-    return path.notes.map((note, index) => {
+    return uniqueNotes.map((note, index) => {
       const x = getFretX(note.position.fret);
       const y = getStringY(note.position.string);
       const state = noteStates[index] as 'active' | 'upcoming' | 'completed' | 'reference';
