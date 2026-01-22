@@ -534,20 +534,7 @@ export const TechniqueAnimatedFretboard: React.FC<TechniqueAnimatedFretboardProp
   
   // Render note markers
   const renderNotes = () => {
-    // CRITICAL DEBUG: Log all values used in calculation
-    const debugInfo = {
-      startFret,
-      endFret,
-      numFrets,
-      fretWidth: fretWidth.toFixed(2),
-      fretboardWidth,
-      nutWidth,
-      uniqueNotesCount: uniqueNotes.length,
-    };
-    console.log('[TechniqueAnimatedFretboard] DEBUG renderNotes values:', debugInfo);
-    
     if (uniqueNotes.length === 0) {
-      console.log('[TechniqueAnimatedFretboard] No notes to render!');
       return null;
     }
     
@@ -557,15 +544,6 @@ export const TechniqueAnimatedFretboard: React.FC<TechniqueAnimatedFretboardProp
       const x = nutWidth + (relativeFret * fretWidth) + (fretWidth / 2);
       const y = getStringY(note.position.string);
       const state = noteStates[index] as 'active' | 'upcoming' | 'completed' | 'reference';
-      
-      console.log(`[TechniqueAnimatedFretboard] Note ${index}:`, {
-        fret,
-        relativeFret,
-        x: x.toFixed(2),
-        y: y.toFixed(2),
-        state,
-        inViewport: x >= 0 && x <= fretboardWidth,
-      });
       
       return (
         <NoteMarker
