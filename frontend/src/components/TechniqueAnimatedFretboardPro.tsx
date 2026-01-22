@@ -680,7 +680,7 @@ export const TechniqueAnimatedFretboardPro: React.FC<TechniqueAnimatedFretboardP
             styles.toggleText,
             fingerGuidesEnabled && styles.toggleTextActive
           ]}>
-            Dedos {fingerGuidesEnabled ? 'ON' : 'OFF'}
+            Dedos {fingerGuidesEnabled ? 'ON ✅ (PRO)' : 'OFF'}
           </Text>
         </TouchableOpacity>
         
