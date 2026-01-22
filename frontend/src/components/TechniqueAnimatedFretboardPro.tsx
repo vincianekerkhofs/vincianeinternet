@@ -335,18 +335,24 @@ export const TechniqueAnimatedFretboardPro: React.FC<TechniqueAnimatedFretboardP
   // STATE
   // =============================================
   
+  // State - default to TRUE
   const [fingerGuidesEnabled, setFingerGuidesEnabled] = useState(true);
   
-  // Load saved preference
+  // Load saved preference (but default is always true)
   useEffect(() => {
     const loadPreference = async () => {
       try {
         const saved = await AsyncStorage.getItem(FINGER_GUIDES_STORAGE_KEY);
-        // Default to true if nothing saved
-        setFingerGuidesEnabled(saved === null ? true : saved === 'true');
+        // If saved value exists, use it; otherwise keep default (true)
+        if (saved !== null) {
+          setFingerGuidesEnabled(saved === 'true');
+        }
+        // If nothing saved, save the default
+        else {
+          await AsyncStorage.setItem(FINGER_GUIDES_STORAGE_KEY, 'true');
+        }
       } catch (e) {
         console.warn('[Fretboard] Failed to load preference');
-        setFingerGuidesEnabled(true); // Default ON
       }
     };
     loadPreference();
