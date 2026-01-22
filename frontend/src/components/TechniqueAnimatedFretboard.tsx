@@ -215,25 +215,53 @@ export const TechniqueAnimatedFretboard: React.FC<TechniqueAnimatedFretboardProp
   const stringSpacing = stringAreaHeight / 5; // 5 gaps for 6 strings
   const nutWidth = 12;
   
-  // Calculate fret range
-  const startFret = path.startFret || 0;
-  const endFret = path.endFret || 12;
-  const numFrets = endFret - startFret + 1;
+  // Calculate fret range with robust type safety
+  // Compute min/max from notes as fallback
+  const computedFrets = useMemo(() => {
+    if (!path.notes || path.notes.length === 0) {
+      return { min: 0, max: 12 };
+    }
+    const frets = path.notes.map(n => n.position.fret);
+    return {
+      min: Math.min(...frets),
+      max: Math.max(...frets),
+    };
+  }, [path.notes]);
+  
+  // Ensure startFret and endFret are valid numbers
+  const rawStartFret = path.startFret;
+  const rawEndFret = path.endFret;
+  
+  const startFret = typeof rawStartFret === 'number' && !isNaN(rawStartFret) 
+    ? rawStartFret 
+    : Math.max(0, computedFrets.min - 1);
+    
+  const endFret = typeof rawEndFret === 'number' && !isNaN(rawEndFret) 
+    ? rawEndFret 
+    : computedFrets.max + 1;
+  
+  // Ensure we have at least 3 frets visible for context
+  const numFrets = Math.max(3, endFret - startFret + 1);
   const fretWidth = (fretboardWidth - nutWidth) / numFrets;
   
-  // Debug log
+  // Debug log (only in DEV)
   useEffect(() => {
-    console.log('[TechniqueAnimatedFretboard] Received path:', {
-      startFret: path.startFret,
-      endFret: path.endFret,
-      notesCount: path.notes?.length,
-      beatsPerLoop: path.beatsPerLoop,
-      calculatedNumFrets: numFrets,
-    });
-    if (path.notes?.length > 0) {
-      console.log('[TechniqueAnimatedFretboard] First note:', JSON.stringify(path.notes[0]));
+    if (__DEV__) {
+      console.log('[TechniqueAnimatedFretboard] Fret calculation:', {
+        rawStartFret,
+        rawEndFret,
+        typeofStart: typeof rawStartFret,
+        typeofEnd: typeof rawEndFret,
+        computedMin: computedFrets.min,
+        computedMax: computedFrets.max,
+        finalStartFret: startFret,
+        finalEndFret: endFret,
+        numFrets,
+        fretWidth: fretWidth.toFixed(2),
+        fretboardWidth,
+      });
     }
-  }, [path]);
+  }, [path, startFret, endFret, numFrets, fretWidth]);
   
   // Animation for active note pulse
   useEffect(() => {
