@@ -505,4 +505,101 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: COLORS.text,
   },
+  // New styles for level chips
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  pathToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  pathToggleLabel: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.textMuted,
+  },
+  levelChips: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+  levelChip: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.backgroundCard,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    gap: SPACING.xs,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  levelChipSelected: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primary + '20',
+  },
+  levelChipCompleted: {
+    borderColor: COLORS.success + '40',
+  },
+  levelChipLocked: {
+    opacity: 0.5,
+    backgroundColor: COLORS.surfaceLight,
+  },
+  levelChipText: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  levelChipTextSelected: {
+    color: COLORS.primary,
+  },
+  levelChipTextLocked: {
+    color: COLORS.textMuted,
+  },
+  levelDetailCard: {
+    backgroundColor: COLORS.backgroundCard,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.md,
+  },
+  levelDetailHeader: {
+    marginBottom: SPACING.md,
+  },
+  levelDetailTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    marginBottom: SPACING.xs,
+  },
+  completedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.success,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.sm,
+    gap: 4,
+  },
+  completedBadgeText: {
+    fontSize: FONTS.sizes.xs,
+    fontWeight: '600',
+    color: COLORS.text,
+  },
+  levelQuickInfo: {
+    flexDirection: 'row',
+    gap: SPACING.lg,
+  },
+  quickInfoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  quickInfoText: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.textMuted,
+  },
 });
