@@ -1976,4 +1976,135 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: COLORS.text,
   },
+  
+  // Symbol Tutorial Modal styles
+  symbolTutorialModal: {
+    backgroundColor: COLORS.backgroundCard,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.lg,
+    margin: SPACING.lg,
+    maxWidth: 360,
+    width: '100%',
+  },
+  symbolTutorialHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    marginBottom: SPACING.lg,
+  },
+  symbolBadgeLarge: {
+    width: 56,
+    height: 56,
+    borderRadius: BORDER_RADIUS.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  symbolBadgeText: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  symbolTutorialTitleWrap: {
+    flex: 1,
+  },
+  symbolTutorialName: {
+    fontSize: FONTS.sizes.xl,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  symbolTutorialMeaning: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.textSecondary,
+    marginTop: 2,
+  },
+  symbolTutorialBody: {
+    marginBottom: SPACING.lg,
+  },
+  symbolTutorialSection: {
+    marginBottom: SPACING.md,
+  },
+  symbolTutorialSectionTitle: {
+    fontSize: FONTS.sizes.sm,
+    fontWeight: '600',
+    color: COLORS.textMuted,
+    marginBottom: SPACING.xs,
+  },
+  symbolTutorialText: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.text,
+    lineHeight: 22,
+  },
+  symbolTutorialTabBox: {
+    backgroundColor: COLORS.surfaceLight,
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+  },
+  symbolTutorialTabLabel: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.textMuted,
+    marginBottom: SPACING.xs,
+  },
+  symbolTutorialTab: {
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontSize: FONTS.sizes.md,
+    color: COLORS.text,
+  },
+  symbolTutorialBtn: {
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: BORDER_RADIUS.md,
+    alignItems: 'center',
+  },
+  symbolTutorialBtnText: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  
+  // Mode Selector Modal styles
+  modeSelectorModal: {
+    backgroundColor: COLORS.backgroundCard,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.lg,
+    margin: SPACING.lg,
+    maxWidth: 400,
+    width: '100%',
+  },
+  modeOptions: {
+    gap: SPACING.md,
+  },
+  modeOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.lg,
+    borderWidth: 2,
+    borderColor: COLORS.surfaceLight,
+    gap: SPACING.md,
+  },
+  modeOptionActive: {
+    backgroundColor: COLORS.surfaceLight,
+    borderWidth: 2,
+  },
+  modeIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: BORDER_RADIUS.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modeTextWrap: {
+    flex: 1,
+  },
+  modeName: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: '600',
+    color: COLORS.text,
+  },
+  modeDescription: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.textMuted,
+    marginTop: 2,
+    lineHeight: 18,
+  },
 });
