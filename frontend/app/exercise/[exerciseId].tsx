@@ -60,6 +60,11 @@ export default function ExerciseDetailScreen() {
   const [error, setError] = useState<string | null>(null);
   const [isCompleted, setIsCompleted] = useState(false);
   
+  // Navigation state
+  const [allExercises, setAllExercises] = useState<Exercise[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(-1);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  
   // Playback state
   const [bpm, setBpm] = useState(80);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -67,8 +72,21 @@ export default function ExerciseDetailScreen() {
   
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Reset all state when exerciseId changes
   useEffect(() => {
+    // Stop metronome
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    setIsPlaying(false);
+    setCurrentBeat(1);
+    setShowCompletionModal(false);
+    
+    // Load new exercise
     loadExercise();
+    loadAllExercises();
+    
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
