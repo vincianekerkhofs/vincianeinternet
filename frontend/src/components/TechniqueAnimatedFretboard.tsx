@@ -339,14 +339,14 @@ export const TechniqueAnimatedFretboard: React.FC<TechniqueAnimatedFretboardProp
         const isDouble = DOUBLE_DOTS.includes(fret);
         if (isDouble) {
           markers.push(
-            <Circle key={`dot-${fret}-1`} cx={x} cy={stringSpacing * 2.5} r={3} fill={COLORS.textMuted} opacity={0.3} />
+            <Circle key={`dot-${fret}-1`} cx={x} cy={getStringY(2)} r={3} fill={COLORS.textMuted} opacity={0.3} />
           );
           markers.push(
-            <Circle key={`dot-${fret}-2`} cx={x} cy={stringSpacing * 4.5} r={3} fill={COLORS.textMuted} opacity={0.3} />
+            <Circle key={`dot-${fret}-2`} cx={x} cy={getStringY(5)} r={3} fill={COLORS.textMuted} opacity={0.3} />
           );
         } else {
           markers.push(
-            <Circle key={`dot-${fret}`} cx={x} cy={stringSpacing * 3.5} r={3} fill={COLORS.textMuted} opacity={0.3} />
+            <Circle key={`dot-${fret}`} cx={x} cy={getStringY(3.5)} r={3} fill={COLORS.textMuted} opacity={0.3} />
           );
         }
       }
