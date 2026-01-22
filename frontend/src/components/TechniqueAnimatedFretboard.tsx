@@ -247,29 +247,56 @@ export const TechniqueAnimatedFretboard: React.FC<TechniqueAnimatedFretboardProp
   }, [isPlaying]);
   
   // Calculate note states based on current beat
-  const noteStates = useMemo(() => {
-    // When not playing, show first note as active and rest as upcoming
+  // Also deduplicate notes at same position for clearer display
+  const { uniqueNotes, noteStates } = useMemo(() => {
+    const seenPositions = new Map<string, number>(); // position key -> index
+    const uniqueNotesList: typeof path.notes = [];
+    
+    // Find unique positions
+    path.notes.forEach((note, index) => {
+      const posKey = `${note.position.string}-${note.position.fret}`;
+      if (!seenPositions.has(posKey)) {
+        seenPositions.set(posKey, uniqueNotesList.length);
+        uniqueNotesList.push(note);
+      }
+    });
+    
+    // Calculate states for unique notes
+    let states: string[];
+    
     if (!isPlaying) {
-      return path.notes.map((note, index) => {
+      // When not playing, show first unique note as active and rest as upcoming
+      states = uniqueNotesList.map((_, index) => {
         if (index === 0) return 'active';
         return 'upcoming';
       });
+    } else {
+      const loopBeat = ((currentBeat - 1) % path.beatsPerLoop) + 1;
+      
+      // Map current beat to active note position
+      const currentNoteIndex = path.notes.findIndex((note, i) => {
+        const noteStart = note.timing;
+        const noteEnd = noteStart + note.duration;
+        return loopBeat >= noteStart && loopBeat < noteEnd;
+      });
+      
+      const currentNote = currentNoteIndex >= 0 ? path.notes[currentNoteIndex] : null;
+      const currentPosKey = currentNote ? `${currentNote.position.string}-${currentNote.position.fret}` : '';
+      
+      states = uniqueNotesList.map((note, index) => {
+        const posKey = `${note.position.string}-${note.position.fret}`;
+        if (posKey === currentPosKey) return 'active';
+        
+        // Determine if this position is upcoming or completed
+        const noteInPath = path.notes.find(n => 
+          n.position.string === note.position.string && n.position.fret === note.position.fret
+        );
+        if (noteInPath && noteInPath.timing > loopBeat) return 'upcoming';
+        return 'completed';
+      });
     }
     
-    const loopBeat = ((currentBeat - 1) % path.beatsPerLoop) + 1;
-    
-    return path.notes.map((note, index) => {
-      const noteStart = note.timing;
-      const noteEnd = noteStart + note.duration;
-      
-      if (loopBeat >= noteStart && loopBeat < noteEnd) {
-        return 'active';
-      } else if (loopBeat < noteStart) {
-        return 'upcoming';
-      } else {
-        return 'completed';
-      }
-    });
+    return { uniqueNotes: uniqueNotesList, noteStates: states };
   }, [currentBeat, path, isPlaying]);
   
   // Get X position for a fret
