@@ -717,8 +717,14 @@ export default function TechniquePracticeScreenV2() {
         )}
 
         {/* Animated Fretboard */}
-        {currentExercise?.fretboardPath && (
+        {currentExercise?.fretboardPath ? (
           <View style={styles.fretboardSection}>
+            {console.log('[TechniquePractice] Rendering fretboard with path:', {
+              startFret: currentExercise.fretboardPath.startFret,
+              endFret: currentExercise.fretboardPath.endFret,
+              notesCount: currentExercise.fretboardPath.notes?.length,
+              firstNote: currentExercise.fretboardPath.notes?.[0],
+            })}
             <TechniqueAnimatedFretboard
               path={currentExercise.fretboardPath}
               currentBeat={currentBeat}
@@ -727,6 +733,12 @@ export default function TechniquePracticeScreenV2() {
               mode={practiceMode}
               showTechniqueGlyphs={true}
             />
+          </View>
+        ) : (
+          <View style={styles.fretboardSection}>
+            <Text style={{ color: COLORS.textMuted, textAlign: 'center', padding: SPACING.md }}>
+              No hay datos de diapasón para este ejercicio
+            </Text>
           </View>
         )}
 
