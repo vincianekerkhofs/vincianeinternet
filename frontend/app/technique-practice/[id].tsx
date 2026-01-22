@@ -675,6 +675,20 @@ export default function TechniquePracticeScreenV2() {
           </Text>
         </View>
         <View style={styles.headerActions}>
+          {/* Mode indicator button */}
+          <TouchableOpacity 
+            style={[styles.modeIndicatorBtn, { backgroundColor: PRACTICE_MODES.find(m => m.id === practiceMode)?.color + '20' }]}
+            onPress={() => setShowModeSelector(true)}
+          >
+            <Ionicons 
+              name={PRACTICE_MODES.find(m => m.id === practiceMode)?.icon as any || 'compass'} 
+              size={18} 
+              color={PRACTICE_MODES.find(m => m.id === practiceMode)?.color || COLORS.primary} 
+            />
+            <Text style={[styles.modeIndicatorText, { color: PRACTICE_MODES.find(m => m.id === practiceMode)?.color }]}>
+              {PRACTICE_MODES.find(m => m.id === practiceMode)?.name}
+            </Text>
+          </TouchableOpacity>
           <TouchableOpacity 
             style={styles.iconButton}
             onPress={() => setShowMicroTutorial(true)}
