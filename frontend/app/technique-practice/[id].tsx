@@ -1146,6 +1146,113 @@ export default function TechniquePracticeScreenV2() {
           </View>
         </View>
       )}
+
+      {/* Symbol Tutorial Modal - Shows when tapping a technique symbol */}
+      <Modal
+        visible={!!selectedSymbol}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setSelectedSymbol(null)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1}
+          onPress={() => setSelectedSymbol(null)}
+        >
+          <View style={styles.symbolTutorialModal}>
+            {selectedSymbol && (
+              <>
+                <View style={styles.symbolTutorialHeader}>
+                  <View style={[styles.symbolBadgeLarge, { backgroundColor: technique?.color || COLORS.primary }]}>
+                    <Text style={styles.symbolBadgeText}>{selectedSymbol.symbol}</Text>
+                  </View>
+                  <View style={styles.symbolTutorialTitleWrap}>
+                    <Text style={styles.symbolTutorialName}>{selectedSymbol.name}</Text>
+                    <Text style={styles.symbolTutorialMeaning}>{selectedSymbol.meaning}</Text>
+                  </View>
+                </View>
+                
+                <View style={styles.symbolTutorialBody}>
+                  <View style={styles.symbolTutorialSection}>
+                    <Text style={styles.symbolTutorialSectionTitle}>
+                      <Ionicons name="hand-left" size={14} color={COLORS.primary} /> Cómo ejecutar
+                    </Text>
+                    <Text style={styles.symbolTutorialText}>{selectedSymbol.howToExecute}</Text>
+                  </View>
+                  
+                  <View style={styles.symbolTutorialSection}>
+                    <Text style={styles.symbolTutorialSectionTitle}>
+                      <Ionicons name="fitness" size={14} color={COLORS.success} /> Mini ejercicio
+                    </Text>
+                    <Text style={styles.symbolTutorialText}>{selectedSymbol.miniExercise}</Text>
+                  </View>
+                  
+                  <View style={styles.symbolTutorialTabBox}>
+                    <Text style={styles.symbolTutorialTabLabel}>Ejemplo:</Text>
+                    <Text style={styles.symbolTutorialTab}>{selectedSymbol.tabExample}</Text>
+                  </View>
+                </View>
+                
+                <TouchableOpacity 
+                  style={[styles.symbolTutorialBtn, { backgroundColor: technique?.color || COLORS.primary }]}
+                  onPress={() => setSelectedSymbol(null)}
+                >
+                  <Text style={styles.symbolTutorialBtnText}>Entendido</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Mode Selector Modal */}
+      <Modal
+        visible={showModeSelector}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowModeSelector(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modeSelectorModal}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Modo de Práctica</Text>
+              <TouchableOpacity onPress={() => setShowModeSelector(false)}>
+                <Ionicons name="close" size={24} color={COLORS.text} />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.modeOptions}>
+              {PRACTICE_MODES.map((mode) => (
+                <TouchableOpacity
+                  key={mode.id}
+                  style={[
+                    styles.modeOption,
+                    practiceMode === mode.id && styles.modeOptionActive,
+                    practiceMode === mode.id && { borderColor: mode.color },
+                  ]}
+                  onPress={() => {
+                    setPracticeMode(mode.id);
+                    setShowModeSelector(false);
+                  }}
+                >
+                  <View style={[styles.modeIconWrap, { backgroundColor: mode.color + '20' }]}>
+                    <Ionicons name={mode.icon as any} size={24} color={mode.color} />
+                  </View>
+                  <View style={styles.modeTextWrap}>
+                    <Text style={[styles.modeName, practiceMode === mode.id && { color: mode.color }]}>
+                      {mode.name}
+                    </Text>
+                    <Text style={styles.modeDescription}>{mode.description}</Text>
+                  </View>
+                  {practiceMode === mode.id && (
+                    <Ionicons name="checkmark-circle" size={24} color={mode.color} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
