@@ -35,7 +35,7 @@ import {
   TechniqueSymbol,
 } from '../../src/data/techniqueExercises';
 import { getTechniqueIcon } from '../../src/components/TechniqueIcons';
-import { TechniqueAnimatedFretboard } from '../../src/components/TechniqueAnimatedFretboard';
+import { TechniqueAnimatedFretboardV2 } from '../../src/components/TechniqueAnimatedFretboardV2';
 import { 
   addPracticeTime, 
   getTechniqueMasteryById, 
