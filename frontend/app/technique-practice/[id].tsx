@@ -169,11 +169,17 @@ export default function TechniquePracticeScreenV2() {
     setTechnique(tech);
     
     // Load exercises for this technique and level
-    const levelExercises = getExercisesForLevel(techniqueId, levelId);
+    const allLevelExercises = getExercisesForLevel(techniqueId, levelId);
+    // Filter only playable exercises (no placeholders!)
+    const levelExercises = filterPlayableTechniqueExercises(allLevelExercises);
+    
+    if (__DEV__ && allLevelExercises.length !== levelExercises.length) {
+      console.log(`[TechniquePractice] Filtered ${allLevelExercises.length - levelExercises.length} incomplete exercises for ${techniqueId} level ${levelId}`);
+    }
+    
     if (levelExercises.length === 0) {
-      // Generate default exercises if none exist in the database
-      console.warn(`No exercises found for ${techniqueId} level ${levelId}, using defaults`);
-      // Still allow practice with default exercise
+      setDataError(`No hay ejercicios disponibles para ${tech.name} Nivel ${levelId}`);
+      return;
     }
     setExercises(levelExercises);
     
