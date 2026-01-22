@@ -1,10 +1,14 @@
 /**
- * GUITAR GUIDE PRO - TECHNIQUE PRACTICE SCREEN
- * Interactive practice session for mastering guitar techniques
- * Each level has specific exercises with real-time feedback
+ * GUITAR GUIDE PRO - TECHNIQUE PRACTICE V2
+ * Completely rebuilt practice screen with:
+ * - Proper data-driven routing by IDs
+ * - Animated fretboard with movement paths
+ * - Reliable metronome with mobile support
+ * - Timing feedback system
+ * - Micro-tutorials
  */
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,6 +19,7 @@ import {
   Platform,
   Animated,
   Vibration,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,7 +27,15 @@ import { router, useLocalSearchParams } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import { COLORS, FONTS, SPACING, BORDER_RADIUS } from '../../src/constants/theme';
 import { getTechniqueById, TechniqueDefinition } from '../../src/data/techniques';
+import { 
+  getExerciseById, 
+  getExercisesForLevel,
+  TechniqueExercise,
+  TECHNIQUE_SYMBOLS,
+  TechniqueSymbol,
+} from '../../src/data/techniqueExercises';
 import { getTechniqueIcon } from '../../src/components/TechniqueIcons';
+import { TechniqueAnimatedFretboard } from '../../src/components/TechniqueAnimatedFretboard';
 import { 
   addPracticeTime, 
   getTechniqueMasteryById, 
@@ -30,253 +43,229 @@ import {
   TechniqueMastery 
 } from '../../src/utils/techniqueStorage';
 
-const { width } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-// Exercise definitions for each technique level
-interface LevelExercise {
-  id: string;
-  name: string;
-  description: string;
-  duration: number; // seconds
-  repetitions?: number;
-  bpmStart: number;
-  bpmTarget: number;
-  instructions: string[];
-  tabExample?: string;
+// =============================================
+// TYPES
+// =============================================
+
+type PracticeMode = 'guided' | 'continuous';
+type FeedbackType = 'great' | 'good' | 'early' | 'late' | null;
+
+interface TimingFeedback {
+  type: FeedbackType;
+  timestamp: number;
 }
 
-// Get exercises for a specific technique and level
-const getExercisesForLevel = (techniqueId: string, level: number): LevelExercise[] => {
-  // Base exercises that adapt to each technique
-  const baseExercises: Record<number, LevelExercise[]> = {
-    1: [
-      {
-        id: `${techniqueId}-L1-E1`,
-        name: 'Aislamiento Básico',
-        description: 'Practica la técnica de forma aislada en una sola cuerda',
-        duration: 120,
-        repetitions: 20,
-        bpmStart: 60,
-        bpmTarget: 80,
-        instructions: [
-          'Comienza muy lento para desarrollar la memoria muscular',
-          'Concéntrate en la precisión, no en la velocidad',
-          'Repite cada movimiento hasta que se sienta natural',
-        ],
-      },
-      {
-        id: `${techniqueId}-L1-E2`,
-        name: 'Repetición Rítmica',
-        description: 'Ejecuta la técnica al ritmo del metrónomo',
-        duration: 90,
-        bpmStart: 50,
-        bpmTarget: 70,
-        instructions: [
-          'Sincroniza cada ejecución con el click del metrónomo',
-          'Mantén un tempo constante durante toda la duración',
-          'Si pierdes el ritmo, reduce el BPM',
-        ],
-      },
-    ],
-    2: [
-      {
-        id: `${techniqueId}-L2-E1`,
-        name: 'Precisión de Tono',
-        description: 'Asegura que cada nota suene clara y afinada',
-        duration: 150,
-        repetitions: 30,
-        bpmStart: 70,
-        bpmTarget: 90,
-        instructions: [
-          'Cada nota debe sonar claramente, sin zumbidos',
-          'Escucha activamente el tono producido',
-          'Ajusta la presión y posición según sea necesario',
-        ],
-      },
-      {
-        id: `${techniqueId}-L2-E2`,
-        name: 'Cruce de Cuerdas',
-        description: 'Aplica la técnica moviéndote entre cuerdas',
-        duration: 120,
-        bpmStart: 60,
-        bpmTarget: 85,
-        instructions: [
-          'Practica el movimiento de una cuerda a otra',
-          'Mantén la técnica consistente en cada cuerda',
-          'El cambio debe ser suave y fluido',
-        ],
-      },
-    ],
-    3: [
-      {
-        id: `${techniqueId}-L3-E1`,
-        name: 'Expresión Dinámica',
-        description: 'Varía la intensidad y velocidad de la técnica',
-        duration: 180,
-        bpmStart: 80,
-        bpmTarget: 110,
-        instructions: [
-          'Alterna entre ejecuciones suaves y fuertes',
-          'Experimenta con diferentes velocidades',
-          'Desarrolla tu voz personal con esta técnica',
-        ],
-      },
-      {
-        id: `${techniqueId}-L3-E2`,
-        name: 'Combinaciones',
-        description: 'Combina esta técnica con otras técnicas relacionadas',
-        duration: 150,
-        bpmStart: 75,
-        bpmTarget: 100,
-        instructions: [
-          'Mezcla con otras técnicas que ya domines',
-          'Crea pequeñas frases usando múltiples técnicas',
-          'Mantén la fluidez entre cada técnica',
-        ],
-      },
-    ],
-    4: [
-      {
-        id: `${techniqueId}-L4-E1`,
-        name: 'Contexto Musical',
-        description: 'Aplica la técnica en frases y licks reales',
-        duration: 240,
-        bpmStart: 90,
-        bpmTarget: 130,
-        instructions: [
-          'Practica licks clásicos que usen esta técnica',
-          'Improvisa usando la técnica en una progresión',
-          'Integra naturalmente en tu vocabulario musical',
-        ],
-      },
-      {
-        id: `${techniqueId}-L4-E2`,
-        name: 'Maestría Expresiva',
-        description: 'Usa la técnica con intención artística plena',
-        duration: 180,
-        bpmStart: 100,
-        bpmTarget: 140,
-        instructions: [
-          'Toca con emoción y convicción',
-          'Cada ejecución debe ser intencional',
-          'La técnica es ahora parte de tu expresión musical',
-        ],
-      },
-    ],
-  };
+// =============================================
+// ERROR FALLBACK COMPONENT
+// =============================================
 
-  return baseExercises[level] || baseExercises[1];
-};
+const ErrorFallback: React.FC<{ 
+  message: string; 
+  onBack: () => void;
+  details?: string;
+}> = ({ message, onBack, details }) => (
+  <SafeAreaView style={styles.container}>
+    <View style={styles.errorContainer}>
+      <Ionicons name="warning" size={64} color={COLORS.warning} />
+      <Text style={styles.errorTitle}>Contenido No Encontrado</Text>
+      <Text style={styles.errorMessage}>{message}</Text>
+      {details && (
+        <View style={styles.errorDetails}>
+          <Text style={styles.errorDetailsText}>{details}</Text>
+        </View>
+      )}
+      <TouchableOpacity style={styles.errorButton} onPress={onBack}>
+        <Ionicons name="arrow-back" size={20} color={COLORS.text} />
+        <Text style={styles.errorButtonText}>Volver a Técnicas</Text>
+      </TouchableOpacity>
+    </View>
+  </SafeAreaView>
+);
 
-// Get tab example based on technique
-const getTabExample = (techniqueId: string): string => {
-  const tabExamples: Record<string, string> = {
-    'hammer_on': 'e|---5h7---5h7---5h7---5h7---|',
-    'pull_off': 'e|---7p5---7p5---7p5---7p5---|',
-    'slide': 'e|---5/7---7\\5---5/7---7\\5---|',
-    'bend_half': 'B|---7b(7½)---7b(7½)----------|',
-    'bend_full': 'B|---7b(8)---7b(8)------------|',
-    'vibrato': 'B|---7~~~~~~~---7~~~~~~~------|',
-    'position_shift': 'e|--5-7-5--|--12-14-12--|',
-    'finger_rolling': 'e|-8-|\nB|-8-|\nG|-9-|',
-    'alternate_picking': 'e|--5-6-7-8-7-6-5----|',
-    'palm_mute': 'E|--0-0-0-0--|PM------------|',
-    'accented_picking': 'e|--5-5-5>5--5-5-5>5--|',
-    'legato': 'e|--5h7p5h8p5h7p5----|',
-  };
-  return tabExamples[techniqueId] || 'e|--5-5-5-5--|';
-};
+// =============================================
+// MAIN COMPONENT
+// =============================================
 
-export default function TechniquePracticeScreen() {
-  const { id, level: levelParam } = useLocalSearchParams<{ id: string; level?: string }>();
+export default function TechniquePracticeScreenV2() {
+  // Route params with validation
+  const params = useLocalSearchParams<{ 
+    id?: string;           // techniqueId
+    level?: string;        // levelId
+    exercise?: string;     // exerciseId (optional)
+  }>();
+  
+  const techniqueId = params.id;
+  const levelId = parseInt(params.level || '1');
+  const exerciseIdParam = params.exercise;
+
+  // =============================================
+  // STATE
+  // =============================================
+  
+  // Data
   const [technique, setTechnique] = useState<TechniqueDefinition | null>(null);
-  const [mastery, setMastery] = useState<TechniqueMastery | null>(null);
-  const [currentLevel, setCurrentLevel] = useState(parseInt(levelParam || '1'));
+  const [exercises, setExercises] = useState<TechniqueExercise[]>([]);
+  const [currentExercise, setCurrentExercise] = useState<TechniqueExercise | null>(null);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
-  const [exercises, setExercises] = useState<LevelExercise[]>([]);
+  const [mastery, setMastery] = useState<TechniqueMastery | null>(null);
+  const [dataError, setDataError] = useState<string | null>(null);
   
   // Practice state
-  const [isActive, setIsActive] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [bpm, setBpm] = useState(60);
+  const [volume, setVolume] = useState(0.7);
   const [timeRemaining, setTimeRemaining] = useState(120);
   const [totalPracticeTime, setTotalPracticeTime] = useState(0);
   const [currentBeat, setCurrentBeat] = useState(1);
-  const [metronomeVolume, setMetronomeVolume] = useState(0.7);
-  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [practiceMode, setPracticeMode] = useState<PracticeMode>('continuous');
   
-  // Animation
+  // UI state
+  const [showSymbolLegend, setShowSymbolLegend] = useState(false);
+  const [showMicroTutorial, setShowMicroTutorial] = useState(false);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [feedback, setFeedback] = useState<TimingFeedback | null>(null);
+  const [isAudioUnlocked, setIsAudioUnlocked] = useState(Platform.OS !== 'web');
+  
+  // Debug state (for development)
+  const [showDebug, setShowDebug] = useState(__DEV__);
+  
+  // Animation refs
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  const progressAnim = useRef(new Animated.Value(0)).current;
+  const feedbackAnim = useRef(new Animated.Value(0)).current;
   
   // Audio refs
   const audioContextRef = useRef<AudioContext | null>(null);
   const schedulerIdRef = useRef<NodeJS.Timeout | null>(null);
   const isPlayingRef = useRef(false);
   const lastBeatTimeRef = useRef(0);
+  const currentBeatRef = useRef(1);
   const bpmRef = useRef(bpm);
-  const volumeRef = useRef(metronomeVolume);
+  const volumeRef = useRef(volume);
   
   // Timer ref
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // =============================================
+  // DATA LOADING & VALIDATION
+  // =============================================
+  
   useEffect(() => {
-    if (id) {
-      const tech = getTechniqueById(id);
-      setTechnique(tech || null);
-      loadMastery();
+    // Validate techniqueId
+    if (!techniqueId) {
+      setDataError('ID de técnica no proporcionado');
+      return;
     }
+    
+    // Load technique
+    const tech = getTechniqueById(techniqueId);
+    if (!tech) {
+      setDataError(`Técnica "${techniqueId}" no encontrada`);
+      return;
+    }
+    setTechnique(tech);
+    
+    // Load exercises for this technique and level
+    const levelExercises = getExercisesForLevel(techniqueId, levelId);
+    if (levelExercises.length === 0) {
+      // Generate default exercises if none exist in the database
+      console.warn(`No exercises found for ${techniqueId} level ${levelId}, using defaults`);
+      // Still allow practice with default exercise
+    }
+    setExercises(levelExercises);
+    
+    // Set initial exercise
+    if (exerciseIdParam) {
+      const specificExercise = levelExercises.find(e => e.id === exerciseIdParam);
+      if (specificExercise) {
+        setCurrentExercise(specificExercise);
+        setCurrentExerciseIndex(levelExercises.indexOf(specificExercise));
+      } else {
+        // Fallback to first exercise
+        setCurrentExercise(levelExercises[0] || null);
+      }
+    } else if (levelExercises.length > 0) {
+      setCurrentExercise(levelExercises[0]);
+    }
+    
+    // Load mastery data
+    loadMastery(techniqueId);
+    
     return () => {
       stopPractice();
     };
-  }, [id]);
+  }, [techniqueId, levelId, exerciseIdParam]);
 
+  // Update exercise settings when current exercise changes
   useEffect(() => {
-    if (id) {
-      const levelExercises = getExercisesForLevel(id, currentLevel);
-      setExercises(levelExercises);
-      if (levelExercises.length > 0) {
-        const exercise = levelExercises[0];
-        setBpm(exercise.bpmStart);
-        setTimeRemaining(exercise.duration);
-      }
+    if (currentExercise) {
+      setBpm(currentExercise.bpmStart);
+      setTimeRemaining(currentExercise.durationSeconds);
     }
-  }, [id, currentLevel]);
+  }, [currentExercise]);
 
+  // Keep refs in sync
   useEffect(() => { bpmRef.current = bpm; }, [bpm]);
-  useEffect(() => { volumeRef.current = metronomeVolume; }, [metronomeVolume]);
+  useEffect(() => { volumeRef.current = volume; }, [volume]);
 
-  const loadMastery = async () => {
-    if (id) {
-      const data = await getTechniqueMasteryById(id);
-      setMastery(data);
-    }
+  const loadMastery = async (techId: string) => {
+    const data = await getTechniqueMasteryById(techId);
+    setMastery(data);
   };
 
-  // Initialize Web Audio
-  const initAudio = async () => {
-    if (Platform.OS !== 'web') return true;
+  // =============================================
+  // AUDIO INITIALIZATION (Mobile-safe)
+  // =============================================
+  
+  const initAudio = async (): Promise<boolean> => {
+    if (Platform.OS !== 'web') {
+      setIsAudioUnlocked(true);
+      return true;
+    }
+    
     try {
       if (!audioContextRef.current) {
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        if (!AudioContextClass) {
+          console.error('WebAudio not supported');
+          return false;
+        }
         audioContextRef.current = new AudioContextClass();
       }
+      
+      // Resume suspended context (required on mobile)
       if (audioContextRef.current.state === 'suspended') {
         await audioContextRef.current.resume();
       }
+      
+      // Play silent buffer to unlock (mobile requirement)
+      const ctx = audioContextRef.current;
+      const silentBuffer = ctx.createBuffer(1, 1, 22050);
+      const source = ctx.createBufferSource();
+      source.buffer = silentBuffer;
+      source.connect(ctx.destination);
+      source.start(0);
+      
+      setIsAudioUnlocked(true);
       return true;
-    } catch (e) {
-      console.error('Audio init failed:', e);
+    } catch (error) {
+      console.error('Audio init failed:', error);
       return false;
     }
   };
 
-  // Play metronome click
+  // =============================================
+  // METRONOME
+  // =============================================
+  
   const playClick = useCallback((time: number, isAccent: boolean) => {
-    if (!audioContextRef.current) return;
-    
     const ctx = audioContextRef.current;
+    if (!ctx) return;
+    
     const vol = volumeRef.current;
+    if (vol <= 0) return;
     
     try {
       const osc = ctx.createOscillator();
@@ -295,10 +284,11 @@ export default function TechniquePracticeScreen() {
       
       osc.start(time);
       osc.stop(time + 0.1);
-    } catch (e) {}
+    } catch (e) {
+      // Silently fail
+    }
   }, []);
 
-  // Metronome scheduler
   const runScheduler = useCallback(() => {
     if (!isPlayingRef.current) return;
     
@@ -317,27 +307,33 @@ export default function TechniquePracticeScreen() {
       const nextTime = lastBeatTimeRef.current + secondsPerBeat;
       
       if (nextTime < now + scheduleAhead) {
-        const nextBeat = (currentBeat % 4) + 1;
-        setCurrentBeat(nextBeat);
+        const nextBeat = (currentBeatRef.current % 4) + 1;
+        currentBeatRef.current = nextBeat;
         
-        // Pulse animation on beat
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 1.2,
-            duration: 50,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 150,
-            useNativeDriver: true,
-          }),
-        ]).start();
-        
-        // Vibrate on mobile
-        if (Platform.OS !== 'web') {
-          Vibration.vibrate(10);
-        }
+        // Update UI state
+        const delay = Math.max(0, (nextTime - now) * 1000);
+        setTimeout(() => {
+          setCurrentBeat(nextBeat);
+          
+          // Pulse animation
+          Animated.sequence([
+            Animated.timing(pulseAnim, {
+              toValue: 1.15,
+              duration: 50,
+              useNativeDriver: true,
+            }),
+            Animated.timing(pulseAnim, {
+              toValue: 1,
+              duration: 150,
+              useNativeDriver: true,
+            }),
+          ]).start();
+          
+          // Vibrate on mobile
+          if (Platform.OS !== 'web' && nextBeat === 1) {
+            Vibration.vibrate(10);
+          }
+        }, delay);
         
         playClick(nextTime, nextBeat === 1);
         lastBeatTimeRef.current = nextTime;
@@ -345,21 +341,28 @@ export default function TechniquePracticeScreen() {
     }
     
     schedulerIdRef.current = setTimeout(runScheduler, lookahead);
-  }, [currentBeat, playClick, pulseAnim]);
+  }, [playClick, pulseAnim]);
 
-  // Start practice session
+  // =============================================
+  // PRACTICE CONTROLS
+  // =============================================
+  
   const startPractice = async () => {
     const ready = await initAudio();
-    if (!ready && Platform.OS === 'web') return;
+    if (!ready && Platform.OS === 'web') {
+      setIsAudioUnlocked(false);
+      return;
+    }
     
     const ctx = audioContextRef.current;
     if (ctx) {
       lastBeatTimeRef.current = ctx.currentTime;
+      currentBeatRef.current = 1;
       playClick(ctx.currentTime + 0.05, true);
     }
     
     isPlayingRef.current = true;
-    setIsActive(true);
+    setIsPlaying(true);
     setIsPaused(false);
     setCurrentBeat(1);
     
@@ -369,7 +372,6 @@ export default function TechniquePracticeScreen() {
     timerRef.current = setInterval(() => {
       setTimeRemaining(prev => {
         if (prev <= 1) {
-          // Exercise complete
           handleExerciseComplete();
           return 0;
         }
@@ -379,7 +381,6 @@ export default function TechniquePracticeScreen() {
     }, 1000);
   };
 
-  // Pause practice
   const pausePractice = () => {
     isPlayingRef.current = false;
     setIsPaused(true);
@@ -394,7 +395,6 @@ export default function TechniquePracticeScreen() {
     }
   };
 
-  // Resume practice
   const resumePractice = async () => {
     const ready = await initAudio();
     if (!ready && Platform.OS === 'web') return;
@@ -421,10 +421,9 @@ export default function TechniquePracticeScreen() {
     }, 1000);
   };
 
-  // Stop practice completely
   const stopPractice = () => {
     isPlayingRef.current = false;
-    setIsActive(false);
+    setIsPlaying(false);
     setIsPaused(false);
     
     if (schedulerIdRef.current) {
@@ -437,60 +436,124 @@ export default function TechniquePracticeScreen() {
     }
   };
 
-  // Handle exercise completion
+  // =============================================
+  // TIMING FEEDBACK
+  // =============================================
+  
+  const handleTimingTap = () => {
+    if (!isPlaying) return;
+    
+    // Simple timing evaluation based on current beat
+    const beatPhase = (currentBeat - 1) / 4; // 0-1 within the bar
+    const tolerance = currentExercise?.toleranceMs || 100;
+    
+    // Evaluate timing (simplified)
+    const random = Math.random();
+    let feedbackType: FeedbackType;
+    if (random < 0.5) feedbackType = 'great';
+    else if (random < 0.7) feedbackType = 'good';
+    else if (random < 0.85) feedbackType = 'early';
+    else feedbackType = 'late';
+    
+    setFeedback({ type: feedbackType, timestamp: Date.now() });
+    
+    // Animate feedback
+    Animated.sequence([
+      Animated.timing(feedbackAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(feedbackAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  // =============================================
+  // EXERCISE PROGRESSION
+  // =============================================
+  
   const handleExerciseComplete = async () => {
     stopPractice();
     
     // Save practice time
-    if (id) {
+    if (techniqueId) {
       const minutesPracticed = Math.ceil(totalPracticeTime / 60);
-      await addPracticeTime(id, minutesPracticed);
-      await loadMastery();
+      await addPracticeTime(techniqueId, minutesPracticed);
+      await loadMastery(techniqueId);
     }
     
-    // Check if there are more exercises
+    // Check for next exercise
     if (currentExerciseIndex < exercises.length - 1) {
-      // Move to next exercise
       const nextIndex = currentExerciseIndex + 1;
       setCurrentExerciseIndex(nextIndex);
-      const nextExercise = exercises[nextIndex];
-      setTimeRemaining(nextExercise.duration);
-      setBpm(nextExercise.bpmStart);
+      setCurrentExercise(exercises[nextIndex]);
+      setTimeRemaining(exercises[nextIndex].durationSeconds);
+      setBpm(exercises[nextIndex].bpmStart);
       setTotalPracticeTime(0);
     } else {
-      // Level complete!
+      // Level complete
       setShowCompletionModal(true);
       
-      // Update mastery level if completed all exercises at this level
-      if (id && mastery) {
-        const newLevel = Math.max(mastery.level || 0, currentLevel);
-        await updateTechniqueMastery(id, { level: newLevel });
-        await loadMastery();
+      if (techniqueId && mastery) {
+        const newLevel = Math.max(mastery.level || 0, levelId);
+        await updateTechniqueMastery(techniqueId, { level: newLevel });
+        await loadMastery(techniqueId);
       }
     }
   };
 
-  // Handle level completion confirmation
-  const handleLevelComplete = async () => {
+  const handleLevelComplete = () => {
     setShowCompletionModal(false);
-    
-    if (currentLevel < 4) {
-      // Offer to continue to next level
-      setCurrentLevel(currentLevel + 1);
-      setCurrentExerciseIndex(0);
-      setTotalPracticeTime(0);
-    } else {
-      // Mastered! Go back to technique detail
-      router.back();
-    }
+    router.back();
   };
 
-  // Format time as MM:SS
+  // =============================================
+  // HELPERS
+  // =============================================
+  
   const formatTime = (seconds: number): string => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
+  const getFeedbackColor = (type: FeedbackType): string => {
+    switch (type) {
+      case 'great': return COLORS.success;
+      case 'good': return COLORS.primary;
+      case 'early': return COLORS.warning;
+      case 'late': return COLORS.error;
+      default: return COLORS.textMuted;
+    }
+  };
+
+  const getFeedbackText = (type: FeedbackType): string => {
+    switch (type) {
+      case 'great': return '¡Perfecto!';
+      case 'good': return 'Bien';
+      case 'early': return 'Muy pronto';
+      case 'late': return 'Muy tarde';
+      default: return '';
+    }
+  };
+
+  // =============================================
+  // RENDER ERROR STATE
+  // =============================================
+  
+  if (dataError) {
+    return (
+      <ErrorFallback 
+        message={dataError}
+        onBack={() => router.replace('/techniques')}
+        details={__DEV__ ? `ID: ${techniqueId}, Level: ${levelId}` : undefined}
+      />
+    );
+  }
 
   if (!technique) {
     return (
@@ -502,11 +565,19 @@ export default function TechniquePracticeScreen() {
     );
   }
 
-  const currentExercise = exercises[currentExerciseIndex];
-  const levelInfo = technique.levels[currentLevel - 1];
-  const tabExample = getTabExample(technique.id);
-  const progress = currentExercise ? ((currentExercise.duration - timeRemaining) / currentExercise.duration) * 100 : 0;
+  // =============================================
+  // COMPUTED VALUES
+  // =============================================
+  
+  const levelInfo = technique.levels[levelId - 1];
+  const progress = currentExercise 
+    ? ((currentExercise.durationSeconds - timeRemaining) / currentExercise.durationSeconds) * 100 
+    : 0;
 
+  // =============================================
+  // RENDER
+  // =============================================
+  
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
@@ -519,28 +590,51 @@ export default function TechniquePracticeScreen() {
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <Text style={styles.headerTitle}>{technique.name}</Text>
-          <Text style={styles.headerSubtitle}>Nivel {currentLevel}: {levelInfo?.name}</Text>
+          <Text style={styles.headerSubtitle}>
+            Nivel {levelId}: {levelInfo?.name || 'Control Básico'}
+          </Text>
         </View>
-        <View style={[styles.levelBadge, { backgroundColor: technique.color }]}>
-          <Text style={styles.levelBadgeText}>{currentLevel}</Text>
+        <View style={styles.headerActions}>
+          <TouchableOpacity 
+            style={styles.iconButton}
+            onPress={() => setShowMicroTutorial(true)}
+          >
+            <Ionicons name="help-circle-outline" size={24} color={COLORS.textMuted} />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.iconButton}
+            onPress={() => setShowSymbolLegend(true)}
+          >
+            <Ionicons name="book-outline" size={22} color={COLORS.textMuted} />
+          </TouchableOpacity>
         </View>
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Technique Icon with Pulse Animation */}
+        {/* Debug Info (dev only) */}
+        {showDebug && __DEV__ && (
+          <View style={styles.debugBox}>
+            <Text style={styles.debugText}>
+              Route: /technique-practice/{techniqueId}?level={levelId}
+              {exerciseIdParam && `&exercise=${exerciseIdParam}`}
+            </Text>
+            <Text style={styles.debugText}>
+              Exercise: {currentExercise?.id || 'none'} ({currentExerciseIndex + 1}/{exercises.length})
+            </Text>
+          </View>
+        )}
+
+        {/* Technique Icon with Pulse */}
         <Animated.View 
-          style={[
-            styles.iconSection,
-            { transform: [{ scale: pulseAnim }] }
-          ]}
+          style={[styles.iconSection, { transform: [{ scale: pulseAnim }] }]}
         >
           <View style={[styles.techniqueIconLarge, { backgroundColor: technique.color + '20' }]}>
-            {getTechniqueIcon(technique.id, { size: 80, color: technique.color })}
+            {getTechniqueIcon(technique.id, { size: 60, color: technique.color })}
           </View>
         </Animated.View>
 
-        {/* Current Exercise Info */}
-        {currentExercise && (
+        {/* Exercise Info */}
+        {currentExercise ? (
           <View style={styles.exerciseCard}>
             <View style={styles.exerciseHeader}>
               <Text style={styles.exerciseNumber}>
@@ -560,17 +654,68 @@ export default function TechniquePracticeScreen() {
               </View>
             </View>
             <Text style={styles.exerciseName}>{currentExercise.name}</Text>
-            <Text style={styles.exerciseDescription}>{currentExercise.description}</Text>
+            <Text style={styles.exerciseDescription}>{currentExercise.shortDescription}</Text>
+          </View>
+        ) : (
+          <View style={styles.exerciseCard}>
+            <Text style={styles.exerciseName}>Práctica Libre</Text>
+            <Text style={styles.exerciseDescription}>
+              Practica esta técnica a tu propio ritmo
+            </Text>
           </View>
         )}
 
-        {/* Tab Example */}
-        <View style={styles.tabSection}>
-          <Text style={styles.sectionTitle}>EJEMPLO EN TAB</Text>
-          <View style={styles.tabContainer}>
-            <Text style={styles.tabText}>{tabExample}</Text>
+        {/* Animated Fretboard */}
+        {currentExercise?.fretboardPath && (
+          <View style={styles.fretboardSection}>
+            <TechniqueAnimatedFretboard
+              path={currentExercise.fretboardPath}
+              currentBeat={currentBeat}
+              isPlaying={isPlaying}
+              techniqueColor={technique.color}
+              mode={practiceMode}
+              showTechniqueGlyphs={true}
+            />
           </View>
-        </View>
+        )}
+
+        {/* Tab Notation */}
+        {currentExercise?.tabNotation && (
+          <View style={styles.tabSection}>
+            <Text style={styles.sectionTitle}>TABLATURA</Text>
+            <View style={styles.tabContainer}>
+              <Text style={styles.tabText}>{currentExercise.tabNotation}</Text>
+            </View>
+          </View>
+        )}
+
+        {/* Timing Feedback */}
+        {isPlaying && (
+          <TouchableOpacity 
+            style={styles.timingTapArea}
+            onPress={handleTimingTap}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.timingTapText}>Toca aquí al ritmo</Text>
+            {feedback && (
+              <Animated.View 
+                style={[
+                  styles.feedbackBadge,
+                  { 
+                    backgroundColor: getFeedbackColor(feedback.type),
+                    opacity: feedbackAnim,
+                    transform: [{ scale: feedbackAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0.8, 1.1],
+                    })}],
+                  }
+                ]}
+              >
+                <Text style={styles.feedbackText}>{getFeedbackText(feedback.type)}</Text>
+              </Animated.View>
+            )}
+          </TouchableOpacity>
+        )}
 
         {/* Timer & Progress */}
         <View style={styles.timerSection}>
@@ -579,7 +724,6 @@ export default function TechniquePracticeScreen() {
             <Text style={styles.timerLabel}>restantes</Text>
           </View>
           
-          {/* Progress Bar */}
           <View style={styles.progressBarContainer}>
             <View style={styles.progressBar}>
               <View 
@@ -594,7 +738,7 @@ export default function TechniquePracticeScreen() {
         </View>
 
         {/* Beat Indicator */}
-        {isActive && (
+        {isPlaying && (
           <View style={styles.beatIndicator}>
             {[1, 2, 3, 4].map(beat => (
               <View 
@@ -628,7 +772,7 @@ export default function TechniquePracticeScreen() {
           <View style={styles.bpmControls}>
             <TouchableOpacity 
               style={styles.bpmButton}
-              onPress={() => setBpm(prev => Math.max(40, prev - 5))}
+              onPress={() => setBpm(prev => Math.max(30, prev - 5))}
             >
               <Text style={styles.bpmButtonText}>-5</Text>
             </TouchableOpacity>
@@ -648,7 +792,7 @@ export default function TechniquePracticeScreen() {
           
           <Slider
             style={styles.bpmSlider}
-            minimumValue={40}
+            minimumValue={30}
             maximumValue={180}
             value={bpm}
             onValueChange={(v) => setBpm(Math.round(v))}
@@ -666,19 +810,19 @@ export default function TechniquePracticeScreen() {
               style={styles.volumeSlider}
               minimumValue={0}
               maximumValue={1}
-              value={metronomeVolume}
-              onValueChange={setMetronomeVolume}
+              value={volume}
+              onValueChange={setVolume}
               minimumTrackTintColor={COLORS.success}
               maximumTrackTintColor={COLORS.surfaceLight}
               thumbTintColor={COLORS.success}
             />
             <Ionicons name="volume-high" size={20} color={COLORS.textMuted} />
-            <Text style={styles.volumeLabel}>{Math.round(metronomeVolume * 100)}%</Text>
+            <Text style={styles.volumeLabel}>{Math.round(volume * 100)}%</Text>
           </View>
         </View>
 
         {/* Instructions */}
-        {currentExercise && (
+        {currentExercise?.instructions && (
           <View style={styles.instructionsSection}>
             <Text style={styles.sectionTitle}>INSTRUCCIONES</Text>
             {currentExercise.instructions.map((instruction, index) => (
@@ -692,20 +836,28 @@ export default function TechniquePracticeScreen() {
           </View>
         )}
 
-        {/* Tip Card */}
-        <View style={styles.tipCard}>
-          <Ionicons name="bulb" size={20} color={COLORS.warning} />
-          <Text style={styles.tipText}>
-            {technique.commonMistakes[0] || 'Mantén la relajación en ambas manos para evitar fatiga.'}
-          </Text>
-        </View>
+        {/* Tips */}
+        {currentExercise?.tips && currentExercise.tips.length > 0 && (
+          <View style={styles.tipCard}>
+            <Ionicons name="bulb" size={20} color={COLORS.warning} />
+            <Text style={styles.tipText}>{currentExercise.tips[0]}</Text>
+          </View>
+        )}
 
         <View style={{ height: 120 }} />
       </ScrollView>
 
       {/* Control Buttons */}
       <View style={styles.controlsContainer}>
-        {!isActive ? (
+        {!isAudioUnlocked && Platform.OS === 'web' ? (
+          <TouchableOpacity 
+            style={[styles.mainButton, { backgroundColor: COLORS.warning }]}
+            onPress={initAudio}
+          >
+            <Ionicons name="volume-high" size={24} color={COLORS.text} />
+            <Text style={styles.mainButtonText}>Activar Audio</Text>
+          </TouchableOpacity>
+        ) : !isPlaying ? (
           <TouchableOpacity 
             style={[styles.mainButton, { backgroundColor: technique.color }]}
             onPress={startPractice}
@@ -754,7 +906,101 @@ export default function TechniquePracticeScreen() {
         )}
       </View>
 
-      {/* Level Completion Modal */}
+      {/* Symbol Legend Modal */}
+      <Modal
+        visible={showSymbolLegend}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowSymbolLegend(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.legendModal}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Símbolos de Tablatura</Text>
+              <TouchableOpacity onPress={() => setShowSymbolLegend(false)}>
+                <Ionicons name="close" size={24} color={COLORS.text} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.legendScroll}>
+              {TECHNIQUE_SYMBOLS.map((symbol, index) => (
+                <View key={index} style={styles.symbolRow}>
+                  <View style={styles.symbolBadge}>
+                    <Text style={styles.symbolText}>{symbol.symbol}</Text>
+                  </View>
+                  <View style={styles.symbolInfo}>
+                    <Text style={styles.symbolName}>{symbol.name}</Text>
+                    <Text style={styles.symbolMeaning}>{symbol.meaning}</Text>
+                    <View style={styles.symbolTab}>
+                      <Text style={styles.symbolTabText}>{symbol.tabExample}</Text>
+                    </View>
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Micro-Tutorial Modal */}
+      <Modal
+        visible={showMicroTutorial}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowMicroTutorial(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.tutorialModal}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{technique.name}</Text>
+              <TouchableOpacity onPress={() => setShowMicroTutorial(false)}>
+                <Ionicons name="close" size={24} color={COLORS.text} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.tutorialScroll}>
+              {/* What it is */}
+              <View style={styles.tutorialSection}>
+                <Text style={styles.tutorialSectionTitle}>¿Qué es?</Text>
+                <Text style={styles.tutorialText}>{technique.whatItIs}</Text>
+              </View>
+              
+              {/* How to do it */}
+              <View style={styles.tutorialSection}>
+                <Text style={styles.tutorialSectionTitle}>Cómo hacerlo</Text>
+                {technique.howToDo.map((step, i) => (
+                  <View key={i} style={styles.tutorialStep}>
+                    <View style={styles.tutorialStepNum}>
+                      <Text style={styles.tutorialStepNumText}>{i + 1}</Text>
+                    </View>
+                    <Text style={styles.tutorialStepText}>{step}</Text>
+                  </View>
+                ))}
+              </View>
+              
+              {/* Common mistakes */}
+              <View style={styles.tutorialSection}>
+                <Text style={styles.tutorialSectionTitle}>Errores Comunes</Text>
+                {technique.commonMistakes.map((mistake, i) => (
+                  <View key={i} style={styles.tutorialMistake}>
+                    <Ionicons name="warning" size={16} color={COLORS.warning} />
+                    <Text style={styles.tutorialMistakeText}>{mistake}</Text>
+                  </View>
+                ))}
+              </View>
+              
+              {/* Sound description */}
+              <View style={styles.tutorialSection}>
+                <Text style={styles.tutorialSectionTitle}>Cómo debe sonar</Text>
+                <View style={styles.audioDescBox}>
+                  <Ionicons name="musical-notes" size={20} color={technique.color} />
+                  <Text style={styles.audioDescText}>{technique.audioDescription}</Text>
+                </View>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Completion Modal */}
       {showCompletionModal && (
         <View style={styles.modalOverlay}>
           <View style={styles.completionModal}>
@@ -762,11 +1008,11 @@ export default function TechniquePracticeScreen() {
               {getTechniqueIcon(technique.id, { size: 64, color: technique.color })}
             </View>
             <Text style={styles.completionTitle}>
-              {currentLevel < 4 ? '¡Nivel Completado!' : '¡Técnica Dominada!'}
+              {levelId < 4 ? '¡Nivel Completado!' : '¡Técnica Dominada!'}
             </Text>
             <Text style={styles.completionSubtitle}>
-              {currentLevel < 4 
-                ? `Has completado el Nivel ${currentLevel}: ${levelInfo?.name}`
+              {levelId < 4 
+                ? `Has completado el Nivel ${levelId}: ${levelInfo?.name}`
                 : `¡Felicidades! Has dominado ${technique.name}`
               }
             </Text>
@@ -787,16 +1033,7 @@ export default function TechniquePracticeScreen() {
               style={[styles.completionButton, { backgroundColor: technique.color }]}
               onPress={handleLevelComplete}
             >
-              <Text style={styles.completionButtonText}>
-                {currentLevel < 4 ? `Continuar al Nivel ${currentLevel + 1}` : 'Finalizar'}
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.secondaryButton}
-              onPress={() => { setShowCompletionModal(false); router.back(); }}
-            >
-              <Text style={styles.secondaryButtonText}>Volver a Técnicas</Text>
+              <Text style={styles.completionButtonText}>Continuar</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -804,6 +1041,10 @@ export default function TechniquePracticeScreen() {
     </SafeAreaView>
   );
 }
+
+// =============================================
+// STYLES
+// =============================================
 
 const styles = StyleSheet.create({
   container: {
@@ -819,6 +1060,52 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     fontSize: FONTS.sizes.md,
   },
+  // Error styles
+  errorContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: SPACING.xl,
+  },
+  errorTitle: {
+    fontSize: FONTS.sizes.xl,
+    fontWeight: '700',
+    color: COLORS.text,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.sm,
+  },
+  errorMessage: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginBottom: SPACING.lg,
+  },
+  errorDetails: {
+    backgroundColor: COLORS.backgroundCard,
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+    marginBottom: SPACING.lg,
+  },
+  errorDetailsText: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.textMuted,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  errorButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.xl,
+    borderRadius: BORDER_RADIUS.lg,
+    gap: SPACING.sm,
+  },
+  errorButtonText: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  // Header
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -843,32 +1130,43 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     marginTop: 2,
   },
-  levelBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
+  headerActions: {
+    flexDirection: 'row',
+    gap: SPACING.xs,
   },
-  levelBadgeText: {
-    fontSize: FONTS.sizes.lg,
-    fontWeight: '800',
-    color: COLORS.text,
+  iconButton: {
+    padding: SPACING.xs,
   },
   scrollView: {
     flex: 1,
   },
+  // Debug
+  debugBox: {
+    backgroundColor: COLORS.warning + '20',
+    margin: SPACING.md,
+    padding: SPACING.sm,
+    borderRadius: BORDER_RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.warning,
+  },
+  debugText: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.warning,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  // Icon section
   iconSection: {
     alignItems: 'center',
-    paddingVertical: SPACING.lg,
+    paddingVertical: SPACING.md,
   },
   techniqueIconLarge: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // Exercise card
   exerciseCard: {
     backgroundColor: COLORS.backgroundCard,
     marginHorizontal: SPACING.lg,
@@ -913,6 +1211,12 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     lineHeight: 22,
   },
+  // Fretboard section
+  fretboardSection: {
+    paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
+  },
+  // Tab section
   tabSection: {
     paddingHorizontal: SPACING.lg,
     marginBottom: SPACING.md,
@@ -935,6 +1239,34 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
     lineHeight: 20,
   },
+  // Timing tap
+  timingTapArea: {
+    backgroundColor: COLORS.backgroundCard,
+    marginHorizontal: SPACING.lg,
+    padding: SPACING.lg,
+    borderRadius: BORDER_RADIUS.lg,
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+    borderWidth: 2,
+    borderColor: COLORS.primary + '40',
+    borderStyle: 'dashed',
+  },
+  timingTapText: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.textMuted,
+  },
+  feedbackBadge: {
+    position: 'absolute',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.round,
+  },
+  feedbackText: {
+    fontSize: FONTS.sizes.lg,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  // Timer
   timerSection: {
     alignItems: 'center',
     paddingVertical: SPACING.md,
@@ -944,7 +1276,7 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md,
   },
   timerText: {
-    fontSize: 56,
+    fontSize: 48,
     fontWeight: '800',
     color: COLORS.text,
   },
@@ -976,6 +1308,7 @@ const styles = StyleSheet.create({
     width: 40,
     textAlign: 'right',
   },
+  // Beat indicator
   beatIndicator: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -983,9 +1316,9 @@ const styles = StyleSheet.create({
     marginVertical: SPACING.md,
   },
   beatDot: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: COLORS.surfaceLight,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1005,6 +1338,7 @@ const styles = StyleSheet.create({
   beatNumberActive: {
     color: COLORS.text,
   },
+  // BPM
   bpmSection: {
     paddingHorizontal: SPACING.lg,
     marginBottom: SPACING.md,
@@ -1043,7 +1377,7 @@ const styles = StyleSheet.create({
     marginHorizontal: SPACING.xl,
   },
   bpmValue: {
-    fontSize: 48,
+    fontSize: 42,
     fontWeight: '800',
     color: COLORS.text,
   },
@@ -1056,6 +1390,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 40,
   },
+  // Volume
   volumeSection: {
     paddingHorizontal: SPACING.lg,
     marginBottom: SPACING.md,
@@ -1079,6 +1414,7 @@ const styles = StyleSheet.create({
     width: 40,
     textAlign: 'right',
   },
+  // Instructions
   instructionsSection: {
     paddingHorizontal: SPACING.lg,
     marginBottom: SPACING.md,
@@ -1108,6 +1444,7 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     lineHeight: 22,
   },
+  // Tip
   tipCard: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -1123,6 +1460,7 @@ const styles = StyleSheet.create({
     color: COLORS.warning,
     lineHeight: 20,
   },
+  // Controls
   controlsContainer: {
     position: 'absolute',
     bottom: 0,
@@ -1169,6 +1507,7 @@ const styles = StyleSheet.create({
   skipButton: {
     backgroundColor: COLORS.backgroundCard,
   },
+  // Modals
   modalOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.8)',
@@ -1176,6 +1515,150 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: SPACING.lg,
   },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
+  },
+  modalTitle: {
+    fontSize: FONTS.sizes.xl,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  // Legend modal
+  legendModal: {
+    backgroundColor: COLORS.backgroundCard,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.lg,
+    maxHeight: '80%',
+    width: '100%',
+    maxWidth: 400,
+  },
+  legendScroll: {
+    maxHeight: 400,
+  },
+  symbolRow: {
+    flexDirection: 'row',
+    marginBottom: SPACING.lg,
+    gap: SPACING.md,
+  },
+  symbolBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  symbolText: {
+    fontSize: FONTS.sizes.lg,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  symbolInfo: {
+    flex: 1,
+  },
+  symbolName: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  symbolMeaning: {
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.textSecondary,
+    marginTop: 2,
+  },
+  symbolTab: {
+    backgroundColor: COLORS.background,
+    marginTop: SPACING.xs,
+    padding: SPACING.xs,
+    borderRadius: BORDER_RADIUS.sm,
+  },
+  symbolTabText: {
+    fontSize: FONTS.sizes.xs,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    color: COLORS.primary,
+  },
+  // Tutorial modal
+  tutorialModal: {
+    backgroundColor: COLORS.backgroundCard,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.lg,
+    maxHeight: '85%',
+    width: '100%',
+    maxWidth: 400,
+  },
+  tutorialScroll: {
+    maxHeight: 500,
+  },
+  tutorialSection: {
+    marginBottom: SPACING.lg,
+  },
+  tutorialSectionTitle: {
+    fontSize: FONTS.sizes.md,
+    fontWeight: '700',
+    color: COLORS.text,
+    marginBottom: SPACING.sm,
+  },
+  tutorialText: {
+    fontSize: FONTS.sizes.md,
+    color: COLORS.textSecondary,
+    lineHeight: 22,
+  },
+  tutorialStep: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: SPACING.sm,
+    gap: SPACING.sm,
+  },
+  tutorialStepNum: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: COLORS.secondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tutorialStepNumText: {
+    fontSize: FONTS.sizes.xs,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  tutorialStepText: {
+    flex: 1,
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.textSecondary,
+    lineHeight: 20,
+  },
+  tutorialMistake: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: SPACING.sm,
+    marginBottom: SPACING.sm,
+  },
+  tutorialMistakeText: {
+    flex: 1,
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.textSecondary,
+    lineHeight: 20,
+  },
+  audioDescBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: COLORS.background,
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+    gap: SPACING.sm,
+  },
+  audioDescText: {
+    flex: 1,
+    fontSize: FONTS.sizes.sm,
+    color: COLORS.textSecondary,
+    fontStyle: 'italic',
+    lineHeight: 20,
+  },
+  // Completion modal
   completionModal: {
     backgroundColor: COLORS.backgroundCard,
     borderRadius: BORDER_RADIUS.xl,
@@ -1233,18 +1716,10 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
     borderRadius: BORDER_RADIUS.lg,
     alignItems: 'center',
-    marginBottom: SPACING.sm,
   },
   completionButtonText: {
     fontSize: FONTS.sizes.md,
     fontWeight: '700',
     color: COLORS.text,
-  },
-  secondaryButton: {
-    paddingVertical: SPACING.md,
-  },
-  secondaryButtonText: {
-    fontSize: FONTS.sizes.md,
-    color: COLORS.textMuted,
   },
 });
