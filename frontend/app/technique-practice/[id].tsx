@@ -170,8 +170,14 @@ export default function TechniquePracticeScreenV2() {
     
     // Load exercises for this technique and level
     const allLevelExercises = getExercisesForLevel(techniqueId, levelId);
+    console.log(`[TechniquePractice] Loaded ${allLevelExercises.length} exercises for ${techniqueId} level ${levelId}`);
+    if (allLevelExercises.length > 0) {
+      console.log(`[TechniquePractice] First exercise:`, JSON.stringify(allLevelExercises[0], null, 2).slice(0, 500));
+    }
+    
     // Filter only playable exercises (no placeholders!)
     const levelExercises = filterPlayableTechniqueExercises(allLevelExercises);
+    console.log(`[TechniquePractice] After filter: ${levelExercises.length} exercises`);
     
     if (__DEV__ && allLevelExercises.length !== levelExercises.length) {
       console.log(`[TechniquePractice] Filtered ${allLevelExercises.length - levelExercises.length} incomplete exercises for ${techniqueId} level ${levelId}`);
