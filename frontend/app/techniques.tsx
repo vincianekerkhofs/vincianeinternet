@@ -79,10 +79,14 @@ export default function TechniquesScreen() {
           styles.techniqueCard,
           isMastered && styles.masteredCard
         ]}
-        onPress={() => router.push({
-          pathname: '/technique/[id]',
-          params: { id: technique.id }
-        } as any)}
+        onPress={() => {
+          // Debug log for navigation
+          console.log(`[Techniques] Navigating to technique: ${technique.id} - ${technique.name}`);
+          router.push({
+            pathname: '/technique/[id]',
+            params: { id: technique.id }
+          } as any);
+        }}
       >
         <View style={[styles.iconContainer, { backgroundColor: technique.color + '20' }]}>
           {getTechniqueIcon(technique.id, { size: 32, color: technique.color })}
