@@ -129,8 +129,8 @@ export default function TechniquePracticeScreenV2() {
   const [feedback, setFeedback] = useState<TimingFeedback | null>(null);
   const [isAudioUnlocked, setIsAudioUnlocked] = useState(Platform.OS !== 'web');
   
-  // Debug state (for development)
-  const [showDebug, setShowDebug] = useState(__DEV__);
+  // Debug state (hidden by default - toggle with long press on icon)
+  const [showDebug, setShowDebug] = useState(false);
   
   // Animation refs
   const pulseAnim = useRef(new Animated.Value(1)).current;
