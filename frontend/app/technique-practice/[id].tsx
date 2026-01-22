@@ -36,6 +36,7 @@ import {
 } from '../../src/data/techniqueExercises';
 import { getTechniqueIcon } from '../../src/components/TechniqueIcons';
 import { TechniqueAnimatedFretboard } from '../../src/components/TechniqueAnimatedFretboard';
+import { TechniqueAnimatedFretboardPro } from '../../src/components/TechniqueAnimatedFretboardPro';
 import { 
   addPracticeTime, 
   getTechniqueMasteryById, 
