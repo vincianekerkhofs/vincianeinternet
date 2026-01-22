@@ -859,18 +859,19 @@ export const TechniqueAnimatedFretboardPro: React.FC<TechniqueAnimatedFretboardP
     let poseA: GhostHandPose | null = null;
     let shouldShow = false;
     
-    // Check if ghost hand should be shown
+    // Always show ghost hand when there's a technique on current note
     if (currentNote.technique && GHOST_HAND_TECHNIQUES.includes(currentNote.technique)) {
       shouldShow = true;
     }
     
-    // Check for large fret jump (> 2 frets)
+    // Also show for large fret jumps (> 2 frets) even without technique
     if (previousNote) {
       const fretDiff = Math.abs(currentNote.position.fret - previousNote.position.fret);
       if (fretDiff > 2) {
         shouldShow = true;
       }
       
+      // Set poseA if we have a previous note (for arrow/trail)
       if (shouldShow) {
         const prevPos = computeNotePosition(previousNote.position.fret, previousNote.position.string);
         poseA = {
@@ -880,6 +881,12 @@ export const TechniqueAnimatedFretboardPro: React.FC<TechniqueAnimatedFretboardP
           technique: previousNote.technique,
         };
       }
+    }
+    
+    // Show ghost hand even without previous note if there's a technique
+    // This ensures it shows from the start
+    if (currentNote.technique && !shouldShow) {
+      shouldShow = true;
     }
     
     return { poseA, poseB, shouldShow };
