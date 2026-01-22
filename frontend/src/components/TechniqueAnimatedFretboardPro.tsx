@@ -265,7 +265,7 @@ const FingerGuideSVG: React.FC<FingerGuideProps> = ({
   if (!guides || guides.length === 0) return null;
   
   const config = FINGER_GUIDE_CONFIG;
-  const baseRadius = 11 * scale * config.sizeMultiplier;
+  const baseRadius = 12 * scale * config.sizeMultiplier;
   
   return (
     <G id="finger-guides-layer">
@@ -273,12 +273,13 @@ const FingerGuideSVG: React.FC<FingerGuideProps> = ({
         if (!guide.finger || guide.finger < 1 || guide.finger > 4) return null;
         
         const fingerColor = FINGER_COLORS[guide.finger];
-        const radius = guide.isActive ? baseRadius * 1.1 : baseRadius * 0.9;
+        const radius = guide.isActive ? baseRadius : baseRadius * 0.85;
         const opacity = guide.isActive ? config.baseOpacity : config.fadeOpacity;
+        const glyph = guide.technique ? TECHNIQUE_GLYPHS[guide.technique] : null;
         
         return (
           <G key={`finger-guide-${index}`} opacity={opacity}>
-            {/* Shadow */}
+            {/* Shadow for depth */}
             <Circle
               cx={guide.x + config.shadowOffsetX * scale}
               cy={guide.y + config.shadowOffsetY * scale}
@@ -287,7 +288,7 @@ const FingerGuideSVG: React.FC<FingerGuideProps> = ({
               opacity={config.shadowOpacity}
             />
             
-            {/* Main finger circle */}
+            {/* Main finger circle - Color background */}
             <Circle
               cx={guide.x}
               cy={guide.y}
@@ -298,61 +299,62 @@ const FingerGuideSVG: React.FC<FingerGuideProps> = ({
               strokeOpacity={config.strokeOpacity}
             />
             
-            {/* Finger number */}
+            {/* Finger number - LARGE and CENTERED */}
             <SvgText
               x={guide.x}
-              y={guide.y + 4 * scale}
+              y={guide.y + 5 * scale}
               textAnchor="middle"
               fill="#FFFFFF"
-              fontSize={12 * scale}
+              fontSize={16 * scale}
               fontWeight="bold"
             >
               {guide.finger}
             </SvgText>
             
-            {/* Active indicator - pulsing ring */}
+            {/* Technique badge - VISIBLE when technique present */}
+            {glyph && (
+              <G>
+                {/* Badge background */}
+                <Circle
+                  cx={guide.x + radius * config.badgeOffset}
+                  cy={guide.y - radius * config.badgeOffset}
+                  r={config.badgeRadius * scale}
+                  fill="#FFFFFF"
+                  stroke={fingerColor}
+                  strokeWidth={1.5 * scale}
+                />
+                {/* Badge text */}
+                <SvgText
+                  x={guide.x + radius * config.badgeOffset}
+                  y={guide.y - radius * config.badgeOffset + 3.5 * scale}
+                  textAnchor="middle"
+                  fill={fingerColor}
+                  fontSize={9 * scale}
+                  fontWeight="bold"
+                >
+                  {glyph}
+                </SvgText>
+              </G>
+            )}
+            
+            {/* Active pulse ring */}
             {guide.isActive && (
               <Circle
                 cx={guide.x}
                 cy={guide.y}
-                r={radius + 3 * scale}
+                r={radius + 4 * scale}
                 fill="none"
                 stroke={fingerColor}
                 strokeWidth={2 * scale}
-                strokeOpacity={0.5}
-                strokeDasharray={`${4 * scale} ${2 * scale}`}
+                strokeOpacity={0.4}
               />
-            )}
-            
-            {/* Technique indicator (small badge) */}
-            {guide.technique && guide.isActive && (
-              <G>
-                <Circle
-                  cx={guide.x + radius * 0.8}
-                  cy={guide.y - radius * 0.8}
-                  r={6 * scale}
-                  fill="#FFFFFF"
-                  stroke={fingerColor}
-                  strokeWidth={1 * scale}
-                />
-                <SvgText
-                  x={guide.x + radius * 0.8}
-                  y={guide.y - radius * 0.8 + 3 * scale}
-                  textAnchor="middle"
-                  fill={fingerColor}
-                  fontSize={7 * scale}
-                  fontWeight="bold"
-                >
-                  {TECHNIQUE_GLYPHS[guide.technique] || guide.technique}
-                </SvgText>
-              </G>
             )}
             
             {/* Debug info */}
             {debugMode && (
               <SvgText
                 x={guide.x}
-                y={guide.y + radius + 10 * scale}
+                y={guide.y + radius + 12 * scale}
                 textAnchor="middle"
                 fill="#FF0000"
                 fontSize={8 * scale}
