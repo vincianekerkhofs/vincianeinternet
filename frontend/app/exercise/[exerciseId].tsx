@@ -124,6 +124,57 @@ export default function ExerciseDetailScreen() {
       setLoading(false);
     }
   };
+  
+  // Load all exercises to enable navigation
+  const loadAllExercises = async () => {
+    try {
+      const response = await getExercises({ limit: 100 });
+      const exercises = response.exercises || [];
+      setAllExercises(exercises);
+      
+      // Find current exercise index
+      const index = exercises.findIndex((e: Exercise) => e.id === exerciseId);
+      setCurrentIndex(index);
+    } catch (err) {
+      console.error('Error loading exercise list:', err);
+    }
+  };
+  
+  // Get next exercise in the same category/difficulty
+  const getNextExercise = useCallback((): Exercise | null => {
+    if (!exercise || allExercises.length === 0) return null;
+    
+    // Filter exercises by same category/difficulty
+    const sameCategory = allExercises.filter(
+      e => e.domain === exercise.domain && e.difficulty_tier === exercise.difficulty_tier && e.id !== exerciseId
+    );
+    
+    if (sameCategory.length > 0) {
+      // Return next in same category
+      const currentCategoryIndex = sameCategory.findIndex(e => 
+        allExercises.findIndex(a => a.id === e.id) > currentIndex
+      );
+      if (currentCategoryIndex >= 0) {
+        return sameCategory[currentCategoryIndex];
+      }
+      // Return first of same category if at end
+      return sameCategory[0];
+    }
+    
+    // Fallback: just return next exercise in list
+    if (currentIndex < allExercises.length - 1) {
+      return allExercises[currentIndex + 1];
+    }
+    
+    return null;
+  }, [exercise, allExercises, currentIndex, exerciseId]);
+    } catch (err) {
+      console.error('Error loading exercise:', err);
+      setError(`Failed to load exercise: ${exerciseId}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleToggleComplete = async () => {
     if (!exerciseId) return;
