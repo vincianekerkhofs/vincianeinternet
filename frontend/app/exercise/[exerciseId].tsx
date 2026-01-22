@@ -290,7 +290,15 @@ export default function ExerciseDetailScreen() {
         {/* Description */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>DESCRIPCIÓN</Text>
-          <Text style={styles.descriptionText}>{exercise.description}</Text>
+          <Text style={styles.descriptionText}>
+            {exercise.description_training || exercise.description || 'Sin descripción'}
+          </Text>
+          {exercise.description_why && (
+            <View style={styles.whyCard}>
+              <Ionicons name="bulb" size={16} color={COLORS.warning} />
+              <Text style={styles.whyText}>{exercise.description_why}</Text>
+            </View>
+          )}
         </View>
 
         {/* Goal */}
@@ -304,11 +312,11 @@ export default function ExerciseDetailScreen() {
         {/* Visualization */}
         {renderVisualization()}
 
-        {/* Instructions */}
-        {exercise.instructions && exercise.instructions.length > 0 && (
+        {/* Instructions / Steps */}
+        {(exercise.steps || exercise.instructions) && (exercise.steps?.length || exercise.instructions?.length) > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>INSTRUCCIONES</Text>
-            {exercise.instructions.map((instruction, index) => (
+            {(exercise.steps || exercise.instructions || []).map((instruction, index) => (
               <View key={index} style={styles.instructionRow}>
                 <View style={styles.instructionNumber}>
                   <Text style={styles.instructionNumberText}>{index + 1}</Text>
@@ -319,16 +327,35 @@ export default function ExerciseDetailScreen() {
           </View>
         )}
 
-        {/* Common Mistakes */}
-        {exercise.common_mistakes && exercise.common_mistakes.length > 0 && (
+        {/* Common Mistakes / Mistakes and Fixes */}
+        {(exercise.mistakes_and_fixes || exercise.common_mistakes) && 
+         (exercise.mistakes_and_fixes?.length || exercise.common_mistakes?.length) > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>ERRORES COMUNES</Text>
-            {exercise.common_mistakes.map((mistake, index) => (
+            <Text style={styles.sectionTitle}>ERRORES COMUNES Y SOLUCIONES</Text>
+            {(exercise.mistakes_and_fixes || exercise.common_mistakes || []).map((mistake, index) => (
               <View key={index} style={styles.mistakeRow}>
                 <Ionicons name="warning" size={16} color={COLORS.warning} />
                 <Text style={styles.mistakeText}>{mistake}</Text>
               </View>
             ))}
+          </View>
+        )}
+
+        {/* Success Criteria */}
+        {exercise.success_criteria && Object.keys(exercise.success_criteria).length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>CRITERIOS DE ÉXITO</Text>
+            <View style={styles.criteriaContainer}>
+              {Object.entries(exercise.success_criteria).map(([key, value]) => (
+                <View key={key} style={styles.criteriaItem}>
+                  <Text style={styles.criteriaLabel}>{key.replace(/_/g, ' ')}</Text>
+                  <View style={styles.criteriaBar}>
+                    <View style={[styles.criteriaFill, { width: `${value}%` }]} />
+                  </View>
+                  <Text style={styles.criteriaValue}>{value}%</Text>
+                </View>
+              ))}
+            </View>
           </View>
         )}
 
