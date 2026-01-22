@@ -337,6 +337,9 @@ export const TechniqueAnimatedFretboardPro: React.FC<TechniqueAnimatedFretboardP
   showFingerGuides: showFingerGuidesProp = true,
   debugMode = false,
 }) => {
+  // DEBUG: Verify this is the component being rendered
+  console.log("[FRETBOARD_PRO] mounted", Date.now());
+  
   // =============================================
   // STATE
   // =============================================
