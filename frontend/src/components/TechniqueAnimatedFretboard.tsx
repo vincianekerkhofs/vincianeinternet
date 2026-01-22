@@ -216,10 +216,24 @@ export const TechniqueAnimatedFretboard: React.FC<TechniqueAnimatedFretboardProp
   const nutWidth = 12;
   
   // Calculate fret range
-  const startFret = path.startFret;
-  const endFret = path.endFret;
+  const startFret = path.startFret || 0;
+  const endFret = path.endFret || 12;
   const numFrets = endFret - startFret + 1;
   const fretWidth = (fretboardWidth - nutWidth) / numFrets;
+  
+  // Debug log
+  useEffect(() => {
+    console.log('[TechniqueAnimatedFretboard] Received path:', {
+      startFret: path.startFret,
+      endFret: path.endFret,
+      notesCount: path.notes?.length,
+      beatsPerLoop: path.beatsPerLoop,
+      calculatedNumFrets: numFrets,
+    });
+    if (path.notes?.length > 0) {
+      console.log('[TechniqueAnimatedFretboard] First note:', JSON.stringify(path.notes[0]));
+    }
+  }, [path]);
   
   // Animation for active note pulse
   useEffect(() => {
