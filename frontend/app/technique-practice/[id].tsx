@@ -42,6 +42,7 @@ import {
   updateTechniqueMastery,
   TechniqueMastery 
 } from '../../src/utils/techniqueStorage';
+import { filterPlayableTechniqueExercises } from '../../src/utils/exerciseValidator';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
