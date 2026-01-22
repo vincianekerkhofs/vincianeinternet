@@ -763,14 +763,28 @@ export default function TechniquePracticeScreenV2() {
         {/* Animated Fretboard */}
         {currentExercise?.fretboardPath ? (
           <View style={styles.fretboardSection}>
-            <TechniqueAnimatedFretboard
-              path={currentExercise.fretboardPath}
-              currentBeat={currentBeat}
-              isPlaying={isPlaying}
-              techniqueColor={technique.color}
-              mode={practiceMode}
-              showTechniqueGlyphs={true}
-            />
+            {/* Use Pro version for Hammer-on technique (proof of concept) */}
+            {techniqueId === 'hammer_on' ? (
+              <TechniqueAnimatedFretboardPro
+                path={currentExercise.fretboardPath}
+                currentBeat={currentBeat}
+                isPlaying={isPlaying}
+                techniqueColor={technique.color}
+                mode={practiceMode}
+                showTechniqueGlyphs={true}
+                showGhostHand={practiceMode === 'guided'}
+                debugMode={showDebug}
+              />
+            ) : (
+              <TechniqueAnimatedFretboard
+                path={currentExercise.fretboardPath}
+                currentBeat={currentBeat}
+                isPlaying={isPlaying}
+                techniqueColor={technique.color}
+                mode={practiceMode}
+                showTechniqueGlyphs={true}
+              />
+            )}
           </View>
         ) : (
           <View style={styles.fretboardSection}>
