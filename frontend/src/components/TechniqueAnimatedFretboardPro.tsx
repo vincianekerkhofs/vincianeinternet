@@ -904,12 +904,50 @@ export const TechniqueAnimatedFretboardPro: React.FC<TechniqueAnimatedFretboardP
   onSymbolPress,
   mode = 'guided',
   showTechniqueGlyphs = true,
-  showGhostHand = true,
+  showGhostHand: showGhostHandProp = true,
   debugMode = false,
 }) => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const [showLegendModal, setShowLegendModal] = useState(false);
   const [ghostHandPhase, setGhostHandPhase] = useState<'start' | 'moving' | 'end' | 'hidden'>('hidden');
+  
+  // =============================================
+  // GHOST HAND TOGGLE STATE WITH PERSISTENCE
+  // =============================================
+  
+  const [ghostHandEnabled, setGhostHandEnabled] = useState(true); // Default ON for beginners
+  const [isLoadingPreference, setIsLoadingPreference] = useState(true);
+  
+  // Load saved preference on mount
+  useEffect(() => {
+    const loadGhostHandPreference = async () => {
+      try {
+        const savedValue = await AsyncStorage.getItem(GHOST_HAND_STORAGE_KEY);
+        if (savedValue !== null) {
+          setGhostHandEnabled(savedValue === 'true');
+        }
+      } catch (error) {
+        console.warn('[GhostHand] Failed to load preference:', error);
+      } finally {
+        setIsLoadingPreference(false);
+      }
+    };
+    loadGhostHandPreference();
+  }, []);
+  
+  // Save preference when changed
+  const toggleGhostHand = useCallback(async () => {
+    const newValue = !ghostHandEnabled;
+    setGhostHandEnabled(newValue);
+    try {
+      await AsyncStorage.setItem(GHOST_HAND_STORAGE_KEY, String(newValue));
+    } catch (error) {
+      console.warn('[GhostHand] Failed to save preference:', error);
+    }
+  }, [ghostHandEnabled]);
+  
+  // Final ghost hand visibility (considers prop + toggle)
+  const showGhostHand = showGhostHandProp && ghostHandEnabled && mode === 'guided';
   
   // =============================================
   // FRETBOARD DIMENSIONS (All in SVG units)
