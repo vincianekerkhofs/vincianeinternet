@@ -92,7 +92,7 @@ const SectionPlayer: React.FC<SectionPlayerProps> = ({
               techniqueColor={techniqueColor}
               mode="guided"
               showTechniqueGlyphs={true}
-              showGhostHand={true}
+              showFingerGuides={true}
             />
           </View>
           
