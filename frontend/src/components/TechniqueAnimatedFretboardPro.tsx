@@ -342,11 +342,11 @@ export const TechniqueAnimatedFretboardPro: React.FC<TechniqueAnimatedFretboardP
     const loadPreference = async () => {
       try {
         const saved = await AsyncStorage.getItem(FINGER_GUIDES_STORAGE_KEY);
-        if (saved !== null) {
-          setFingerGuidesEnabled(saved === 'true');
-        }
+        // Default to true if nothing saved
+        setFingerGuidesEnabled(saved === null ? true : saved === 'true');
       } catch (e) {
         console.warn('[Fretboard] Failed to load preference');
+        setFingerGuidesEnabled(true); // Default ON
       }
     };
     loadPreference();
