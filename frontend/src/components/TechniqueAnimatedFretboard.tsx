@@ -392,13 +392,17 @@ export const TechniqueAnimatedFretboard: React.FC<TechniqueAnimatedFretboardProp
     const frets = [];
     
     // Nut
+    // Nut
+    const firstStringY = getStringY(1);
+    const lastStringY = getStringY(6);
+    
     frets.push(
       <Rect
         key="nut"
-        x={nutWidth - 2}
-        y={stringSpacing * 0.8}
-        width={4}
-        height={stringSpacing * 5.4}
+        x={nutWidth - 4}
+        y={firstStringY - 4}
+        width={6}
+        height={lastStringY - firstStringY + 8}
         fill={COLORS.fret}
         rx={2}
       />
@@ -411,9 +415,9 @@ export const TechniqueAnimatedFretboard: React.FC<TechniqueAnimatedFretboardProp
         <Line
           key={`fret-${i}`}
           x1={x}
-          y1={stringSpacing * 0.8}
+          y1={firstStringY - 4}
           x2={x}
-          y2={stringSpacing * 6.2}
+          y2={lastStringY + 4}
           stroke={COLORS.fret}
           strokeWidth={1.5}
           opacity={0.4}
