@@ -153,11 +153,13 @@ export default function TechniquePracticeScreenV2() {
   const [timeRemaining, setTimeRemaining] = useState(120);
   const [totalPracticeTime, setTotalPracticeTime] = useState(0);
   const [currentBeat, setCurrentBeat] = useState(1);
-  const [practiceMode, setPracticeMode] = useState<PracticeMode>('continuous');
+  const [practiceMode, setPracticeMode] = useState<PracticeMode>('guided');
   
   // UI state
   const [showSymbolLegend, setShowSymbolLegend] = useState(false);
   const [showMicroTutorial, setShowMicroTutorial] = useState(false);
+  const [showModeSelector, setShowModeSelector] = useState(false);
+  const [selectedSymbol, setSelectedSymbol] = useState<TechniqueSymbol | null>(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [feedback, setFeedback] = useState<TimingFeedback | null>(null);
   const [isAudioUnlocked, setIsAudioUnlocked] = useState(Platform.OS !== 'web');
