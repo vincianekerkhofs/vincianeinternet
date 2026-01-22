@@ -1494,22 +1494,65 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: SPACING.xs,
-    marginBottom: SPACING.xs,
+    marginBottom: SPACING.sm,
+    gap: SPACING.sm,
   },
   legendButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
     backgroundColor: COLORS.surfaceLight,
-    borderRadius: BORDER_RADIUS.sm,
+    borderRadius: BORDER_RADIUS.md,
   },
   legendButtonText: {
     fontSize: FONTS.sizes.xs,
     color: COLORS.primary,
     fontWeight: '600',
   },
+  // Ghost Hand Toggle Button Styles
+  ghostHandToggleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: COLORS.surfaceLight,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1.5,
+    borderColor: COLORS.surfaceLight,
+  },
+  ghostHandToggleBtnActive: {
+    backgroundColor: COLORS.success,
+    borderColor: COLORS.success,
+  },
+  ghostHandToggleText: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.textMuted,
+    fontWeight: '600',
+  },
+  ghostHandToggleTextActive: {
+    color: '#FFFFFF',
+  },
+  toggleIndicator: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.sm,
+    marginLeft: 2,
+  },
+  toggleIndicatorOn: {
+    backgroundColor: 'rgba(255,255,255,0.3)',
+  },
+  toggleIndicatorOff: {
+    backgroundColor: COLORS.backgroundCard,
+  },
+  toggleIndicatorText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  // Legacy styles (kept for compatibility)
   ghostHandToggle: {
     flexDirection: 'row',
     alignItems: 'center',
