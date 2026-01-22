@@ -201,7 +201,7 @@ export default function ExercisesScreen() {
                 style={[styles.exerciseItem, isComplete && styles.exerciseItemComplete]}
                 onPress={() => {
                   router.push({
-                    pathname: '/practice',
+                    pathname: '/exercise/[exerciseId]',
                     params: { exerciseId: item.id },
                   });
                 }}
