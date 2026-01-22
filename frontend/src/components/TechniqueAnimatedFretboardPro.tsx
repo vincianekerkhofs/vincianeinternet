@@ -263,9 +263,13 @@ const NoteCircle: React.FC<NoteCircleProps> = ({
     opacity = 1;
   }
   
-  // Display content: finger number if active and showFinger, otherwise note name
+  // Display content: finger number if active and has finger, otherwise note name
   // When active, ALWAYS show finger if available (this is the key change)
-  const shouldShowFinger = state === 'active' && finger !== undefined && finger > 0;
+  const hasFinger = finger !== undefined && finger > 0;
+  const isActive = state === 'active';
+  const shouldShowFinger = isActive && hasFinger;
+  
+  // FORCE finger display when active and finger exists
   const displayText = shouldShowFinger ? String(finger) : noteName;
   
   return (
