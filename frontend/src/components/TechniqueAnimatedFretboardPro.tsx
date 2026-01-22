@@ -609,10 +609,10 @@ export const TechniqueAnimatedFretboardPro: React.FC<TechniqueAnimatedFretboardP
       
       // Show finger on active note when:
       // - Note is active (current beat) AND
-      // - Note has finger data AND
-      // - Finger guides are enabled (or default to show for clarity)
+      // - Note has finger data
       // According to design: finger appears ON THE EXACT PULSE
-      const showFinger = state === 'active' && !!note.finger && fingerGuidesEnabled;
+      // ALWAYS show finger when active (simplified logic)
+      const showFinger = state === 'active' && !!note.finger;
       
       return (
         <NoteCircle
