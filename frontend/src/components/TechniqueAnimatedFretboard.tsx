@@ -194,13 +194,25 @@ const NoteMarker: React.FC<NoteMarkerProps> = ({
 // MAIN COMPONENT
 // =============================================
 
+interface TechniqueAnimatedFretboardProps {
+  path: FretboardPath;
+  currentBeat: number;
+  isPlaying: boolean;
+  techniqueColor: string;
+  onNotePress?: (note: FretboardNote) => void;
+  onTechniqueSymbolPress?: (symbol: string, symbolData: TechniqueSymbol | undefined) => void;
+  mode?: 'guided' | 'follow' | 'free' | 'continuous';
+  showTechniqueGlyphs?: boolean;
+}
+
 export const TechniqueAnimatedFretboard: React.FC<TechniqueAnimatedFretboardProps> = ({
   path,
   currentBeat,
   isPlaying,
   techniqueColor,
   onNotePress,
-  mode = 'continuous',
+  onTechniqueSymbolPress,
+  mode = 'guided',
   showTechniqueGlyphs = true,
 }) => {
   const pulseAnim = useRef(new Animated.Value(1)).current;
