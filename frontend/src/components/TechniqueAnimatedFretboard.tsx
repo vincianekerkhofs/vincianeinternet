@@ -344,7 +344,8 @@ export const TechniqueAnimatedFretboard: React.FC<TechniqueAnimatedFretboardProp
   // Get X position for a fret
   const getFretX = (fret: number): number => {
     const relativeFret = fret - startFret;
-    return nutWidth + (relativeFret * fretWidth) + (fretWidth / 2);
+    const x = nutWidth + (relativeFret * fretWidth) + (fretWidth / 2);
+    return x;
   };
   
   // Get Y position for a string (1 = high E at top)
