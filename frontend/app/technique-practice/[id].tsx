@@ -1361,7 +1361,21 @@ const styles = StyleSheet.create({
   },
   headerActions: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: SPACING.xs,
+  },
+  modeIndicatorBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.md,
+    gap: 4,
+    marginRight: SPACING.xs,
+  },
+  modeIndicatorText: {
+    fontSize: FONTS.sizes.xs,
+    fontWeight: '600',
   },
   iconButton: {
     padding: SPACING.xs,
