@@ -73,9 +73,21 @@ export default function ExercisesScreen() {
         domain: selectedDomain || undefined,
         difficulty: selectedDifficulty || undefined,
         search: searchQuery || undefined,
-        limit: 50,
+        limit: 100, // Load more to account for filtering
       });
-      setExercises(data.exercises);
+      
+      // Filter to only show playable exercises - no placeholders!
+      const playableExercises = filterPlayableExercises(data.exercises);
+      
+      // In dev mode, log audit results
+      if (__DEV__) {
+        const audit = auditExercises(data.exercises);
+        if (audit.excluded.length > 0) {
+          console.log(`[Library] Filtered ${audit.excluded.length} incomplete exercises`);
+        }
+      }
+      
+      setExercises(playableExercises);
     } catch (error) {
       console.error('Error loading exercises:', error);
     }
