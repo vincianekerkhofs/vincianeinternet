@@ -163,53 +163,89 @@ export default function TechniqueDetailScreen() {
 
         {/* Levels */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Niveles de Maestría</Text>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Niveles de Maestría</Text>
+            <View style={styles.pathToggle}>
+              <Text style={styles.pathToggleLabel}>Ruta Recomendada</Text>
+              <Switch
+                value={recommendedPath}
+                onValueChange={setRecommendedPath}
+                trackColor={{ false: COLORS.surfaceLight, true: COLORS.primary + '60' }}
+                thumbColor={recommendedPath ? COLORS.primary : COLORS.textMuted}
+              />
+            </View>
+          </View>
+          
+          {/* Level selection chips */}
+          <View style={styles.levelChips}>
+            {technique.levels.map((level) => {
+              const isCompleted = level.level <= currentLevel;
+              const isSelected = level.level === selectedLevel;
+              // Only lock if "Recommended Path" is ON
+              const isLocked = recommendedPath && level.level > currentLevel + 1;
+              
+              return (
+                <TouchableOpacity
+                  key={level.level}
+                  style={[
+                    styles.levelChip,
+                    isSelected && styles.levelChipSelected,
+                    isCompleted && styles.levelChipCompleted,
+                    isLocked && styles.levelChipLocked,
+                  ]}
+                  onPress={() => !isLocked && handleLevelSelect(level.level)}
+                  disabled={isLocked}
+                >
+                  {isCompleted && (
+                    <Ionicons name="checkmark-circle" size={14} color={COLORS.success} />
+                  )}
+                  {isLocked && (
+                    <Ionicons name="lock-closed" size={12} color={COLORS.textMuted} />
+                  )}
+                  <Text style={[
+                    styles.levelChipText,
+                    isSelected && styles.levelChipTextSelected,
+                    isLocked && styles.levelChipTextLocked,
+                  ]}>
+                    {level.level}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          
+          {/* Selected level details */}
           {technique.levels.map((level) => {
+            if (level.level !== selectedLevel) return null;
             const isCompleted = level.level <= currentLevel;
-            const isSelected = level.level === selectedLevel;
-            const isLocked = level.level > currentLevel + 1;
             
             return (
-              <TouchableOpacity
-                key={level.level}
-                style={[
-                  styles.levelCard,
-                  isSelected && styles.levelCardSelected,
-                  isCompleted && styles.levelCardCompleted,
-                  isLocked && styles.levelCardLocked,
-                ]}
-                onPress={() => !isLocked && setSelectedLevel(level.level)}
-                disabled={isLocked}
-              >
-                <View style={styles.levelHeader}>
-                  <View style={[
-                    styles.levelBadge,
-                    isCompleted && { backgroundColor: COLORS.success },
-                    isLocked && { backgroundColor: COLORS.surfaceLight },
-                  ]}>
-                    {isCompleted ? (
-                      <Ionicons name="checkmark" size={14} color={COLORS.text} />
-                    ) : (
-                      <Text style={styles.levelBadgeText}>{level.level}</Text>
+              <View key={`detail-${level.level}`} style={styles.levelDetailCard}>
+                <View style={styles.levelDetailHeader}>
+                  <View style={styles.levelDetailTitle}>
+                    <Text style={styles.levelName}>{level.name}</Text>
+                    {isCompleted && (
+                      <View style={styles.completedBadge}>
+                        <Ionicons name="checkmark" size={12} color={COLORS.text} />
+                        <Text style={styles.completedBadgeText}>Completado</Text>
+                      </View>
                     )}
                   </View>
-                  <View style={styles.levelInfo}>
-                    <Text style={[
-                      styles.levelName,
-                      isLocked && { color: COLORS.textMuted }
-                    ]}>
-                      {level.name}
-                    </Text>
-                    <Text style={styles.levelDescription}>{level.description}</Text>
-                  </View>
-                  {isLocked && (
-                    <Ionicons name="lock-closed" size={16} color={COLORS.textMuted} />
-                  )}
-                  {isSelected && !isLocked && (
-                    <Ionicons name="radio-button-on" size={20} color={COLORS.primary} />
-                  )}
+                  <Text style={styles.levelDescription}>{level.description}</Text>
                 </View>
-              </TouchableOpacity>
+                
+                {/* Quick info */}
+                <View style={styles.levelQuickInfo}>
+                  <View style={styles.quickInfoItem}>
+                    <Ionicons name="speedometer" size={16} color={COLORS.primary} />
+                    <Text style={styles.quickInfoText}>60-90 BPM</Text>
+                  </View>
+                  <View style={styles.quickInfoItem}>
+                    <Ionicons name="time" size={16} color={COLORS.primary} />
+                    <Text style={styles.quickInfoText}>2 ejercicios</Text>
+                  </View>
+                </View>
+              </View>
             );
           })}
         </View>
