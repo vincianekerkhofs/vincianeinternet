@@ -904,6 +904,28 @@ export default function TechniquePracticeScreenV2() {
             </TouchableOpacity>
           </View>
         )}
+        
+        {/* Mark Complete / Next buttons - always visible when not playing */}
+        {!isPlaying && currentExercise && (
+          <View style={styles.quickActionsRow}>
+            <TouchableOpacity 
+              style={styles.markCompleteButton}
+              onPress={handleMarkComplete}
+            >
+              <Ionicons name="checkmark-circle" size={20} color={COLORS.success} />
+              <Text style={styles.markCompleteText}>Marcar Completo</Text>
+            </TouchableOpacity>
+            {currentExerciseIndex < exercises.length - 1 && (
+              <TouchableOpacity 
+                style={styles.nextExerciseButton}
+                onPress={handleNextExercise}
+              >
+                <Text style={styles.nextExerciseText}>Siguiente</Text>
+                <Ionicons name="arrow-forward" size={20} color={COLORS.primary} />
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
       </View>
 
       {/* Symbol Legend Modal */}
