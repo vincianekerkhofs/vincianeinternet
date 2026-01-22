@@ -721,17 +721,4 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: COLORS.text,
   },
-  debugInfo: {
-    backgroundColor: COLORS.warning + '20',
-    padding: SPACING.sm,
-    borderRadius: BORDER_RADIUS.sm,
-    marginTop: SPACING.md,
-    borderWidth: 1,
-    borderColor: COLORS.warning,
-  },
-  debugText: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.warning,
-    fontFamily: 'monospace',
-  },
 });
