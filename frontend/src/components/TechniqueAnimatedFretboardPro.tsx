@@ -1,16 +1,19 @@
 /**
- * GUITAR GUIDE PRO - ANIMATED TECHNIQUE FRETBOARD PRO
- * Enhanced fretboard with FINGER GUIDES and Symbol Legend
+ * GUITAR GUIDE PRO - PEDAGOGICAL FRETBOARD
  * 
- * Features:
- * A) Finger Guides - Individual finger markers showing exact fingering
- *    - Toggle ON/OFF with persistence
- *    - Clean, minimal design (NO full hand)
- *    - Color-coded fingers: 1=blue, 2=green, 3=yellow, 4=red
- * B) Symbol Legend - Dictionary of all technique symbols and colors
+ * DESIGN PHILOSOPHY:
+ * - Fretboard = WHERE to play (string/fret)
+ * - Circle = WHAT sounds (note name) → WHICH finger (on pulse)
+ * - Connectors = HOW notes connect (techniques)
  * 
- * IMPORTANT: All positioning uses SVG coordinates from fretboardBBox
- * No screen pixels (window, clientWidth) for SVG internal elements
+ * VISUAL RULES:
+ * 1. Notes are WHITE circles with subtle border and BLACK text
+ * 2. Before pulse: circle shows NOTE NAME (C, D, E...)
+ * 3. On pulse: circle shows FINGER NUMBER (1-4) + brief halo
+ * 4. After pulse: circle reduces opacity
+ * 5. Techniques are CONNECTORS between circles, never circles themselves
+ * 
+ * Each visual element has ONE function only. No duplicate information.
  */
 
 import React, { useEffect, useRef, useMemo, useState, useCallback } from 'react';
@@ -20,7 +23,6 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
-  Animated,
   Platform,
   Modal,
   ScrollView,
@@ -36,10 +38,9 @@ import Svg, {
   Defs,
   LinearGradient,
   Stop,
-  Ellipse,
 } from 'react-native-svg';
 import { COLORS, FONTS, SPACING, BORDER_RADIUS } from '../constants/theme';
-import { FretboardNote, FretboardPath, TechniqueGlyph, TechniqueSymbol, TECHNIQUE_SYMBOLS } from '../data/techniqueExercises';
+import { FretboardNote, FretboardPath, TechniqueGlyph } from '../data/techniqueExercises';
 import { Ionicons } from '@expo/vector-icons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -50,503 +51,254 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const FINGER_GUIDES_STORAGE_KEY = '@guitar_guide_finger_guides_enabled';
 
-// Finger Guide Colors - Consistent per finger
-const FINGER_COLORS: Record<number, string> = {
-  1: '#3498DB', // Azul - Índice
-  2: '#27AE60', // Verde - Medio
-  3: '#F1C40F', // Amarillo - Anular
-  4: '#E74C3C', // Rojo - Meñique
+// Note names for display
+const NOTE_NAMES: Record<number, Record<number, string>> = {
+  // String 1 (high E)
+  1: { 0: 'E', 1: 'F', 2: 'F#', 3: 'G', 4: 'G#', 5: 'A', 6: 'A#', 7: 'B', 8: 'C', 9: 'C#', 10: 'D', 11: 'D#', 12: 'E', 13: 'F', 14: 'F#', 15: 'G' },
+  // String 2 (B)
+  2: { 0: 'B', 1: 'C', 2: 'C#', 3: 'D', 4: 'D#', 5: 'E', 6: 'F', 7: 'F#', 8: 'G', 9: 'G#', 10: 'A', 11: 'A#', 12: 'B', 13: 'C', 14: 'C#', 15: 'D' },
+  // String 3 (G)
+  3: { 0: 'G', 1: 'G#', 2: 'A', 3: 'A#', 4: 'B', 5: 'C', 6: 'C#', 7: 'D', 8: 'D#', 9: 'E', 10: 'F', 11: 'F#', 12: 'G', 13: 'G#', 14: 'A', 15: 'A#' },
+  // String 4 (D)
+  4: { 0: 'D', 1: 'D#', 2: 'E', 3: 'F', 4: 'F#', 5: 'G', 6: 'G#', 7: 'A', 8: 'A#', 9: 'B', 10: 'C', 11: 'C#', 12: 'D', 13: 'D#', 14: 'E', 15: 'F' },
+  // String 5 (A)
+  5: { 0: 'A', 1: 'A#', 2: 'B', 3: 'C', 4: 'C#', 5: 'D', 6: 'D#', 7: 'E', 8: 'F', 9: 'F#', 10: 'G', 11: 'G#', 12: 'A', 13: 'A#', 14: 'B', 15: 'C' },
+  // String 6 (low E)
+  6: { 0: 'E', 1: 'F', 2: 'F#', 3: 'G', 4: 'G#', 5: 'A', 6: 'A#', 7: 'B', 8: 'C', 9: 'C#', 10: 'D', 11: 'D#', 12: 'E', 13: 'F', 14: 'F#', 15: 'G' },
 };
 
-// Finger Guide Visual Config - PREMIUM DESIGN
-const FINGER_GUIDE_CONFIG = {
-  // Opacidad: 70-90%
-  baseOpacity: 0.92,
-  fadeOpacity: 0.55,
-  
-  // Tamaño - MAYOR para claridad
-  sizeMultiplier: 1.6,
-  
-  // Stroke para contraste
-  strokeWidth: 2.5,
-  strokeColor: '#FFFFFF',
-  strokeOpacity: 0.95,
-  
-  // Sombra para profundidad
-  shadowOffsetX: 1.5,
-  shadowOffsetY: 1.5,
-  shadowOpacity: 0.35,
-  
-  // Badge de técnica
-  badgeRadius: 8,
-  badgeOffset: 0.75,
+// Technique symbols for connectors
+const TECHNIQUE_SYMBOLS: Record<TechniqueGlyph, string> = {
+  'h': 'h',      // Hammer-on
+  'p': 'p',      // Pull-off
+  '/': '/',      // Slide up
+  '\\': '\\',    // Slide down
+  'b': 'b',      // Bend
+  'r': 'r',      // Release
+  '~': '~',      // Vibrato
+  'x': 'x',      // Muted
+  'PM': 'PM',    // Palm mute
+  '>': '>',      // Accent
+  'sl': 'sl',    // Legato slide
+  'tr': 'tr',    // Trill
+};
+
+// Visual config
+const CIRCLE_CONFIG = {
+  radius: 14,
+  strokeWidth: 1.5,
+  strokeColor: '#9CA3AF',    // Subtle gray border
+  fillColor: '#FFFFFF',       // White fill
+  textColor: '#1F2937',       // Dark text
+  activeHaloColor: '#F59E0B', // Amber halo on pulse
+  completedOpacity: 0.4,
+  upcomingOpacity: 0.85,
+};
+
+const CONNECTOR_CONFIG = {
+  strokeWidth: 2,
+  color: '#6B7280',           // Gray for connectors
+  symbolSize: 10,
+  curveHeight: 15,
 };
 
 // =============================================
 // TYPES
 // =============================================
 
-interface FretboardBBox {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
-interface FingerGuideData {
-  x: number;
-  y: number;
-  finger: number;
-  fret: number;
-  string: number;
-  isActive: boolean;
-  isNext: boolean;
-  technique?: TechniqueGlyph;
+interface NoteState {
+  note: FretboardNote;
+  state: 'upcoming' | 'active' | 'completed';
+  showFinger: boolean;  // true = show finger, false = show note name
 }
 
 // =============================================
-// SYMBOL LEGEND DATA (Source of Truth)
+// HELPER: Get note name
 // =============================================
 
-interface SymbolLegendItem {
-  symbol: string;
-  displaySymbol: string;
-  name: string;
-  meaning: string;
-  howToExecute: string;
-  example: string;
-  color: string;
-}
-
-const SYMBOLS_LEGEND: SymbolLegendItem[] = [
-  {
-    symbol: 'h',
-    displaySymbol: 'H',
-    name: 'Hammer-on',
-    meaning: 'Golpear la cuerda con el dedo sin usar la púa',
-    howToExecute: 'Mantén el primer dedo presionado y golpea fuerte con otro dedo',
-    example: '5h7',
-    color: '#9B59B6',
-  },
-  {
-    symbol: 'p',
-    displaySymbol: 'P',
-    name: 'Pull-off',
-    meaning: 'Tirar del dedo para hacer sonar la nota inferior',
-    howToExecute: 'Tira el dedo hacia abajo (como un pequeño rasgueo) al levantarlo',
-    example: '7p5',
-    color: '#E67E22',
-  },
-  {
-    symbol: '/',
-    displaySymbol: '/',
-    name: 'Slide Up',
-    meaning: 'Deslizar el dedo hacia un traste más alto',
-    howToExecute: 'Mantén la presión mientras deslizas hacia arriba',
-    example: '5/7',
-    color: '#3498DB',
-  },
-  {
-    symbol: '\\',
-    displaySymbol: '\\',
-    name: 'Slide Down',
-    meaning: 'Deslizar el dedo hacia un traste más bajo',
-    howToExecute: 'Mantén la presión mientras deslizas hacia abajo',
-    example: '7\\5',
-    color: '#3498DB',
-  },
-  {
-    symbol: 'b',
-    displaySymbol: '↑',
-    name: 'Bend',
-    meaning: 'Estirar la cuerda para subir el tono',
-    howToExecute: 'Empuja la cuerda hacia arriba con 2-3 dedos de apoyo',
-    example: '7b9',
-    color: '#E74C3C',
-  },
-  {
-    symbol: 'r',
-    displaySymbol: '↓',
-    name: 'Release',
-    meaning: 'Soltar el bend para volver al tono original',
-    howToExecute: 'Relaja la presión gradualmente',
-    example: '9r7',
-    color: '#E74C3C',
-  },
-  {
-    symbol: '~',
-    displaySymbol: '∿',
-    name: 'Vibrato',
-    meaning: 'Oscilar el tono rápidamente',
-    howToExecute: 'Mueve la muñeca en un movimiento de "abanico"',
-    example: '7~~~',
-    color: '#9B59B6',
-  },
-  {
-    symbol: 'x',
-    displaySymbol: '×',
-    name: 'Muted Note',
-    meaning: 'Nota apagada (sin tono definido)',
-    howToExecute: 'Toca la cuerda sin presionar completamente',
-    example: 'x-x-x',
-    color: '#7F8C8D',
-  },
-  {
-    symbol: 'PM',
-    displaySymbol: 'PM',
-    name: 'Palm Mute',
-    meaning: 'Silenciar parcialmente con la palma',
-    howToExecute: 'Apoya el canto de la palma sobre las cuerdas cerca del puente',
-    example: 'PM---|',
-    color: '#34495E',
-  },
-  {
-    symbol: '>',
-    displaySymbol: '>',
-    name: 'Accent',
-    meaning: 'Tocar más fuerte esta nota',
-    howToExecute: 'Ataca con más fuerza de púa',
-    example: '>5',
-    color: '#F39C12',
-  },
-  {
-    symbol: 'sl',
-    displaySymbol: '⌒',
-    name: 'Legato Slide',
-    meaning: 'Deslizamiento suave sin reataque',
-    howToExecute: 'Desliza manteniendo el sonido continuo',
-    example: '5sl7',
-    color: '#1ABC9C',
-  },
-  {
-    symbol: 'tr',
-    displaySymbol: 'tr',
-    name: 'Trill',
-    meaning: 'Hammer-on y pull-off rápidos alternados',
-    howToExecute: 'Alterna rápidamente entre dos notas con ligados',
-    example: '5tr7',
-    color: '#8E44AD',
-  },
-];
-
-const COLORS_LEGEND = [
-  { color: '#F59E0B', name: 'Ámbar/Naranja', meaning: 'Nota ACTIVA - la que debes tocar ahora' },
-  { color: '#14B8A6', name: 'Teal/Verde-Azul', meaning: 'Nota PRÓXIMA - prepárate para esta' },
-  { color: '#6B7280', name: 'Gris', meaning: 'Nota COMPLETADA - ya la tocaste' },
-  { color: '#FFD700', name: 'Dorado (borde)', meaning: 'Nota RAÍZ - referencia tonal' },
-  { color: FINGER_COLORS[1], name: 'Azul (dedo 1)', meaning: 'Dedo ÍNDICE' },
-  { color: FINGER_COLORS[2], name: 'Verde (dedo 2)', meaning: 'Dedo MEDIO' },
-  { color: FINGER_COLORS[3], name: 'Amarillo (dedo 3)', meaning: 'Dedo ANULAR' },
-  { color: FINGER_COLORS[4], name: 'Rojo (dedo 4)', meaning: 'Dedo MEÑIQUE' },
-];
-
-const TECHNIQUE_GLYPHS: Record<TechniqueGlyph, string> = {
-  'h': 'H', 'p': 'P', '/': '/', '\\': '\\',
-  'b': '↑', 'r': '↓', '~': '∿', 'x': '×',
-  'PM': 'PM', '>': '>', 'sl': '⌒', 'tr': 'tr',
+const getNoteName = (string: number, fret: number): string => {
+  return NOTE_NAMES[string]?.[fret] || `${fret}`;
 };
 
 // =============================================
-// FINGER GUIDE SVG COMPONENT
-// Clean, minimal finger markers
+// TECHNIQUE CONNECTOR COMPONENT
+// Renders lines/curves between notes with technique symbols
 // =============================================
 
-interface FingerGuideProps {
-  guides: FingerGuideData[];
+interface TechniqueConnectorProps {
+  fromX: number;
+  fromY: number;
+  toX: number;
+  toY: number;
+  technique: TechniqueGlyph;
   scale: number;
-  debugMode?: boolean;
+  isActive: boolean;
 }
 
-const FingerGuideSVG: React.FC<FingerGuideProps> = ({
-  guides,
+const TechniqueConnector: React.FC<TechniqueConnectorProps> = ({
+  fromX,
+  fromY,
+  toX,
+  toY,
+  technique,
   scale,
-  debugMode = false,
+  isActive,
 }) => {
-  if (!guides || guides.length === 0) return null;
+  const config = CONNECTOR_CONFIG;
+  const symbol = TECHNIQUE_SYMBOLS[technique] || technique;
+  const midX = (fromX + toX) / 2;
+  const midY = (fromY + toY) / 2;
   
-  const config = FINGER_GUIDE_CONFIG;
-  const baseRadius = 12 * scale * config.sizeMultiplier;
+  // Calculate curve control point
+  const curveY = midY - config.curveHeight * scale;
+  
+  // Determine connector style based on technique
+  const isSlide = technique === '/' || technique === '\\';
+  const isBend = technique === 'b' || technique === 'r';
+  const isLegato = technique === 'h' || technique === 'p';
+  
+  const opacity = isActive ? 1 : 0.5;
+  const strokeColor = isActive ? '#F59E0B' : config.color;
   
   return (
-    <G id="finger-guides-layer">
-      {guides.map((guide, index) => {
-        if (!guide.finger || guide.finger < 1 || guide.finger > 4) return null;
-        
-        const fingerColor = FINGER_COLORS[guide.finger];
-        const radius = guide.isActive ? baseRadius : baseRadius * 0.85;
-        const opacity = guide.isActive ? config.baseOpacity : config.fadeOpacity;
-        const glyph = guide.technique ? TECHNIQUE_GLYPHS[guide.technique] : null;
-        
-        return (
-          <G key={`finger-guide-${index}`} opacity={opacity}>
-            {/* Shadow for depth */}
-            <Circle
-              cx={guide.x + config.shadowOffsetX * scale}
-              cy={guide.y + config.shadowOffsetY * scale}
-              r={radius}
-              fill="#000000"
-              opacity={config.shadowOpacity}
-            />
-            
-            {/* Main finger circle - Color background */}
-            <Circle
-              cx={guide.x}
-              cy={guide.y}
-              r={radius}
-              fill={fingerColor}
-              stroke={config.strokeColor}
-              strokeWidth={config.strokeWidth * scale}
-              strokeOpacity={config.strokeOpacity}
-            />
-            
-            {/* Finger number - LARGE and CENTERED */}
-            <SvgText
-              x={guide.x}
-              y={guide.y + 5 * scale}
-              textAnchor="middle"
-              fill="#FFFFFF"
-              fontSize={16 * scale}
-              fontWeight="bold"
-            >
-              {guide.finger}
-            </SvgText>
-            
-            {/* Technique badge - VISIBLE when technique present */}
-            {glyph && (
-              <G>
-                {/* Badge background */}
-                <Circle
-                  cx={guide.x + radius * config.badgeOffset}
-                  cy={guide.y - radius * config.badgeOffset}
-                  r={config.badgeRadius * scale}
-                  fill="#FFFFFF"
-                  stroke={fingerColor}
-                  strokeWidth={1.5 * scale}
-                />
-                {/* Badge text */}
-                <SvgText
-                  x={guide.x + radius * config.badgeOffset}
-                  y={guide.y - radius * config.badgeOffset + 3.5 * scale}
-                  textAnchor="middle"
-                  fill={fingerColor}
-                  fontSize={9 * scale}
-                  fontWeight="bold"
-                >
-                  {glyph}
-                </SvgText>
-              </G>
-            )}
-            
-            {/* Active pulse ring */}
-            {guide.isActive && (
-              <Circle
-                cx={guide.x}
-                cy={guide.y}
-                r={radius + 4 * scale}
-                fill="none"
-                stroke={fingerColor}
-                strokeWidth={2 * scale}
-                strokeOpacity={0.4}
-              />
-            )}
-            
-            {/* Debug info */}
-            {debugMode && (
-              <SvgText
-                x={guide.x}
-                y={guide.y + radius + 12 * scale}
-                textAnchor="middle"
-                fill="#FF0000"
-                fontSize={8 * scale}
-              >
-                T{guide.fret}/C{guide.string}
-              </SvgText>
-            )}
-          </G>
-        );
-      })}
+    <G opacity={opacity}>
+      {/* Connector line/curve */}
+      {isLegato || isBend ? (
+        // Curved connector for legato techniques
+        <Path
+          d={`M ${fromX} ${fromY - CIRCLE_CONFIG.radius * scale} 
+              Q ${midX} ${curveY} 
+              ${toX} ${toY - CIRCLE_CONFIG.radius * scale}`}
+          fill="none"
+          stroke={strokeColor}
+          strokeWidth={config.strokeWidth * scale}
+          strokeLinecap="round"
+        />
+      ) : isSlide ? (
+        // Straight diagonal line for slides
+        <Line
+          x1={fromX}
+          y1={fromY}
+          x2={toX}
+          y2={toY}
+          stroke={strokeColor}
+          strokeWidth={config.strokeWidth * scale}
+          strokeLinecap="round"
+          strokeDasharray={`${4 * scale} ${2 * scale}`}
+        />
+      ) : (
+        // Default straight line
+        <Line
+          x1={fromX}
+          y1={fromY - CIRCLE_CONFIG.radius * scale}
+          x2={toX}
+          y2={toY - CIRCLE_CONFIG.radius * scale}
+          stroke={strokeColor}
+          strokeWidth={config.strokeWidth * scale}
+          strokeLinecap="round"
+        />
+      )}
+      
+      {/* Technique symbol */}
+      <G>
+        {/* Symbol background */}
+        <Rect
+          x={midX - 8 * scale}
+          y={curveY - 8 * scale}
+          width={16 * scale}
+          height={14 * scale}
+          rx={3 * scale}
+          fill={COLORS.background}
+          stroke={strokeColor}
+          strokeWidth={1 * scale}
+        />
+        {/* Symbol text */}
+        <SvgText
+          x={midX}
+          y={curveY + 1 * scale}
+          textAnchor="middle"
+          fill={strokeColor}
+          fontSize={config.symbolSize * scale}
+          fontWeight="bold"
+        >
+          {symbol}
+        </SvgText>
+      </G>
     </G>
   );
 };
 
 // =============================================
-// SYMBOL LEGEND MODAL COMPONENT
+// NOTE CIRCLE COMPONENT
+// White circle showing note name OR finger number
 // =============================================
 
-interface SymbolLegendModalProps {
-  visible: boolean;
-  onClose: () => void;
-}
-
-const SymbolLegendModal: React.FC<SymbolLegendModalProps> = ({ visible, onClose }) => {
-  const [activeTab, setActiveTab] = useState<'symbols' | 'colors'>('symbols');
-  
-  return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={onClose}
-    >
-      <View style={modalStyles.overlay}>
-        <View style={modalStyles.container}>
-          {/* Header */}
-          <View style={modalStyles.header}>
-            <Text style={modalStyles.title}>Diccionario</Text>
-            <TouchableOpacity onPress={onClose} style={modalStyles.closeButton}>
-              <Ionicons name="close" size={24} color={COLORS.text} />
-            </TouchableOpacity>
-          </View>
-          
-          {/* Tabs */}
-          <View style={modalStyles.tabs}>
-            <TouchableOpacity 
-              style={[modalStyles.tab, activeTab === 'symbols' && modalStyles.tabActive]}
-              onPress={() => setActiveTab('symbols')}
-            >
-              <Text style={[modalStyles.tabText, activeTab === 'symbols' && modalStyles.tabTextActive]}>
-                Símbolos
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[modalStyles.tab, activeTab === 'colors' && modalStyles.tabActive]}
-              onPress={() => setActiveTab('colors')}
-            >
-              <Text style={[modalStyles.tabText, activeTab === 'colors' && modalStyles.tabTextActive]}>
-                Colores
-              </Text>
-            </TouchableOpacity>
-          </View>
-          
-          {/* Content */}
-          <ScrollView style={modalStyles.content} showsVerticalScrollIndicator={false}>
-            {activeTab === 'symbols' ? (
-              // Symbols Tab
-              SYMBOLS_LEGEND.map((item, index) => (
-                <View key={index} style={modalStyles.symbolItem}>
-                  <View style={[modalStyles.symbolBadge, { backgroundColor: item.color }]}>
-                    <Text style={modalStyles.symbolText}>{item.displaySymbol}</Text>
-                  </View>
-                  <View style={modalStyles.symbolInfo}>
-                    <Text style={modalStyles.symbolName}>{item.name}</Text>
-                    <Text style={modalStyles.symbolMeaning}>{item.meaning}</Text>
-                    <Text style={modalStyles.symbolHow}>
-                      <Text style={modalStyles.symbolHowLabel}>Cómo: </Text>
-                      {item.howToExecute}
-                    </Text>
-                    <View style={modalStyles.exampleContainer}>
-                      <Text style={modalStyles.exampleLabel}>Ejemplo: </Text>
-                      <Text style={modalStyles.exampleText}>{item.example}</Text>
-                    </View>
-                  </View>
-                </View>
-              ))
-            ) : (
-              // Colors Tab
-              COLORS_LEGEND.map((item, index) => (
-                <View key={index} style={modalStyles.colorItem}>
-                  <View style={[modalStyles.colorDot, { backgroundColor: item.color }]} />
-                  <View style={modalStyles.colorInfo}>
-                    <Text style={modalStyles.colorName}>{item.name}</Text>
-                    <Text style={modalStyles.colorMeaning}>{item.meaning}</Text>
-                  </View>
-                </View>
-              ))
-            )}
-            <View style={{ height: 20 }} />
-          </ScrollView>
-        </View>
-      </View>
-    </Modal>
-  );
-};
-
-// =============================================
-// NOTE COMPONENT
-// =============================================
-
-interface NoteComponentProps {
-  note: FretboardNote;
+interface NoteCircleProps {
   x: number;
   y: number;
-  state: 'active' | 'next' | 'completed' | 'upcoming';
-  techniqueColor: string;
-  showTechniqueGlyph: boolean;
+  noteName: string;
+  finger?: number;
+  state: 'upcoming' | 'active' | 'completed';
+  showFinger: boolean;
   scale: number;
 }
 
-const NoteComponent: React.FC<NoteComponentProps> = ({
-  note,
+const NoteCircle: React.FC<NoteCircleProps> = ({
   x,
   y,
+  noteName,
+  finger,
   state,
-  techniqueColor,
-  showTechniqueGlyph,
+  showFinger,
   scale,
 }) => {
-  const isActive = state === 'active';
-  const radius = isActive ? 13 * scale : 11 * scale;
+  const config = CIRCLE_CONFIG;
+  const radius = config.radius * scale;
   
-  // Color based on state
-  let fillColor = COLORS.textMuted;
-  let strokeColor = 'transparent';
-  let textColor = '#FFFFFF';
-  
-  switch (state) {
-    case 'active':
-      fillColor = techniqueColor;
-      strokeColor = '#FFFFFF';
-      break;
-    case 'next':
-      fillColor = COLORS.secondaryDark;
-      strokeColor = techniqueColor;
-      break;
-    case 'completed':
-      fillColor = COLORS.surfaceLight;
-      textColor = COLORS.textMuted;
-      break;
-    case 'upcoming':
-      fillColor = COLORS.surfaceDark;
-      textColor = COLORS.textMuted;
-      break;
+  // Determine opacity based on state
+  let opacity = config.upcomingOpacity;
+  if (state === 'completed') {
+    opacity = config.completedOpacity;
+  } else if (state === 'active') {
+    opacity = 1;
   }
   
-  // Get technique glyph
-  const glyph = note.technique ? TECHNIQUE_GLYPHS[note.technique] : null;
+  // Display content: note name or finger number
+  const displayText = showFinger && finger ? String(finger) : noteName;
   
   return (
-    <G>
-      {/* Outer glow for active */}
-      {isActive && (
+    <G opacity={opacity}>
+      {/* Active halo - brief pulse indicator */}
+      {state === 'active' && (
         <Circle
           cx={x}
           cy={y}
-          r={radius + 4 * scale}
-          fill={techniqueColor}
+          r={radius + 6 * scale}
+          fill={config.activeHaloColor}
           opacity={0.3}
         />
       )}
       
-      {/* Main note circle */}
+      {/* Main white circle */}
       <Circle
         cx={x}
         cy={y}
         r={radius}
-        fill={fillColor}
-        stroke={strokeColor}
-        strokeWidth={isActive ? 2 * scale : 1 * scale}
+        fill={config.fillColor}
+        stroke={state === 'active' ? config.activeHaloColor : config.strokeColor}
+        strokeWidth={state === 'active' ? 2.5 * scale : config.strokeWidth * scale}
       />
       
-      {/* Fret number or technique glyph */}
+      {/* Text content - note name or finger */}
       <SvgText
         x={x}
-        y={y + 4 * scale}
+        y={y + 4.5 * scale}
         textAnchor="middle"
-        fill={textColor}
-        fontSize={11 * scale}
-        fontWeight={isActive ? 'bold' : '600'}
+        fill={config.textColor}
+        fontSize={showFinger ? 14 * scale : 11 * scale}
+        fontWeight={state === 'active' ? 'bold' : '600'}
       >
-        {showTechniqueGlyph && glyph ? glyph : note.position.fret}
+        {displayText}
       </SvgText>
     </G>
   );
@@ -562,7 +314,6 @@ interface TechniqueAnimatedFretboardProProps {
   isPlaying: boolean;
   techniqueColor: string;
   onNotePress?: (note: FretboardNote) => void;
-  onSymbolPress?: (symbol: TechniqueGlyph) => void;
   mode?: 'guided' | 'follow' | 'free';
   showTechniqueGlyphs?: boolean;
   showFingerGuides?: boolean;
@@ -575,81 +326,65 @@ export const TechniqueAnimatedFretboardPro: React.FC<TechniqueAnimatedFretboardP
   isPlaying,
   techniqueColor,
   onNotePress,
-  onSymbolPress,
   mode = 'guided',
   showTechniqueGlyphs = true,
   showFingerGuides: showFingerGuidesProp = true,
   debugMode = false,
 }) => {
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const [showLegendModal, setShowLegendModal] = useState(false);
-  
   // =============================================
-  // FINGER GUIDES TOGGLE STATE WITH PERSISTENCE
+  // STATE
   // =============================================
   
-  const [fingerGuidesEnabled, setFingerGuidesEnabled] = useState(true); // Default ON
-  const [isLoadingPreference, setIsLoadingPreference] = useState(true);
+  const [fingerGuidesEnabled, setFingerGuidesEnabled] = useState(true);
   
-  // Load saved preference on mount
+  // Load saved preference
   useEffect(() => {
-    const loadFingerGuidesPreference = async () => {
+    const loadPreference = async () => {
       try {
-        const savedValue = await AsyncStorage.getItem(FINGER_GUIDES_STORAGE_KEY);
-        if (savedValue !== null) {
-          setFingerGuidesEnabled(savedValue === 'true');
+        const saved = await AsyncStorage.getItem(FINGER_GUIDES_STORAGE_KEY);
+        if (saved !== null) {
+          setFingerGuidesEnabled(saved === 'true');
         }
-      } catch (error) {
-        console.warn('[FingerGuides] Failed to load preference:', error);
-      } finally {
-        setIsLoadingPreference(false);
+      } catch (e) {
+        console.warn('[Fretboard] Failed to load preference');
       }
     };
-    loadFingerGuidesPreference();
+    loadPreference();
   }, []);
   
-  // Save preference when changed
+  // Toggle finger guides
   const toggleFingerGuides = useCallback(async () => {
     const newValue = !fingerGuidesEnabled;
     setFingerGuidesEnabled(newValue);
     try {
       await AsyncStorage.setItem(FINGER_GUIDES_STORAGE_KEY, String(newValue));
-    } catch (error) {
-      console.warn('[FingerGuides] Failed to save preference:', error);
+    } catch (e) {
+      console.warn('[Fretboard] Failed to save preference');
     }
   }, [fingerGuidesEnabled]);
   
-  // Final finger guides visibility (considers prop + toggle + mode)
-  const showFingerGuides = showFingerGuidesProp && fingerGuidesEnabled && mode === 'guided';
+  const showFingers = showFingerGuidesProp && fingerGuidesEnabled && mode === 'guided';
   
   // =============================================
-  // FRETBOARD DIMENSIONS (All in SVG units)
+  // FRETBOARD DIMENSIONS
   // =============================================
   
-  const rawScreenWidth = SCREEN_WIDTH;
-  const maxMobileWidth = 400;
-  const effectiveScreenWidth = Math.min(rawScreenWidth, maxMobileWidth);
-  
-  const fretboardWidth = effectiveScreenWidth - 32;
-  const fretboardHeight = 160;
+  const maxWidth = Math.min(SCREEN_WIDTH, 400);
+  const fretboardWidth = maxWidth - 32;
+  const fretboardHeight = 180;
   const numStrings = 6;
   const numFrets = (path.endFret - path.startFret) + 1;
-  const leftPadding = 25;
+  
+  // Padding for string numbers and fret numbers
+  const leftPadding = 30;  // Space for string numbers
   const rightPadding = 15;
-  const topPadding = 25;
-  const bottomPadding = 20;
+  const topPadding = 20;
+  const bottomPadding = 25; // Space for fret numbers
+  
   const stringAreaHeight = fretboardHeight - topPadding - bottomPadding;
   const stringSpacing = stringAreaHeight / (numStrings - 1);
   const fretSpacing = (fretboardWidth - leftPadding - rightPadding) / numFrets;
-  const scale = fretboardHeight / 160;
-  
-  // Fretboard bounding box for reference
-  const fretboardBBox: FretboardBBox = useMemo(() => ({
-    x: leftPadding,
-    y: topPadding,
-    width: fretboardWidth - leftPadding - rightPadding,
-    height: stringAreaHeight,
-  }), [fretboardWidth, leftPadding, rightPadding, topPadding, stringAreaHeight]);
+  const scale = fretboardHeight / 180;
   
   // =============================================
   // NOTE POSITIONING
@@ -663,208 +398,220 @@ export const TechniqueAnimatedFretboardPro: React.FC<TechniqueAnimatedFretboardP
   }, [path.startFret, leftPadding, fretSpacing, topPadding, stringSpacing]);
   
   // =============================================
-  // CURRENT & PREVIOUS NOTE TRACKING
+  // CURRENT NOTE TRACKING
   // =============================================
   
-  const currentNote = useMemo(() => {
-    if (!path.notes.length) return null;
-    
-    const effectiveBeat = path.loopable && path.beatsPerLoop 
+  const effectiveBeat = useMemo(() => {
+    return path.loopable && path.beatsPerLoop 
       ? currentBeat % path.beatsPerLoop 
       : currentBeat;
-    
-    // Find the note that should be active at this beat
+  }, [currentBeat, path.loopable, path.beatsPerLoop]);
+  
+  const currentNoteIndex = useMemo(() => {
     for (let i = path.notes.length - 1; i >= 0; i--) {
       if (path.notes[i].timing <= effectiveBeat) {
-        return path.notes[i];
+        return i;
       }
     }
-    return path.notes[0];
-  }, [path.notes, currentBeat, path.loopable, path.beatsPerLoop]);
+    return 0;
+  }, [path.notes, effectiveBeat]);
   
-  const previousNote = useMemo(() => {
-    if (!currentNote || !path.notes.length) return null;
-    const currentIndex = path.notes.findIndex(n => 
-      n.timing === currentNote.timing && 
-      n.position.fret === currentNote.position.fret
-    );
-    return currentIndex > 0 ? path.notes[currentIndex - 1] : null;
-  }, [currentNote, path.notes]);
-  
-  const nextNote = useMemo(() => {
-    if (!currentNote || !path.notes.length) return null;
-    const currentIndex = path.notes.findIndex(n => 
-      n.timing === currentNote.timing && 
-      n.position.fret === currentNote.position.fret
-    );
-    return currentIndex >= 0 && currentIndex < path.notes.length - 1 
-      ? path.notes[currentIndex + 1] 
-      : null;
-  }, [currentNote, path.notes]);
+  const currentNote = path.notes[currentNoteIndex] || null;
   
   // =============================================
-  // FINGER GUIDES DATA
+  // RENDER FRETBOARD BASE
   // =============================================
   
-  const fingerGuidesData = useMemo((): FingerGuideData[] => {
-    if (!showFingerGuides) return [];
+  const renderFretboard = () => {
+    const elements: JSX.Element[] = [];
     
-    const guides: FingerGuideData[] = [];
+    // Fretboard background
+    elements.push(
+      <Rect
+        key="bg"
+        x={leftPadding - 5}
+        y={topPadding - 5}
+        width={fretboardWidth - leftPadding - rightPadding + 10}
+        height={stringAreaHeight + 10}
+        fill="#1A0F0A"
+        rx={4}
+      />
+    );
     
-    // Add current note finger guide
-    if (currentNote && currentNote.finger) {
-      const pos = computeNotePosition(currentNote.position.fret, currentNote.position.string);
-      guides.push({
-        x: pos.x,
-        y: pos.y,
-        finger: currentNote.finger,
-        fret: currentNote.position.fret,
-        string: currentNote.position.string,
-        isActive: true,
-        isNext: false,
-        technique: currentNote.technique,
-      });
+    // Frets (vertical lines)
+    for (let i = 0; i <= numFrets; i++) {
+      const x = leftPadding + i * fretSpacing;
+      const isNut = i === 0;
+      elements.push(
+        <Line
+          key={`fret-${i}`}
+          x1={x}
+          y1={topPadding - 3}
+          x2={x}
+          y2={topPadding + stringAreaHeight + 3}
+          stroke={isNut ? '#E5E5E5' : '#6B6B6B'}
+          strokeWidth={isNut ? 4 : 1.5}
+        />
+      );
     }
     
-    // Add next note finger guide (anticipation)
-    if (nextNote && nextNote.finger && nextNote.finger !== currentNote?.finger) {
-      const pos = computeNotePosition(nextNote.position.fret, nextNote.position.string);
-      guides.push({
-        x: pos.x,
-        y: pos.y,
-        finger: nextNote.finger,
-        fret: nextNote.position.fret,
-        string: nextNote.position.string,
-        isActive: false,
-        isNext: true,
-        technique: nextNote.technique,
-      });
-    }
-    
-    return guides;
-  }, [showFingerGuides, currentNote, nextNote, computeNotePosition]);
-  
-  // =============================================
-  // RENDER FUNCTIONS
-  // =============================================
-  
-  const renderStrings = () => {
-    return Array.from({ length: numStrings }, (_, i) => {
+    // Strings (horizontal lines)
+    for (let i = 0; i < numStrings; i++) {
       const y = topPadding + i * stringSpacing;
-      const thickness = 1 + (i * 0.3); // Thicker strings at bottom
-      return (
+      const thickness = 1 + (i * 0.35);
+      elements.push(
         <Line
           key={`string-${i}`}
           x1={leftPadding}
           y1={y}
           x2={fretboardWidth - rightPadding}
           y2={y}
-          stroke="#C0C0C0"
+          stroke="#B8B8B8"
           strokeWidth={thickness}
-          opacity={0.8}
         />
       );
-    });
-  };
-  
-  const renderFrets = () => {
-    return Array.from({ length: numFrets + 1 }, (_, i) => {
-      const x = leftPadding + i * fretSpacing;
-      const isNut = i === 0;
-      return (
-        <Line
-          key={`fret-${i}`}
-          x1={x}
-          y1={topPadding - 5}
-          x2={x}
-          y2={topPadding + stringAreaHeight + 5}
-          stroke={isNut ? '#E0E0E0' : '#808080'}
-          strokeWidth={isNut ? 4 : 1.5}
-          opacity={isNut ? 1 : 0.6}
-        />
-      );
-    });
-  };
-  
-  const renderFretMarkers = () => {
-    const markers: JSX.Element[] = [];
-    const markerFrets = [3, 5, 7, 9, 12, 15, 17, 19, 21];
-    const doubleDotFrets = [12, 24];
+    }
     
+    // Fret markers (dots)
+    const markerFrets = [3, 5, 7, 9, 12, 15, 17, 19];
     markerFrets.forEach(fret => {
       if (fret >= path.startFret && fret <= path.endFret) {
         const fretIndex = fret - path.startFret;
         const x = leftPadding + (fretIndex + 0.5) * fretSpacing;
         const yCenter = topPadding + stringAreaHeight / 2;
         
-        if (doubleDotFrets.includes(fret)) {
-          markers.push(
-            <Circle key={`marker-${fret}-1`} cx={x} cy={yCenter - 20} r={4} fill="#555" opacity={0.5} />,
-            <Circle key={`marker-${fret}-2`} cx={x} cy={yCenter + 20} r={4} fill="#555" opacity={0.5} />
+        if (fret === 12) {
+          elements.push(
+            <Circle key={`marker-${fret}-1`} cx={x} cy={yCenter - 18} r={3.5} fill="#4A4A4A" />,
+            <Circle key={`marker-${fret}-2`} cx={x} cy={yCenter + 18} r={3.5} fill="#4A4A4A" />
           );
         } else {
-          markers.push(
-            <Circle key={`marker-${fret}`} cx={x} cy={yCenter} r={4} fill="#555" opacity={0.5} />
+          elements.push(
+            <Circle key={`marker-${fret}`} cx={x} cy={yCenter} r={3.5} fill="#4A4A4A" />
           );
         }
       }
     });
     
-    // Fret numbers
+    return elements;
+  };
+  
+  // =============================================
+  // RENDER STRING NUMBERS (Left side, 6 to 1)
+  // =============================================
+  
+  const renderStringNumbers = () => {
+    return Array.from({ length: numStrings }, (_, i) => {
+      const stringNum = 6 - i; // 6 at top, 1 at bottom
+      const y = topPadding + i * stringSpacing;
+      return (
+        <SvgText
+          key={`string-num-${i}`}
+          x={12}
+          y={y + 4}
+          textAnchor="middle"
+          fill={COLORS.textMuted}
+          fontSize={11}
+          fontWeight="600"
+        >
+          {stringNum}
+        </SvgText>
+      );
+    });
+  };
+  
+  // =============================================
+  // RENDER FRET NUMBERS (Bottom)
+  // =============================================
+  
+  const renderFretNumbers = () => {
+    const elements: JSX.Element[] = [];
+    
     for (let i = 0; i <= numFrets; i++) {
       const fretNum = path.startFret + i;
       const x = leftPadding + (i + 0.5) * fretSpacing;
-      markers.push(
+      elements.push(
         <SvgText
           key={`fret-num-${i}`}
           x={x}
-          y={fretboardHeight - 5}
+          y={fretboardHeight - 6}
           textAnchor="middle"
           fill={COLORS.textMuted}
-          fontSize={9}
-          opacity={0.7}
+          fontSize={10}
+          fontWeight="500"
         >
           {fretNum}
         </SvgText>
       );
     }
     
-    return markers;
+    return elements;
   };
   
-  const renderNotes = () => {
-    const effectiveBeat = path.loopable && path.beatsPerLoop 
-      ? currentBeat % path.beatsPerLoop 
-      : currentBeat;
+  // =============================================
+  // RENDER TECHNIQUE CONNECTORS
+  // =============================================
+  
+  const renderConnectors = () => {
+    const connectors: JSX.Element[] = [];
     
+    for (let i = 1; i < path.notes.length; i++) {
+      const note = path.notes[i];
+      const prevNote = path.notes[i - 1];
+      
+      if (note.technique) {
+        const fromPos = computeNotePosition(prevNote.position.fret, prevNote.position.string);
+        const toPos = computeNotePosition(note.position.fret, note.position.string);
+        
+        const isActive = currentNoteIndex === i || currentNoteIndex === i - 1;
+        
+        connectors.push(
+          <TechniqueConnector
+            key={`connector-${i}`}
+            fromX={fromPos.x}
+            fromY={fromPos.y}
+            toX={toPos.x}
+            toY={toPos.y}
+            technique={note.technique}
+            scale={scale}
+            isActive={isActive}
+          />
+        );
+      }
+    }
+    
+    return connectors;
+  };
+  
+  // =============================================
+  // RENDER NOTE CIRCLES
+  // =============================================
+  
+  const renderNotes = () => {
     return path.notes.map((note, index) => {
       const pos = computeNotePosition(note.position.fret, note.position.string);
+      const noteName = getNoteName(note.position.string, note.position.fret);
       
-      let state: 'active' | 'next' | 'completed' | 'upcoming' = 'upcoming';
-      
-      if (currentNote && 
-          note.timing === currentNote.timing && 
-          note.position.fret === currentNote.position.fret &&
-          note.position.string === currentNote.position.string) {
+      // Determine state
+      let state: 'upcoming' | 'active' | 'completed' = 'upcoming';
+      if (index === currentNoteIndex) {
         state = 'active';
-      } else if (nextNote &&
-          note.timing === nextNote.timing && 
-          note.position.fret === nextNote.position.fret &&
-          note.position.string === nextNote.position.string) {
-        state = 'next';
-      } else if (note.timing < effectiveBeat) {
+      } else if (index < currentNoteIndex) {
         state = 'completed';
       }
       
+      // Show finger only on active note when playing and guides enabled
+      const showFinger = showFingers && state === 'active' && isPlaying;
+      
       return (
-        <NoteComponent
+        <NoteCircle
           key={`note-${index}`}
-          note={note}
           x={pos.x}
           y={pos.y}
+          noteName={noteName}
+          finger={note.finger}
           state={state}
-          techniqueColor={techniqueColor}
-          showTechniqueGlyph={showTechniqueGlyphs}
+          showFinger={showFinger}
           scale={scale}
         />
       );
@@ -877,62 +624,34 @@ export const TechniqueAnimatedFretboardPro: React.FC<TechniqueAnimatedFretboardP
   
   return (
     <View style={styles.container}>
-      {/* Controls row */}
+      {/* Controls */}
       <View style={styles.controlsRow}>
-        <TouchableOpacity 
-          style={styles.legendButton}
-          onPress={() => setShowLegendModal(true)}
-          accessibilityLabel="Abrir diccionario de símbolos"
-        >
-          <Ionicons name="book-outline" size={18} color={COLORS.primary} />
-          <Text style={styles.legendButtonText}>Símbolos</Text>
-        </TouchableOpacity>
-        
-        {/* Finger Guides Toggle Button - ON/OFF */}
+        {/* Finger guides toggle */}
         {mode === 'guided' && showFingerGuidesProp && (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[
-              styles.fingerGuidesToggleBtn,
-              fingerGuidesEnabled && styles.fingerGuidesToggleBtnActive
+              styles.toggleBtn,
+              fingerGuidesEnabled && styles.toggleBtnActive
             ]}
             onPress={toggleFingerGuides}
-            accessibilityLabel="Mostrar/ocultar dedos guía"
-            accessibilityRole="switch"
-            accessibilityState={{ checked: fingerGuidesEnabled }}
+            accessibilityLabel="Mostrar/ocultar número de dedo"
           >
-            <View style={styles.fingerIconsRow}>
-              {[1, 2, 3, 4].map(f => (
-                <View 
-                  key={f} 
-                  style={[
-                    styles.miniFingerDot, 
-                    { backgroundColor: fingerGuidesEnabled ? FINGER_COLORS[f] : COLORS.textMuted }
-                  ]} 
-                />
-              ))}
-            </View>
+            <Ionicons 
+              name="finger-print-outline" 
+              size={16} 
+              color={fingerGuidesEnabled ? COLORS.primary : COLORS.textMuted} 
+            />
             <Text style={[
-              styles.fingerGuidesToggleText,
-              fingerGuidesEnabled && styles.fingerGuidesToggleTextActive
+              styles.toggleText,
+              fingerGuidesEnabled && styles.toggleTextActive
             ]}>
-              Dedos
+              Dedos {fingerGuidesEnabled ? 'ON' : 'OFF'}
             </Text>
-            <View style={[
-              styles.toggleIndicator,
-              fingerGuidesEnabled ? styles.toggleIndicatorOn : styles.toggleIndicatorOff
-            ]}>
-              <Text style={[
-                styles.toggleIndicatorText,
-                !fingerGuidesEnabled && styles.toggleIndicatorTextOff
-              ]}>
-                {fingerGuidesEnabled ? 'ON' : 'OFF'}
-              </Text>
-            </View>
           </TouchableOpacity>
         )}
         
         {debugMode && (
-          <Text style={styles.debugLabel}>DEBUG ON</Text>
+          <Text style={styles.debugText}>Beat: {effectiveBeat.toFixed(1)}</Text>
         )}
       </View>
       
@@ -943,42 +662,19 @@ export const TechniqueAnimatedFretboardPro: React.FC<TechniqueAnimatedFretboardP
           height={fretboardHeight}
           viewBox={`0 0 ${fretboardWidth} ${fretboardHeight}`}
         >
-          <Defs>
-            <LinearGradient id="fretboardBg" x1="0%" y1="0%" x2="0%" y2="100%">
-              <Stop offset="0%" stopColor="#2D1F1A" stopOpacity={1} />
-              <Stop offset="100%" stopColor="#1A0F0A" stopOpacity={1} />
-            </LinearGradient>
-          </Defs>
+          {/* Layer 1: Fretboard base (frets, strings) */}
+          {renderFretboard()}
           
-          {/* LAYER 1: Background */}
-          <Rect
-            x={0}
-            y={topPadding - 8}
-            width={fretboardWidth}
-            height={stringAreaHeight + 16}
-            fill="url(#fretboardBg)"
-            rx={6}
-          />
+          {/* Layer 2: String numbers (left side) */}
+          {renderStringNumbers()}
           
-          {/* LAYER 2: Frets */}
-          {renderFrets()}
+          {/* Layer 3: Fret numbers (bottom) */}
+          {renderFretNumbers()}
           
-          {/* LAYER 3: Fret markers */}
-          {renderFretMarkers()}
+          {/* Layer 4: Technique connectors */}
+          {renderConnectors()}
           
-          {/* LAYER 4: Strings */}
-          {renderStrings()}
-          
-          {/* LAYER 5: Finger Guides (ABOVE fretboard/strings, BELOW notes) */}
-          {showFingerGuides && fingerGuidesData.length > 0 && (
-            <FingerGuideSVG
-              guides={fingerGuidesData}
-              scale={scale}
-              debugMode={debugMode}
-            />
-          )}
-          
-          {/* LAYER 6: Notes (topmost layer) */}
+          {/* Layer 5: Note circles (topmost) */}
           {renderNotes()}
         </Svg>
       </View>
@@ -986,31 +682,24 @@ export const TechniqueAnimatedFretboardPro: React.FC<TechniqueAnimatedFretboardP
       {/* Legend */}
       <View style={styles.legend}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: techniqueColor }]} />
-          <Text style={styles.legendText}>Activa</Text>
+          <View style={styles.legendCircle}>
+            <Text style={styles.legendCircleText}>A</Text>
+          </View>
+          <Text style={styles.legendText}>Nota</Text>
         </View>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: COLORS.secondaryDark }]} />
-          <Text style={styles.legendText}>Próxima</Text>
+          <View style={[styles.legendCircle, styles.legendCircleActive]}>
+            <Text style={styles.legendCircleTextActive}>1</Text>
+          </View>
+          <Text style={styles.legendText}>Dedo (al pulsar)</Text>
         </View>
-        {showFingerGuides && (
-          <>
-            <View style={styles.legendSeparator} />
-            {[1, 2, 3, 4].map(f => (
-              <View key={f} style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: FINGER_COLORS[f] }]} />
-                <Text style={styles.legendText}>{f}</Text>
-              </View>
-            ))}
-          </>
-        )}
+        <View style={styles.legendItem}>
+          <View style={styles.legendConnector}>
+            <Text style={styles.legendConnectorText}>h</Text>
+          </View>
+          <Text style={styles.legendText}>Técnica</Text>
+        </View>
       </View>
-      
-      {/* Symbol Legend Modal */}
-      <SymbolLegendModal
-        visible={showLegendModal}
-        onClose={() => setShowLegendModal(false)}
-      />
     </View>
   );
 };
@@ -1029,76 +718,31 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SPACING.xs,
     marginBottom: SPACING.sm,
-    gap: SPACING.sm,
   },
-  legendButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    backgroundColor: COLORS.surfaceLight,
-    borderRadius: BORDER_RADIUS.md,
-  },
-  legendButtonText: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.primary,
-    fontWeight: '600',
-  },
-  // Finger Guides Toggle Button Styles
-  fingerGuidesToggleBtn: {
+  toggleBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     paddingVertical: 6,
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     backgroundColor: COLORS.surfaceLight,
     borderRadius: BORDER_RADIUS.md,
-    borderWidth: 1.5,
-    borderColor: COLORS.surfaceLight,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
-  fingerGuidesToggleBtnActive: {
-    backgroundColor: COLORS.backgroundCard,
+  toggleBtnActive: {
     borderColor: COLORS.primary,
+    backgroundColor: COLORS.primary + '15',
   },
-  fingerIconsRow: {
-    flexDirection: 'row',
-    gap: 2,
-  },
-  miniFingerDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  fingerGuidesToggleText: {
+  toggleText: {
     fontSize: FONTS.sizes.xs,
     color: COLORS.textMuted,
     fontWeight: '600',
   },
-  fingerGuidesToggleTextActive: {
-    color: COLORS.text,
+  toggleTextActive: {
+    color: COLORS.primary,
   },
-  toggleIndicator: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: BORDER_RADIUS.sm,
-    marginLeft: 2,
-  },
-  toggleIndicatorOn: {
-    backgroundColor: COLORS.success,
-  },
-  toggleIndicatorOff: {
-    backgroundColor: COLORS.surfaceDark,
-  },
-  toggleIndicatorText: {
-    fontSize: 9,
-    fontWeight: '800',
-    color: '#FFFFFF',
-  },
-  toggleIndicatorTextOff: {
-    color: COLORS.textMuted,
-  },
-  debugLabel: {
+  debugText: {
     fontSize: FONTS.sizes.xs,
     color: '#E74C3C',
     fontWeight: 'bold',
@@ -1113,167 +757,53 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: SPACING.md,
+    gap: SPACING.lg,
     marginTop: SPACING.sm,
     flexWrap: 'wrap',
   },
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 6,
   },
-  legendDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+  legendCircle: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#9CA3AF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  legendCircleActive: {
+    borderColor: '#F59E0B',
+    borderWidth: 2,
+  },
+  legendCircleText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#1F2937',
+  },
+  legendCircleTextActive: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#1F2937',
+  },
+  legendConnector: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    backgroundColor: COLORS.background,
+    borderWidth: 1,
+    borderColor: '#6B7280',
+    borderRadius: 4,
+  },
+  legendConnectorText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#6B7280',
   },
   legendText: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.textMuted,
-  },
-  legendSeparator: {
-    width: 1,
-    height: 12,
-    backgroundColor: COLORS.surfaceLight,
-  },
-});
-
-// Modal Styles
-const modalStyles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'flex-end',
-  },
-  container: {
-    backgroundColor: COLORS.background,
-    borderTopLeftRadius: BORDER_RADIUS.xl,
-    borderTopRightRadius: BORDER_RADIUS.xl,
-    maxHeight: '80%',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.surfaceLight,
-  },
-  title: {
-    fontSize: FONTS.sizes.xl,
-    fontWeight: '700',
-    color: COLORS.text,
-  },
-  closeButton: {
-    padding: SPACING.xs,
-  },
-  tabs: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.surfaceLight,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: SPACING.sm,
-    alignItems: 'center',
-  },
-  tabActive: {
-    borderBottomWidth: 2,
-    borderBottomColor: COLORS.primary,
-  },
-  tabText: {
-    fontSize: FONTS.sizes.md,
-    color: COLORS.textMuted,
-    fontWeight: '600',
-  },
-  tabTextActive: {
-    color: COLORS.primary,
-  },
-  content: {
-    padding: SPACING.md,
-  },
-  symbolItem: {
-    flexDirection: 'row',
-    marginBottom: SPACING.md,
-    padding: SPACING.sm,
-    backgroundColor: COLORS.backgroundCard,
-    borderRadius: BORDER_RADIUS.md,
-  },
-  symbolBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: SPACING.sm,
-  },
-  symbolText: {
-    color: '#FFFFFF',
-    fontSize: FONTS.sizes.lg,
-    fontWeight: '700',
-  },
-  symbolInfo: {
-    flex: 1,
-  },
-  symbolName: {
-    fontSize: FONTS.sizes.md,
-    fontWeight: '700',
-    color: COLORS.text,
-    marginBottom: 2,
-  },
-  symbolMeaning: {
-    fontSize: FONTS.sizes.sm,
-    color: COLORS.textSecondary,
-    marginBottom: 4,
-  },
-  symbolHow: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.textMuted,
-    marginBottom: 4,
-  },
-  symbolHowLabel: {
-    fontWeight: '600',
-    color: COLORS.textSecondary,
-  },
-  exampleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  exampleLabel: {
-    fontSize: FONTS.sizes.xs,
-    color: COLORS.textMuted,
-  },
-  exampleText: {
-    fontSize: FONTS.sizes.sm,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-    color: COLORS.primary,
-    fontWeight: '600',
-  },
-  colorItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.sm,
-    padding: SPACING.sm,
-    backgroundColor: COLORS.backgroundCard,
-    borderRadius: BORDER_RADIUS.md,
-  },
-  colorDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    marginRight: SPACING.sm,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.2)',
-  },
-  colorInfo: {
-    flex: 1,
-  },
-  colorName: {
-    fontSize: FONTS.sizes.sm,
-    fontWeight: '600',
-    color: COLORS.text,
-  },
-  colorMeaning: {
     fontSize: FONTS.sizes.xs,
     color: COLORS.textMuted,
   },
