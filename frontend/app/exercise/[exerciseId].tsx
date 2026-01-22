@@ -31,18 +31,25 @@ interface Exercise {
   id: string;
   _id?: string;
   title: string;
-  description: string;
+  description?: string;
+  description_training?: string;
+  description_why?: string;
   domain: string;
+  subdomain?: string;
   difficulty_tier: string;
   bpm_start: number;
   bpm_target: number;
   technique_focus?: string;
   goal?: string;
   instructions?: string[];
+  steps?: string[];
   common_mistakes?: string[];
+  mistakes_and_fixes?: string[];
   tab_data?: any;
   chord_progression?: string[];
   scale_shape?: string;
+  tags?: string[];
+  success_criteria?: Record<string, number>;
 }
 
 export default function ExerciseDetailScreen() {
