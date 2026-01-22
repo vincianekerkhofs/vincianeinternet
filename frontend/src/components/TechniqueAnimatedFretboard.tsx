@@ -280,7 +280,8 @@ export const TechniqueAnimatedFretboard: React.FC<TechniqueAnimatedFretboardProp
   
   // Get Y position for a string (1 = high E at top)
   const getStringY = (string: number): number => {
-    return stringSpacing * string;
+    // string 1 = high E at top, string 6 = low E at bottom
+    return topPadding + ((string - 1) * stringSpacing);
   };
   
   // Generate connection path between notes
