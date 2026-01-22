@@ -1350,16 +1350,44 @@ export const TechniqueAnimatedFretboardPro: React.FC<TechniqueAnimatedFretboardP
         <TouchableOpacity 
           style={styles.legendButton}
           onPress={() => setShowLegendModal(true)}
+          accessibilityLabel="Abrir diccionario de símbolos"
         >
           <Ionicons name="book-outline" size={18} color={COLORS.primary} />
           <Text style={styles.legendButtonText}>Símbolos</Text>
         </TouchableOpacity>
         
-        {mode === 'guided' && (
-          <View style={styles.ghostHandToggle}>
-            <Text style={styles.ghostHandLabel}>Mano guía</Text>
-            <View style={[styles.toggleDot, showGhostHand && styles.toggleDotActive]} />
-          </View>
+        {/* Ghost Hand Toggle Button - ON/OFF */}
+        {mode === 'guided' && showGhostHandProp && (
+          <TouchableOpacity 
+            style={[
+              styles.ghostHandToggleBtn,
+              ghostHandEnabled && styles.ghostHandToggleBtnActive
+            ]}
+            onPress={toggleGhostHand}
+            accessibilityLabel="Mostrar/ocultar mano guía"
+            accessibilityRole="switch"
+            accessibilityState={{ checked: ghostHandEnabled }}
+          >
+            <Ionicons 
+              name={ghostHandEnabled ? "hand-left" : "hand-left-outline"} 
+              size={18} 
+              color={ghostHandEnabled ? '#FFFFFF' : COLORS.textMuted} 
+            />
+            <Text style={[
+              styles.ghostHandToggleText,
+              ghostHandEnabled && styles.ghostHandToggleTextActive
+            ]}>
+              Mano
+            </Text>
+            <View style={[
+              styles.toggleIndicator,
+              ghostHandEnabled ? styles.toggleIndicatorOn : styles.toggleIndicatorOff
+            ]}>
+              <Text style={styles.toggleIndicatorText}>
+                {ghostHandEnabled ? 'ON' : 'OFF'}
+              </Text>
+            </View>
+          </TouchableOpacity>
         )}
         
         {debugMode && (
@@ -1381,7 +1409,7 @@ export const TechniqueAnimatedFretboardPro: React.FC<TechniqueAnimatedFretboardP
             </LinearGradient>
           </Defs>
           
-          {/* Background */}
+          {/* LAYER 1: Background */}
           <Rect
             x={0}
             y={topPadding - 8}
@@ -1391,30 +1419,33 @@ export const TechniqueAnimatedFretboardPro: React.FC<TechniqueAnimatedFretboardP
             rx={6}
           />
           
-          {/* Frets */}
+          {/* LAYER 2: Frets */}
           {renderFrets()}
           
-          {/* Fret markers */}
+          {/* LAYER 3: Fret markers */}
           {renderFretMarkers()}
           
-          {/* Strings */}
+          {/* LAYER 4: Strings */}
           {renderStrings()}
           
-          {/* Ghost Hand Layer (above fretboard, below notes) */}
-          {showGhostHand && ghostHandData.poseB && mode === 'guided' && (
+          {/* LAYER 5: Ghost Hand (ABOVE fretboard/strings, BELOW notes) */}
+          {/* Only render if enabled - no opacity:0 trick, truly not rendered */}
+          {showGhostHand && ghostHandData.poseB && (
             <GhostHandSVG
               poseA={ghostHandData.poseA}
               poseB={ghostHandData.poseB}
               fretboardBBox={fretboardBBox}
-              color={techniqueColor}
+              techniqueColor={techniqueColor}
               showArrow={!!ghostHandData.poseA}
               animationPhase={ghostHandPhase}
               finger={currentNote?.finger}
+              targetString={currentNote?.position.string}
+              targetFret={currentNote?.position.fret}
               debugMode={debugMode}
             />
           )}
           
-          {/* Notes (topmost layer) */}
+          {/* LAYER 6: Notes (topmost layer) */}
           {renderNotes()}
         </Svg>
       </View>
