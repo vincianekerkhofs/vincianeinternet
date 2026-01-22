@@ -49,14 +49,10 @@ export default function TechniqueDetailScreen() {
   const handleStartPractice = async () => {
     if (!technique) return;
     
-    // Add 5 minutes of practice time when starting
-    await addPracticeTime(technique.id, 5);
-    await loadMastery();
-    
-    // Navigate to practice with technique context
+    // Navigate to dedicated technique practice screen
     router.push({
-      pathname: '/practice',
-      params: { techniqueId: technique.id, level: selectedLevel }
+      pathname: '/technique-practice/[id]',
+      params: { id: technique.id, level: String(selectedLevel) }
     } as any);
   };
 
