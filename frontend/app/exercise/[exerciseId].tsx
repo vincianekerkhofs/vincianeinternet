@@ -18,12 +18,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import Slider from '@react-native-community/slider';
-import { COLORS, FONTS, SPACING, BORDER_RADIUS } from '../src/constants/theme';
-import { getExerciseById } from '../src/services/api';
-import { isExerciseComplete, markExerciseComplete, markExerciseIncomplete } from '../src/utils/completionStorage';
-import { ChordFretboard } from '../src/components/ChordFretboard';
-import { ScaleFretboard } from '../src/components/ScaleFretboard';
-import { CHORD_SHAPES } from '../src/data/curriculum';
+import { COLORS, FONTS, SPACING, BORDER_RADIUS } from '../../src/constants/theme';
+import { getExerciseById } from '../../src/services/api';
+import { isExerciseComplete, markExerciseComplete, markExerciseIncomplete } from '../../src/utils/completionStorage';
+import { ChordFretboard } from '../../src/components/ChordFretboard';
+import { ScaleFretboard } from '../../src/components/ScaleFretboard';
+import { CHORD_SHAPES } from '../../src/data/curriculum';
 
 const { width } = Dimensions.get('window');
 
