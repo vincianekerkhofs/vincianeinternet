@@ -631,29 +631,27 @@ export const TechniqueAnimatedFretboardPro: React.FC<TechniqueAnimatedFretboardP
     <View style={styles.container}>
       {/* Controls */}
       <View style={styles.controlsRow}>
-        {/* Finger guides toggle */}
-        {mode === 'guided' && showFingerGuidesProp && (
-          <TouchableOpacity
-            style={[
-              styles.toggleBtn,
-              fingerGuidesEnabled && styles.toggleBtnActive
-            ]}
-            onPress={toggleFingerGuides}
-            accessibilityLabel="Mostrar/ocultar número de dedo"
-          >
-            <Ionicons 
-              name="finger-print-outline" 
-              size={16} 
-              color={fingerGuidesEnabled ? COLORS.primary : COLORS.textMuted} 
-            />
-            <Text style={[
-              styles.toggleText,
-              fingerGuidesEnabled && styles.toggleTextActive
-            ]}>
-              Dedos {fingerGuidesEnabled ? 'ON' : 'OFF'}
-            </Text>
-          </TouchableOpacity>
-        )}
+        {/* Finger guides toggle - always visible */}
+        <TouchableOpacity
+          style={[
+            styles.toggleBtn,
+            fingerGuidesEnabled && styles.toggleBtnActive
+          ]}
+          onPress={toggleFingerGuides}
+          accessibilityLabel="Mostrar/ocultar número de dedo"
+        >
+          <Ionicons 
+            name="finger-print-outline" 
+            size={16} 
+            color={fingerGuidesEnabled ? COLORS.primary : COLORS.textMuted} 
+          />
+          <Text style={[
+            styles.toggleText,
+            fingerGuidesEnabled && styles.toggleTextActive
+          ]}>
+            Dedos {fingerGuidesEnabled ? 'ON' : 'OFF'}
+          </Text>
+        </TouchableOpacity>
         
         {debugMode && (
           <Text style={styles.debugText}>Beat: {effectiveBeat.toFixed(1)}</Text>
