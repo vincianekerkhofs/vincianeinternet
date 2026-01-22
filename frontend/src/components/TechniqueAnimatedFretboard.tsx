@@ -248,25 +248,6 @@ export const TechniqueAnimatedFretboard: React.FC<TechniqueAnimatedFretboardProp
   const numFrets = Math.max(3, endFret - startFret + 1);
   const fretWidth = (fretboardWidth - nutWidth) / numFrets;
   
-  // Debug log (only in DEV)
-  useEffect(() => {
-    if (__DEV__) {
-      console.log('[TechniqueAnimatedFretboard] Fret calculation:', {
-        rawStartFret,
-        rawEndFret,
-        typeofStart: typeof rawStartFret,
-        typeofEnd: typeof rawEndFret,
-        computedMin: computedFrets.min,
-        computedMax: computedFrets.max,
-        finalStartFret: startFret,
-        finalEndFret: endFret,
-        numFrets,
-        fretWidth: fretWidth.toFixed(2),
-        fretboardWidth,
-      });
-    }
-  }, [path, startFret, endFret, numFrets, fretWidth]);
-  
   // Animation for active note pulse
   useEffect(() => {
     if (isPlaying) {
