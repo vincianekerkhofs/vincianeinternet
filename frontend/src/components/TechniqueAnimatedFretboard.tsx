@@ -206,11 +206,14 @@ export const TechniqueAnimatedFretboard: React.FC<TechniqueAnimatedFretboardProp
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const trailOpacity = useRef(new Animated.Value(0.5)).current;
   
-  // Fretboard dimensions
+  // Fretboard dimensions - adjusted for better visibility
   const fretboardWidth = SCREEN_WIDTH - SPACING.lg * 2;
-  const fretboardHeight = 160;
-  const stringSpacing = fretboardHeight / 7;
-  const nutWidth = 8;
+  const fretboardHeight = 180; // Increased height
+  const topPadding = 20; // Padding at top for first string
+  const bottomPadding = 25; // Padding at bottom for fret numbers
+  const stringAreaHeight = fretboardHeight - topPadding - bottomPadding;
+  const stringSpacing = stringAreaHeight / 5; // 5 gaps for 6 strings
+  const nutWidth = 12;
   
   // Calculate fret range
   const startFret = path.startFret;
