@@ -245,6 +245,14 @@ export const TechniqueAnimatedFretboard: React.FC<TechniqueAnimatedFretboardProp
   
   // Calculate note states based on current beat
   const noteStates = useMemo(() => {
+    // When not playing, show first note as active and rest as upcoming
+    if (!isPlaying) {
+      return path.notes.map((note, index) => {
+        if (index === 0) return 'active';
+        return 'upcoming';
+      });
+    }
+    
     const loopBeat = ((currentBeat - 1) % path.beatsPerLoop) + 1;
     
     return path.notes.map((note, index) => {
@@ -259,7 +267,7 @@ export const TechniqueAnimatedFretboard: React.FC<TechniqueAnimatedFretboardProp
         return 'completed';
       }
     });
-  }, [currentBeat, path]);
+  }, [currentBeat, path, isPlaying]);
   
   // Get X position for a fret
   const getFretX = (fret: number): number => {
