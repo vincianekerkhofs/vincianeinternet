@@ -262,6 +262,64 @@ export default function TechniqueDetailScreen() {
           ))}
         </View>
 
+        {/* Final Song Section - Only if technique has a song */}
+        {isTechniqueComplete(technique.id) && (
+          <View style={styles.section}>
+            <View style={styles.songSectionHeader}>
+              <View style={styles.songTitleRow}>
+                <Ionicons name="musical-notes" size={24} color={technique.color} />
+                <View>
+                  <Text style={styles.sectionTitle}>🎸 Canción Final</Text>
+                  <Text style={styles.songSubtitle}>Cierra la técnica tocando música real</Text>
+                </View>
+              </View>
+            </View>
+            
+            {(() => {
+              const song = getMasterySongByTechnique(technique.id);
+              if (!song) return null;
+              
+              return (
+                <TouchableOpacity 
+                  style={[styles.songCard, { borderColor: technique.color }]}
+                  onPress={() => router.push({
+                    pathname: '/technique-song/[id]',
+                    params: { id: technique.id }
+                  } as any)}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.songCardContent}>
+                    <View style={[styles.songIconCircle, { backgroundColor: technique.color + '20' }]}>
+                      <Ionicons name="play" size={28} color={technique.color} />
+                    </View>
+                    <View style={styles.songInfo}>
+                      <Text style={styles.songTitle}>{song.title}</Text>
+                      <Text style={styles.songMeta}>
+                        {song.style} • {song.tempo} BPM • {song.totalMeasures} compases
+                      </Text>
+                      <View style={styles.songSections}>
+                        {song.sections.map(s => (
+                          <View key={s.id} style={[styles.sectionBadge, { backgroundColor: technique.color + '30' }]}>
+                            <Text style={[styles.sectionBadgeText, { color: technique.color }]}>{s.id}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                    <Ionicons name="chevron-forward" size={24} color={COLORS.textMuted} />
+                  </View>
+                  
+                  <View style={styles.songFooter}>
+                    <Ionicons name="trophy-outline" size={14} color={COLORS.success} />
+                    <Text style={styles.songFooterText}>
+                      Completa esta canción para dominar la técnica
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })()}
+          </View>
+        )}
+
         <View style={{ height: 100 }} />
       </ScrollView>
 
