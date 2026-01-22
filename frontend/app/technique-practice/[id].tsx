@@ -511,6 +511,44 @@ export default function TechniquePracticeScreenV2() {
     router.back();
   };
 
+  // Mark exercise as complete immediately (without waiting for timer)
+  const handleMarkComplete = async () => {
+    stopPractice();
+    
+    // Save any practice time accumulated
+    if (techniqueId && totalPracticeTime > 0) {
+      const minutesPracticed = Math.max(1, Math.ceil(totalPracticeTime / 60));
+      await addPracticeTime(techniqueId, minutesPracticed);
+      await loadMastery(techniqueId);
+    }
+    
+    // Update mastery level
+    if (techniqueId && mastery) {
+      const newLevel = Math.max(mastery.level || 0, levelId);
+      await updateTechniqueMastery(techniqueId, { level: newLevel });
+      await loadMastery(techniqueId);
+    }
+    
+    // Move to next exercise or show completion
+    if (currentExerciseIndex < exercises.length - 1) {
+      handleNextExercise();
+    } else {
+      setShowCompletionModal(true);
+    }
+  };
+
+  // Go to next exercise without completing current one
+  const handleNextExercise = () => {
+    if (currentExerciseIndex < exercises.length - 1) {
+      const nextIndex = currentExerciseIndex + 1;
+      setCurrentExerciseIndex(nextIndex);
+      setCurrentExercise(exercises[nextIndex]);
+      setTimeRemaining(exercises[nextIndex].durationSeconds);
+      setBpm(exercises[nextIndex].bpmStart);
+      setTotalPracticeTime(0);
+    }
+  };
+
   // =============================================
   // HELPERS
   // =============================================
