@@ -168,14 +168,29 @@ export default function ExerciseDetailScreen() {
     
     return null;
   }, [exercise, allExercises, currentIndex, exerciseId]);
-    } catch (err) {
-      console.error('Error loading exercise:', err);
-      setError(`Failed to load exercise: ${exerciseId}`);
-    } finally {
-      setLoading(false);
+
+  // Handle complete and navigate to next
+  const handleCompleteAndNext = async () => {
+    if (!exerciseId) return;
+    
+    // Mark as complete
+    await markExerciseComplete(exerciseId);
+    setIsCompleted(true);
+    
+    // Get next exercise
+    const nextExercise = getNextExercise();
+    
+    if (nextExercise) {
+      // Navigate to next exercise with router.push to force remount
+      console.log(`[ExerciseDetail] Navigating to next exercise: ${nextExercise.id}`);
+      router.push(`/exercise/${nextExercise.id}`);
+    } else {
+      // Show completion modal - no more exercises
+      setShowCompletionModal(true);
     }
   };
-
+  
+  // Handle just marking complete without navigation
   const handleToggleComplete = async () => {
     if (!exerciseId) return;
     
@@ -185,6 +200,16 @@ export default function ExerciseDetailScreen() {
     } else {
       await markExerciseComplete(exerciseId);
       setIsCompleted(true);
+    }
+  };
+  
+  // Handle going to next without completing
+  const handleSkipToNext = () => {
+    const nextExercise = getNextExercise();
+    if (nextExercise) {
+      router.push(`/exercise/${nextExercise.id}`);
+    } else {
+      setShowCompletionModal(true);
     }
   };
 
