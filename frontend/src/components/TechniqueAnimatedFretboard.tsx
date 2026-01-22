@@ -34,16 +34,6 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 // TYPES
 // =============================================
 
-interface TechniqueAnimatedFretboardProps {
-  path: FretboardPath;
-  currentBeat: number;
-  isPlaying: boolean;
-  techniqueColor: string;
-  onNotePress?: (note: FretboardNote) => void;
-  mode?: 'guided' | 'continuous';
-  showTechniqueGlyphs?: boolean;
-}
-
 interface NoteMarkerProps {
   note: FretboardNote;
   x: number;
@@ -52,6 +42,7 @@ interface NoteMarkerProps {
   techniqueColor: string;
   showGlyph: boolean;
   pulseAnim: Animated.Value;
+  onTechniquePress?: (symbol: string) => void;
 }
 
 // =============================================
