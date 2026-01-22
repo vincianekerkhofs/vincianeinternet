@@ -612,7 +612,20 @@ export const TechniqueAnimatedFretboardPro: React.FC<TechniqueAnimatedFretboardP
       // - Note has finger data
       // According to design: finger appears ON THE EXACT PULSE
       // ALWAYS show finger when active (simplified logic)
-      const showFinger = state === 'active' && !!note.finger;
+      const hasFinger = !!note.finger;
+      const isActive = state === 'active';
+      const showFinger = isActive && hasFinger;
+      
+      // Debug
+      if (isActive) {
+        console.log('[NoteCircle] Active note:', { 
+          index, 
+          noteName, 
+          finger: note.finger, 
+          hasFinger, 
+          showFinger 
+        });
+      }
       
       return (
         <NoteCircle
