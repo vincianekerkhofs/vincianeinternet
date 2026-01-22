@@ -710,16 +710,19 @@ export default function TechniquePracticeScreenV2() {
           </View>
         )}
 
-        {/* Animated Fretboard */}
+        {/* Animated Fretboard V2 */}
         {currentExercise?.fretboardPath && (
           <View style={styles.fretboardSection}>
-            <TechniqueAnimatedFretboard
+            <TechniqueAnimatedFretboardV2
               path={currentExercise.fretboardPath}
               currentBeat={currentBeat}
               isPlaying={isPlaying}
               techniqueColor={technique.color}
-              mode={practiceMode}
+              techniqueId={technique.id}
+              mode={practiceMode === 'guided' ? 'guided' : 'follow'}
               showTechniqueGlyphs={true}
+              showMicroTutorial={true}
+              showGhostHand={isPlaying}
             />
           </View>
         )}
