@@ -941,20 +941,24 @@ const BEND_EXERCISES: TechniqueExercise[] = [
 ];
 
 // =============================================
-// ALL EXERCISES COMBINED
+// IMPORT COMPLETE EXERCISES DATABASE
 // =============================================
 
-export const ALL_TECHNIQUE_EXERCISES: TechniqueExercise[] = [
-  ...HAMMER_ON_EXERCISES,
-  ...PULL_OFF_EXERCISES,
-  ...SLIDE_EXERCISES,
-  ...ALTERNATE_PICKING_EXERCISES,
-  ...VIBRATO_EXERCISES,
-  ...BEND_EXERCISES,
-];
+import { 
+  ALL_COMPLETE_EXERCISES,
+  getCompleteExercisesForLevel,
+  getCompleteExercisesForTechnique,
+  generateFallbackExercise,
+} from './techniqueExercisesComplete';
 
 // =============================================
-// HELPER FUNCTIONS
+// ALL EXERCISES COMBINED (Using complete database)
+// =============================================
+
+export const ALL_TECHNIQUE_EXERCISES: TechniqueExercise[] = ALL_COMPLETE_EXERCISES;
+
+// =============================================
+// HELPER FUNCTIONS (With fallback generation)
 // =============================================
 
 export const getExerciseById = (exerciseId: string): TechniqueExercise | undefined => {
@@ -962,19 +966,21 @@ export const getExerciseById = (exerciseId: string): TechniqueExercise | undefin
 };
 
 export const getExercisesForTechnique = (techniqueId: string): TechniqueExercise[] => {
-  return ALL_TECHNIQUE_EXERCISES.filter(e => e.techniqueId === techniqueId);
+  return getCompleteExercisesForTechnique(techniqueId);
 };
 
+/**
+ * Get exercises for a specific level - NEVER returns empty array
+ * Uses complete database with automatic fallback generation
+ */
 export const getExercisesForLevel = (techniqueId: string, levelId: number): TechniqueExercise[] => {
-  return ALL_TECHNIQUE_EXERCISES.filter(
-    e => e.techniqueId === techniqueId && e.levelId === levelId
-  );
+  return getCompleteExercisesForLevel(techniqueId, levelId);
 };
 
+/**
+ * Get all levels for a technique - ALWAYS returns 4 levels
+ */
 export const getLevelsForTechnique = (techniqueId: string): TechniqueLevel[] => {
-  const exercises = getExercisesForTechnique(techniqueId);
-  const levelIds = [...new Set(exercises.map(e => e.levelId))].sort();
-  
   const levelNames: Record<number, string> = {
     1: 'Control Básico',
     2: 'Precisión',
@@ -989,9 +995,12 @@ export const getLevelsForTechnique = (techniqueId: string): TechniqueLevel[] => 
     4: 'Integrar la técnica en contextos musicales reales',
   };
   
-  return levelIds.map(levelId => {
-    const levelExercises = exercises.filter(e => e.levelId === levelId);
-    const bpmRanges = levelExercises.map(e => [e.bpmStart, e.bpmTarget]).flat();
+  // ALWAYS return all 4 levels
+  return [1, 2, 3, 4].map(levelId => {
+    const levelExercises = getExercisesForLevel(techniqueId, levelId);
+    const bpmRanges = levelExercises.length > 0 
+      ? levelExercises.map(e => [e.bpmStart, e.bpmTarget]).flat()
+      : [60, 100]; // Default BPM range
     
     return {
       id: levelId,
@@ -1008,3 +1017,6 @@ export const getLevelsForTechnique = (techniqueId: string): TechniqueLevel[] => 
 export const getSymbolByKey = (symbol: string): TechniqueSymbol | undefined => {
   return TECHNIQUE_SYMBOLS.find(s => s.symbol === symbol);
 };
+
+// Re-export generator for direct access
+export { generateFallbackExercise };
