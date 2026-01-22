@@ -301,7 +301,7 @@ const NoteCircle: React.FC<NoteCircleProps> = ({
         y={y + 4.5 * scale}
         textAnchor="middle"
         fill={config.textColor}
-        fontSize={showFinger ? 14 * scale : 11 * scale}
+        fontSize={shouldShowFinger ? 14 * scale : 11 * scale}
         fontWeight={state === 'active' ? 'bold' : '600'}
       >
         {displayText}
