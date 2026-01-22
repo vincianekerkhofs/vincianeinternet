@@ -269,19 +269,19 @@ const GhostHandSVG: React.FC<GhostHandProps> = ({
   // Current position based on animation phase
   let currentX = poseB.x;
   let currentY = poseB.y;
-  let opacity = 0.2;
+  let opacity = 0.45; // Increased base opacity for better visibility
   
   if (animationPhase === 'start' && poseA) {
     currentX = poseA.x;
     currentY = poseA.y;
-    opacity = 0.25;
+    opacity = 0.5;
   } else if (animationPhase === 'moving' && poseA) {
     // Interpolate between A and B (50% for now - could be animated)
     currentX = (poseA.x + poseB.x) / 2;
     currentY = (poseA.y + poseB.y) / 2;
-    opacity = 0.2;
+    opacity = 0.45;
   } else if (animationPhase === 'end') {
-    opacity = 0.15;
+    opacity = 0.4;
   }
   
   // Validate positions are within fretboard
