@@ -1,6 +1,7 @@
 /**
  * GUITAR GUIDE PRO - TECHNIQUE DETAIL & MASTER CLASS
  * Individual technique learning path with 4 levels
+ * All levels are freely accessible (no gating)
  */
 
 import React, { useState, useEffect } from 'react';
@@ -11,6 +12,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
+  Switch,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,10 +25,11 @@ import { getTechniqueMasteryById, addPracticeTime, TechniqueMastery } from '../.
 const { width } = Dimensions.get('window');
 
 export default function TechniqueDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, level: levelParam } = useLocalSearchParams<{ id: string; level?: string }>();
   const [technique, setTechnique] = useState<TechniqueDefinition | null>(null);
   const [mastery, setMastery] = useState<TechniqueMastery | null>(null);
-  const [selectedLevel, setSelectedLevel] = useState(1);
+  const [selectedLevel, setSelectedLevel] = useState(parseInt(levelParam || '1'));
+  const [recommendedPath, setRecommendedPath] = useState(false); // OFF by default - free mode
 
   useEffect(() => {
     if (id) {
@@ -36,20 +39,34 @@ export default function TechniqueDetailScreen() {
     }
   }, [id]);
 
+  // Update selected level when URL param changes
+  useEffect(() => {
+    if (levelParam) {
+      const level = parseInt(levelParam);
+      if (level >= 1 && level <= 4) {
+        setSelectedLevel(level);
+      }
+    }
+  }, [levelParam]);
+
   const loadMastery = async () => {
     if (id) {
       const data = await getTechniqueMasteryById(id);
       setMastery(data);
-      if (data?.level) {
-        setSelectedLevel(Math.min(data.level + 1, 4));
-      }
     }
+  };
+
+  // Handle level selection with immediate navigation (URL update)
+  const handleLevelSelect = (level: number) => {
+    setSelectedLevel(level);
+    // Update URL to reflect selected level
+    router.setParams({ level: String(level) });
   };
 
   const handleStartPractice = async () => {
     if (!technique) return;
     
-    // Navigate to dedicated technique practice screen
+    // Navigate to dedicated technique practice screen with selected level
     router.push({
       pathname: '/technique-practice/[id]',
       params: { id: technique.id, level: String(selectedLevel) }
