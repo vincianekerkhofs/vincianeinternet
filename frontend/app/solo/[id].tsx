@@ -1,4 +1,9 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+/**
+ * GUITAR GUIDE PRO - SOLO DETAIL SCREEN
+ * Shows guided solo with fretboard visualization and playback
+ */
+
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,29 +16,15 @@ import Slider from '@react-native-community/slider';
 
 const { width } = Dimensions.get('window');
 
-export default function SoloDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const [solo, setSolo] = useState<GuidedSolo | null>(null);
-  const [loading, setLoading] = useState(true);
+// Separate component for the main content to avoid hook issues
+const SoloContent: React.FC<{ solo: GuidedSolo }> = ({ solo }) => {
   const [showIntro, setShowIntro] = useState(true);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentBar, setCurrentBar] = useState(0);
   const [currentNoteIndex, setCurrentNoteIndex] = useState(0);
-  const [tempo, setTempo] = useState(70);
+  const [tempo, setTempo] = useState(solo.tempo);
   
   const playbackRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    if (id) {
-      const foundSolo = getSoloById(id);
-      if (foundSolo) {
-        setSolo(foundSolo);
-        setTempo(foundSolo.tempo);
-      }
-      // Small delay to ensure state is updated
-      setTimeout(() => setLoading(false), 100);
-    }
-  }, [id]);
 
   useEffect(() => {
     return () => {
@@ -45,7 +36,7 @@ export default function SoloDetailScreen() {
 
   // Playback logic
   useEffect(() => {
-    if (isPlaying && solo) {
+    if (isPlaying) {
       const beatDuration = 60000 / tempo;
       const noteInterval = beatDuration / 2;
       
@@ -76,10 +67,10 @@ export default function SoloDetailScreen() {
         clearInterval(playbackRef.current);
       }
     };
-  }, [isPlaying, currentBar, solo, tempo]);
+  }, [isPlaying, currentBar, tempo, solo.notes]);
 
   const handlePlayPause = () => {
-    if (!isPlaying && solo) {
+    if (!isPlaying) {
       if (currentBar >= solo.notes.length - 1 && currentNoteIndex >= (solo.notes[currentBar]?.length || 0) - 1) {
         setCurrentBar(0);
         setCurrentNoteIndex(0);
@@ -93,30 +84,6 @@ export default function SoloDetailScreen() {
     setCurrentBar(0);
     setCurrentNoteIndex(0);
   };
-
-  // Loading or not found state (combined to avoid hook issues)
-  if (loading || !solo) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <View style={styles.loadingContainer}>
-          {loading ? (
-            <>
-              <ActivityIndicator size="large" color={COLORS.primary} />
-              <Text style={styles.loadingText}>Cargando solo...</Text>
-            </>
-          ) : (
-            <>
-              <Ionicons name="alert-circle-outline" size={48} color={COLORS.error} />
-              <Text style={styles.loadingText}>Solo no encontrado</Text>
-              <TouchableOpacity style={styles.backButtonLarge} onPress={() => router.back()}>
-                <Text style={styles.backButtonText}>Volver</Text>
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   // Calculate fret range from notes
   const allFrets = solo.notes.flat().map(n => n.fret);
@@ -132,7 +99,7 @@ export default function SoloDetailScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <>
       {/* Didactic Intro Modal */}
       <DidacticIntroScreen
         intro={soloIntro}
@@ -255,6 +222,55 @@ export default function SoloDetailScreen() {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+    </>
+  );
+};
+
+// Main screen component
+export default function SoloDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const [solo, setSolo] = useState<GuidedSolo | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (id) {
+      const foundSolo = getSoloById(id);
+      setSolo(foundSolo || null);
+    }
+    setLoading(false);
+  }, [id]);
+
+  // Loading state
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.loadingText}>Cargando solo...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Not found state
+  if (!solo) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <Ionicons name="alert-circle-outline" size={48} color={COLORS.error} />
+          <Text style={styles.loadingText}>Solo no encontrado</Text>
+          <TouchableOpacity style={styles.backButtonLarge} onPress={() => router.back()}>
+            <Text style={styles.backButtonText}>Volver</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Main content - rendered in separate component to maintain hook consistency
+  return (
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <SoloContent solo={solo} />
     </SafeAreaView>
   );
 }
