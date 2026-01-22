@@ -843,54 +843,79 @@ export const TechniqueAnimatedFretboardPro: React.FC<TechniqueAnimatedFretboardP
   // GHOST HAND LOGIC
   // =============================================
   
+  // Find the next note after current one
+  const nextNote = useMemo(() => {
+    if (!currentNote) return null;
+    const currentIndex = path.notes.findIndex(n => 
+      n.position.string === currentNote.position.string && 
+      n.position.fret === currentNote.position.fret &&
+      n.timing === currentNote.timing
+    );
+    return currentIndex >= 0 && currentIndex < path.notes.length - 1 
+      ? path.notes[currentIndex + 1] 
+      : null;
+  }, [currentNote, path.notes]);
+  
   const ghostHandData = useMemo(() => {
-    if (!showGhostHand || !currentNote) {
+    if (!showGhostHand) {
       return { poseA: null, poseB: null, shouldShow: false };
     }
     
-    const currentPos = computeNotePosition(currentNote.position.fret, currentNote.position.string);
+    // If no current note, show ghost at first note position
+    const targetNote = currentNote || (path.notes.length > 0 ? path.notes[0] : null);
+    if (!targetNote) {
+      return { poseA: null, poseB: null, shouldShow: false };
+    }
+    
+    const targetPos = computeNotePosition(targetNote.position.fret, targetNote.position.string);
     const poseB: GhostHandPose = {
-      x: currentPos.x,
-      y: currentPos.y,
-      finger: currentNote.finger,
-      technique: currentNote.technique,
+      x: targetPos.x,
+      y: targetPos.y,
+      finger: targetNote.finger,
+      technique: targetNote.technique,
     };
     
     let poseA: GhostHandPose | null = null;
     let shouldShow = false;
     
-    // Always show ghost hand when there's a technique on current note
-    if (currentNote.technique && GHOST_HAND_TECHNIQUES.includes(currentNote.technique)) {
+    // Show ghost hand when:
+    // 1. Current note has a technique
+    if (targetNote.technique && GHOST_HAND_TECHNIQUES.includes(targetNote.technique)) {
       shouldShow = true;
     }
     
-    // Also show for large fret jumps (> 2 frets) even without technique
+    // 2. Next note has a technique (anticipate the movement)
+    if (nextNote?.technique && GHOST_HAND_TECHNIQUES.includes(nextNote.technique)) {
+      shouldShow = true;
+    }
+    
+    // 3. Large fret jumps (> 2 frets)
     if (previousNote) {
-      const fretDiff = Math.abs(currentNote.position.fret - previousNote.position.fret);
+      const fretDiff = Math.abs(targetNote.position.fret - previousNote.position.fret);
       if (fretDiff > 2) {
         shouldShow = true;
       }
-      
-      // Set poseA if we have a previous note (for arrow/trail)
-      if (shouldShow) {
-        const prevPos = computeNotePosition(previousNote.position.fret, previousNote.position.string);
-        poseA = {
-          x: prevPos.x,
-          y: prevPos.y,
-          finger: previousNote.finger,
-          technique: previousNote.technique,
-        };
-      }
     }
     
-    // Show ghost hand even without previous note if there's a technique
-    // This ensures it shows from the start
-    if (currentNote.technique && !shouldShow) {
+    // Always show ghost hand in guided mode during practice for better UX
+    // When not playing, show it at the first note position
+    if (mode === 'guided' && !isPlaying && path.notes.length > 0) {
       shouldShow = true;
     }
     
+    // Set poseA from previous note if available (for arrow/trail)
+    if (previousNote && shouldShow) {
+      const prevPos = computeNotePosition(previousNote.position.fret, previousNote.position.string);
+      poseA = {
+        x: prevPos.x,
+        y: prevPos.y,
+        finger: previousNote.finger,
+        technique: previousNote.technique,
+      };
+    }
+    
     return { poseA, poseB, shouldShow };
-  }, [currentNote, previousNote, showGhostHand, computeNotePosition]);
+  }, [currentNote, previousNote, nextNote, showGhostHand, computeNotePosition, mode, isPlaying, path.notes]);
   
   // Update ghost hand animation phase
   useEffect(() => {
