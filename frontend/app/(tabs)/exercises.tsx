@@ -200,6 +200,8 @@ export default function ExercisesScreen() {
               <TouchableOpacity
                 style={[styles.exerciseItem, isComplete && styles.exerciseItemComplete]}
                 onPress={() => {
+                  // Debug log for navigation
+                  console.log(`[Library] Navigating to exercise: ${item.id} - ${item.title}`);
                   router.push({
                     pathname: '/exercise/[exerciseId]',
                     params: { exerciseId: item.id },
