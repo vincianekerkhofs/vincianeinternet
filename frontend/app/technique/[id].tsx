@@ -661,4 +661,79 @@ const styles = StyleSheet.create({
     fontSize: FONTS.sizes.sm,
     color: COLORS.textMuted,
   },
+  // Song Section Styles
+  songSectionHeader: {
+    marginBottom: SPACING.md,
+  },
+  songTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  songSubtitle: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.textMuted,
+    marginTop: 2,
+  },
+  songCard: {
+    backgroundColor: COLORS.backgroundCard,
+    borderRadius: BORDER_RADIUS.lg,
+    borderWidth: 2,
+    overflow: 'hidden',
+  },
+  songCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.md,
+    gap: SPACING.md,
+  },
+  songIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  songInfo: {
+    flex: 1,
+  },
+  songTitle: {
+    fontSize: FONTS.sizes.lg,
+    fontWeight: '700',
+    color: COLORS.text,
+    marginBottom: 4,
+  },
+  songMeta: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.textMuted,
+    marginBottom: 6,
+  },
+  songSections: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  sectionBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  sectionBadgeText: {
+    fontSize: FONTS.sizes.xs,
+    fontWeight: '700',
+  },
+  songFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    backgroundColor: COLORS.success + '10',
+    borderTopWidth: 1,
+    borderTopColor: COLORS.success + '20',
+  },
+  songFooterText: {
+    fontSize: FONTS.sizes.xs,
+    color: COLORS.success,
+    flex: 1,
+  },
 });
