@@ -714,12 +714,6 @@ export default function TechniquePracticeScreenV2() {
         {/* Animated Fretboard */}
         {currentExercise?.fretboardPath ? (
           <View style={styles.fretboardSection}>
-            {console.log('[TechniquePractice] Rendering fretboard with path:', {
-              startFret: currentExercise.fretboardPath.startFret,
-              endFret: currentExercise.fretboardPath.endFret,
-              notesCount: currentExercise.fretboardPath.notes?.length,
-              firstNote: currentExercise.fretboardPath.notes?.[0],
-            })}
             <TechniqueAnimatedFretboard
               path={currentExercise.fretboardPath}
               currentBeat={currentBeat}
