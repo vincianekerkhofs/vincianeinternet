@@ -363,7 +363,8 @@ export const TechniqueAnimatedFretboardPro: React.FC<TechniqueAnimatedFretboardP
     }
   }, [fingerGuidesEnabled]);
   
-  const showFingers = showFingerGuidesProp && fingerGuidesEnabled && mode === 'guided';
+  // Show fingers when toggle is enabled - simplified logic
+  const showFingers = fingerGuidesEnabled;
   
   // =============================================
   // FRETBOARD DIMENSIONS
