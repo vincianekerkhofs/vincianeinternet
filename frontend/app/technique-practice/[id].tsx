@@ -188,25 +188,13 @@ export default function TechniquePracticeScreenV2() {
     if (exerciseIdParam) {
       const specificExercise = levelExercises.find(e => e.id === exerciseIdParam);
       if (specificExercise) {
-        console.log(`[TechniquePractice] Setting specific exercise with fretboardPath:`, {
-          hasFretboardPath: !!specificExercise.fretboardPath,
-          fretboardPathKeys: specificExercise.fretboardPath ? Object.keys(specificExercise.fretboardPath) : 'N/A',
-        });
         setCurrentExercise(specificExercise);
         setCurrentExerciseIndex(levelExercises.indexOf(specificExercise));
       } else {
         // Fallback to first exercise
-        console.log(`[TechniquePractice] Exercise not found, using first with fretboardPath:`, {
-          hasFretboardPath: !!levelExercises[0]?.fretboardPath,
-        });
         setCurrentExercise(levelExercises[0] || null);
       }
     } else if (levelExercises.length > 0) {
-      console.log(`[TechniquePractice] Setting first exercise with fretboardPath:`, {
-        hasFretboardPath: !!levelExercises[0].fretboardPath,
-        fretboardPathKeys: levelExercises[0].fretboardPath ? Object.keys(levelExercises[0].fretboardPath) : 'N/A',
-        notesLength: levelExercises[0].fretboardPath?.notes?.length,
-      });
       setCurrentExercise(levelExercises[0]);
     }
     
