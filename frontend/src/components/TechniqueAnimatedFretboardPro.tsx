@@ -601,7 +601,8 @@ export const TechniqueAnimatedFretboardPro: React.FC<TechniqueAnimatedFretboardP
   // =============================================
   
   const renderNotes = () => {
-    return path.notes.map((note, index) => {
+    // First, create array of notes with their states
+    const notesWithStates = path.notes.map((note, index) => {
       const pos = computeNotePosition(note.position.fret, note.position.string);
       const noteName = getNoteName(note.position.string, note.position.fret);
       
@@ -613,25 +614,27 @@ export const TechniqueAnimatedFretboardPro: React.FC<TechniqueAnimatedFretboardP
         state = 'completed';
       }
       
-      // Show finger on active note when:
-      // - Note is active (current beat) AND
-      // - Note has finger data
-      // According to design: finger appears ON THE EXACT PULSE
-      // ALWAYS show finger when active (simplified logic)
-      const hasFinger = !!note.finger;
+      return { note, pos, noteName, state, index };
+    });
+    
+    // Group by position to avoid overlapping circles
+    const uniquePositions = new Map<string, typeof notesWithStates[0]>();
+    notesWithStates.forEach(item => {
+      const key = `${item.pos.x}-${item.pos.y}`;
+      // Prioritize active state, then next upcoming
+      const existing = uniquePositions.get(key);
+      if (!existing || item.state === 'active' || 
+          (item.state === 'upcoming' && existing.state === 'completed')) {
+        uniquePositions.set(key, item);
+      }
+    });
+    
+    // Render unique positions
+    return Array.from(uniquePositions.values()).map(({ note, pos, noteName, state, index }) => {
+      // Show finger on active note
+      const hasFinger = note.finger !== undefined && note.finger > 0;
       const isActive = state === 'active';
       const showFinger = isActive && hasFinger;
-      
-      // Debug
-      if (isActive) {
-        console.log('[NoteCircle] Active note:', { 
-          index, 
-          noteName, 
-          finger: note.finger, 
-          hasFinger, 
-          showFinger 
-        });
-      }
       
       return (
         <NoteCircle
