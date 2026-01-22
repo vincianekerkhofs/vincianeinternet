@@ -307,6 +307,16 @@ const GhostHandSVG: React.FC<GhostHandProps> = ({
     
     return (
       <G opacity={handOpacity}>
+        {/* Outer glow for visibility */}
+        <Ellipse
+          cx={palmX + palmWidth / 2}
+          cy={palmY + palmHeight / 2}
+          rx={palmWidth / 2 + 4 * handScale}
+          ry={palmHeight / 2 + 4 * handScale}
+          fill={color}
+          opacity={0.15}
+        />
+        
         {/* Palm - Ellipse */}
         <Ellipse
           cx={palmX + palmWidth / 2}
@@ -314,9 +324,9 @@ const GhostHandSVG: React.FC<GhostHandProps> = ({
           rx={palmWidth / 2}
           ry={palmHeight / 2}
           fill={color}
-          opacity={0.3}
+          opacity={0.5}
           stroke={color}
-          strokeWidth={1 * handScale}
+          strokeWidth={1.5 * handScale}
         />
         
         {/* Fingers - 4 rectangles */}
@@ -332,9 +342,9 @@ const GhostHandSVG: React.FC<GhostHandProps> = ({
               rx={fingerWidth / 2}
               ry={fingerWidth / 2}
               fill={color}
-              opacity={0.25}
+              opacity={0.45}
               stroke={color}
-              strokeWidth={0.5 * handScale}
+              strokeWidth={0.75 * handScale}
             />
           );
         })}
@@ -345,16 +355,16 @@ const GhostHandSVG: React.FC<GhostHandProps> = ({
             <Circle
               cx={palmX + palmWidth / 2}
               cy={fingersStartY - 6 * handScale}
-              r={8 * handScale}
+              r={9 * handScale}
               fill={color}
-              opacity={0.6}
+              opacity={0.8}
             />
             <SvgText
               x={palmX + palmWidth / 2}
               y={fingersStartY - 3 * handScale}
               textAnchor="middle"
               fill="#FFFFFF"
-              fontSize={9 * handScale}
+              fontSize={10 * handScale}
               fontWeight="bold"
             >
               {finger}
