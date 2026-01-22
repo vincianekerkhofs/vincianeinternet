@@ -50,13 +50,45 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 // TYPES
 // =============================================
 
-type PracticeMode = 'guided' | 'continuous';
+type PracticeMode = 'guided' | 'follow' | 'free';
 type FeedbackType = 'great' | 'good' | 'early' | 'late' | null;
 
 interface TimingFeedback {
   type: FeedbackType;
   timestamp: number;
 }
+
+interface PracticeModeInfo {
+  id: PracticeMode;
+  name: string;
+  icon: string;
+  description: string;
+  color: string;
+}
+
+const PRACTICE_MODES: PracticeModeInfo[] = [
+  {
+    id: 'guided',
+    name: 'Guiado',
+    icon: 'compass',
+    description: 'Animación completa + timing. Sigue las indicaciones visuales.',
+    color: '#3498DB',
+  },
+  {
+    id: 'follow',
+    name: 'Seguimiento',
+    icon: 'eye',
+    description: 'Ve las notas, toca junto. Sin guía de timing.',
+    color: '#9B59B6',
+  },
+  {
+    id: 'free',
+    name: 'Libre',
+    icon: 'musical-notes',
+    description: 'Solo metrónomo. Practica a tu ritmo.',
+    color: '#E67E22',
+  },
+];
 
 // =============================================
 // ERROR FALLBACK COMPONENT
