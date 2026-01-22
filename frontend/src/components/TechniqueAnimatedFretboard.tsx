@@ -83,6 +83,7 @@ const NoteMarker: React.FC<NoteMarkerProps> = ({
   techniqueColor,
   showGlyph,
   pulseAnim,
+  onTechniquePress,
 }) => {
   const getColors = () => {
     switch (state) {
