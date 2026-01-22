@@ -397,6 +397,14 @@ export default function ExerciseDetailScreen() {
           </Text>
         </View>
 
+        {/* Debug info - remove in production */}
+        {__DEV__ && (
+          <View style={styles.debugInfo}>
+            <Text style={styles.debugText}>DEBUG ID: {exerciseId}</Text>
+            <Text style={styles.debugText}>Data ID: {exercise.id}</Text>
+          </View>
+        )}
+
         <View style={{ height: 40 }} />
       </ScrollView>
 
