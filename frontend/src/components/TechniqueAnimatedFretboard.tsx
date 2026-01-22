@@ -499,9 +499,9 @@ export const TechniqueAnimatedFretboard: React.FC<TechniqueAnimatedFretboardProp
           {/* Fretboard wood */}
           <Rect
             x={0}
-            y={stringSpacing * 0.7}
+            y={topPadding - 8}
             width={fretboardWidth}
-            height={stringSpacing * 5.6}
+            height={stringAreaHeight + 16}
             fill="url(#fretboardGrad)"
             rx={4}
           />
